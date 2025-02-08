@@ -1,14 +1,7 @@
 <template>
   <div class="home">
     <div class="home__card">
-      <video
-        class="home__video"
-        autoplay
-        loop
-        :muted="!isSoundEnabled"
-        src="/video/gromka.mp4"
-        type="video/mp4"
-      >
+      <video class="home__video" autoplay loop muted src="/video/gromka.mp4" type="video/mp4">
         Ваш браузер не поддерживает видео.
       </video>
     </div>
