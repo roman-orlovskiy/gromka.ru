@@ -12,7 +12,6 @@ import { RouterView } from 'vue-router'
 .app {
   height: 100%;
   min-height: 100%;
-  background-color: $color-primary-light;
 }
 
 html,
@@ -32,6 +31,7 @@ body {
   -ms-text-size-adjust: 100%;
   -webkit-text-size-adjust: 100%;
   font-size: vh(10);
+  background-color: $color-primary-light;
 
   @include layout-aspect-tablet {
     font-size: vw(10);

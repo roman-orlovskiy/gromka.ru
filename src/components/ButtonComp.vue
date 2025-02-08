@@ -1,6 +1,6 @@
 <template>
   <button class="button">
-    Нажми меня
+    <slot></slot>
   </button>
 </template>
 
@@ -8,17 +8,18 @@
 
 <style lang="scss" scoped>
 .button {
-  font-size: 1.5rem;
+  font-size: 3.5rem;
   padding: 1rem 2rem;
-  background-color: $color-secondary;
+  background-color: $color-primary;
   color: $color-white;
   border: none;
   border-radius: 0.5rem;
   cursor: pointer;
-  transition: background-color 0.3s;
+  transition: opacity 0.3s;
+  box-shadow: 0 0 10px 0 rgba($color-primary, 0.5);
 
   &:hover {
-    background-color: $color-primary-dark;
+    opacity: 0.7;
   }
 }
 </style>
