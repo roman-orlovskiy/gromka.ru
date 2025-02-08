@@ -44,13 +44,13 @@ $color-secondary-dark: #80b8c8;
 }
 
 @mixin layout-aspect-tablet() {
-  @media (max-aspect-ratio: 14/10) {
+  @media (max-aspect-ratio: 22/10) {
     @content;
   }
 }
 
 @mixin layout-aspect-mobile() {
-  @media (max-aspect-ratio: 9/10) {
+  @media (max-aspect-ratio: 10/10) {
     @content;
   }
 }
@@ -63,34 +63,22 @@ $color-secondary-dark: #80b8c8;
   }
 }
 
-@function vw($px-vw, $base-vw: 1200) {
+@function vw($px-vw, $base-vw: 1440) {
   @return math.div($px-vw * 100vw, $base-vw);
 }
 
-@function vh($px-vh, $base-vh: 1080) {
+@function vh($px-vh, $base-vh: 676) {
   @return math.div($px-vh * 100vh, $base-vh);
-}
-
-@function vwh($px-vwh) {
-  @return min(vw($px-vwh), vw($px-vwh));
-}
-
-@function vwh-max($px-vwh) {
-  @return max(vw($px-vwh), vw($px-vwh));
 }
 
 @function tvw($px-vw, $base-vw: 800) {
   @return math.div($px-vw * 100vw, $base-vw);
 }
 
-@function tvw($px-vh, $base-vh: 1200) {
+@function tvh($px-vh, $base-vh: 1200) {
   @return math.div($px-vh * 100vh, $base-vh);
 }
 
-@function mvw($px-vw, $base-vw: 530) {
+@function mvw($px-vw, $base-vw: 390) {
   @return math.div($px-vw * 100vw, $base-vw);
-}
-
-@function mvh($px-vh, $base-vh: 800) {
-  @return math.div($px-vh * 100vh, $base-vh);
 }
