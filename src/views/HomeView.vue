@@ -7,10 +7,14 @@
         Ваш браузер не поддерживает видео.
       </video>
     </div>
+
+    <ButtonComp />
   </div>
 </template>
 
-<script setup></script>
+<script setup>
+import ButtonComp from '@/components/ButtonComp.vue'
+</script>
 <style lang="scss" scoped>
 .home {
   display: flex;
