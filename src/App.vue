@@ -32,6 +32,7 @@ body {
   -webkit-text-size-adjust: 100%;
   font-size: vh(10);
   background-color: $color-primary-light;
+  box-sizing: border-box;
 
   @include layout-aspect-tablet {
     font-size: vw(10);
@@ -50,6 +51,7 @@ body {
     font-family: inherit;
     font-weight: inherit;
     vertical-align: baseline;
+    box-sizing: border-box;
   }
 }
 

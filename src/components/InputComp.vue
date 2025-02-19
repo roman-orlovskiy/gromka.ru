@@ -1,11 +1,16 @@
 <template>
-  <input
-    :class="inputClass"
-    :type="type"
-    :placeholder="placeholder"
-    :value="value"
-    @input="handleInput"
-  />
+  <div class="input-wrapper">
+    <label class="input__label" v-if="label" :for="id">{{ label }}</label>
+
+    <input
+      :id="id"
+      :class="inputClass"
+      :type="type"
+      :placeholder="placeholder"
+      :value="value"
+      @input="handleInput"
+    />
+  </div>
 </template>
 
 <script setup>
@@ -28,6 +33,14 @@ const props = defineProps({
   value: {
     type: String,
     default: '',
+  },
+  label: {
+    type: String,
+    default: '',
+  },
+  id: {
+    type: String,
+    required: true,
   },
 })
 
@@ -57,6 +70,18 @@ const inputClass = computed(() => {
 
   &:hover {
     opacity: 0.7;
+  }
+
+  &__wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    width: 100%;
+  }
+
+  &__label {
+    font-size: 2.5rem;
+    font-weight: 600;
   }
 }
 </style>

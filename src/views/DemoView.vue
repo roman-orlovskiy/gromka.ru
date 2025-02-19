@@ -2,8 +2,12 @@
   <div class="demo">
     <div class="demo__editor">
       <div class="demo__editor-inputs">
-        <InputComp />
-        <InputComp />
+        <div class="demo__editor-input">
+          <InputComp id="rows" label="Строки" />
+        </div>
+        <div class="demo__editor-input">
+          <InputComp id="columns" label="Столбцы" />
+        </div>
       </div>
       <div class="demo__editor-item"></div>
     </div>
@@ -38,11 +42,13 @@ import InputComp from '@/components/InputComp.vue'
 
   &__editor-inputs {
     display: flex;
+    justify-content: center;
     gap: 2rem;
+    width: 100%;
+  }
 
-    & > input {
-      width: 10rem;
-    }
+  &__editor-input {
+    width: 15rem;
   }
 }
 </style>
