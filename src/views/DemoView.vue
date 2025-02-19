@@ -17,8 +17,13 @@
             v-for="j in columns"
             :key="j"
             :style="getItemStyle(i, j)"
+            @click="selectColor(i, j)"
           ></div>
         </div>
+      </div>
+
+      <div class="demo__editor-color">
+        <InputComp id="color" label="Цвет" type="color" v-model="color" />
       </div>
     </div>
   </div>
@@ -30,6 +35,7 @@ import InputComp from '@/components/InputComp.vue'
 
 const rows = ref(6)
 const columns = ref(20)
+const color = ref('#FF0000')
 
 const getItemStyle = (row, column) => {
   return {
@@ -40,6 +46,10 @@ const getItemStyle = (row, column) => {
 const paintData = ref({
   '1_1': '#FF0000',
 })
+
+const selectColor = (row, column) => {
+  paintData.value[`${row}_${column}`] = color.value
+}
 </script>
 
 <style lang="scss" scoped>
@@ -74,7 +84,7 @@ const paintData = ref({
   }
 
   &__editor-input {
-    width: 15rem;
+    width: 10rem;
   }
 
   &__editor-row {
@@ -86,6 +96,10 @@ const paintData = ref({
     display: flex;
     flex-direction: column;
     gap: 0.2rem;
+  }
+
+  &__editor-color {
+    width: 15rem;
   }
 }
 </style>
