@@ -1,10 +1,18 @@
 <template>
   <div class="demo">
     <div class="demo__editor">
+      <div class="demo__editor-inputs">
+        <InputComp />
+        <InputComp />
+      </div>
       <div class="demo__editor-item"></div>
     </div>
   </div>
 </template>
+
+<script setup>
+import InputComp from '@/components/InputComp.vue'
+</script>
 
 <style lang="scss" scoped>
 .demo {
