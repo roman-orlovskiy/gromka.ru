@@ -3,10 +3,10 @@
     <div class="demo__editor">
       <div class="demo__editor-inputs">
         <div class="demo__editor-input">
-          <InputComp id="rows" label="Строки" />
+          <InputComp id="rows" label="Строки" type="number" v-model="rows" />
         </div>
         <div class="demo__editor-input">
-          <InputComp id="columns" label="Столбцы" />
+          <InputComp id="columns" label="Столбцы" type="number" v-model="columns" />
         </div>
       </div>
       <div class="demo__editor-item"></div>
@@ -15,7 +15,11 @@
 </template>
 
 <script setup>
+import { ref } from 'vue'
 import InputComp from '@/components/InputComp.vue'
+
+const rows = ref(0)
+const columns = ref(0)
 </script>
 
 <style lang="scss" scoped>

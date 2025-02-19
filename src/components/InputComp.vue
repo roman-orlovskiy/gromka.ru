@@ -7,7 +7,7 @@
       :class="inputClass"
       :type="type"
       :placeholder="placeholder"
-      :value="value"
+      :value="modelValue"
       @input="handleInput"
     />
   </div>
@@ -17,6 +17,10 @@
 import { computed } from 'vue'
 
 const props = defineProps({
+  modelValue: {
+    type: String,
+    default: '',
+  },
   mod: {
     type: String,
     default: '',
@@ -30,10 +34,6 @@ const props = defineProps({
     type: String,
     default: '',
   },
-  value: {
-    type: String,
-    default: '',
-  },
   label: {
     type: String,
     default: '',
@@ -44,9 +44,15 @@ const props = defineProps({
   },
 })
 
+const emit = defineEmits(['update:modelValue'])
+
 const inputClass = computed(() => {
   return `input ${props.mod ? `input--mod-${props.mod}` : ''}`
 })
+
+function handleInput(event) {
+  emit('update:modelValue', event.target.value)
+}
 </script>
 
 <style lang="scss" scoped>
