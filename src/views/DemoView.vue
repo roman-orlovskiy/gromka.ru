@@ -77,7 +77,7 @@ const getItemStyle = (row, column) => {
   }
 }
 
-const paintData = ref(paints.dynamo)
+const paintData = ref(paints.spartak)
 
 const selectColor = (row, column) => {
   paintData.value[`${row}_${column}`] = color.value
