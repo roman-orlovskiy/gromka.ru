@@ -43,9 +43,7 @@ const getItemStyle = (row, column) => {
   }
 }
 
-const paintData = ref({
-  '1_1': '#FF0000',
-})
+const paintData = ref({})
 
 const selectColor = (row, column) => {
   paintData.value[`${row}_${column}`] = color.value
