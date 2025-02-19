@@ -63,6 +63,7 @@ const paintData = ref({
     background-color: $color-white;
     border-radius: 0.2rem;
     border: 1px solid $color-gray-300;
+    cursor: pointer;
   }
 
   &__editor-inputs {
