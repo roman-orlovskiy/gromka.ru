@@ -37,24 +37,9 @@ const getItemStyle = (row, column) => {
   }
 }
 
-const spartakPaints = {
-  '1_1': '#FF0000', // Красный
-  '1_2': '#FF0000',
-  '1_3': '#FFFFFF', // Белый
-  '1_4': '#FF0000',
-  '1_5': '#FF0000',
-  // Добавьте остальные пиксели
-  '2_1': '#FF0000',
-  '2_2': '#FFFFFF',
-  '2_3': '#FF0000',
-  '2_4': '#FFFFFF',
-  '2_5': '#FF0000',
-  // Продолжайте для всех строк и столбцов
-  // ...
-  '6_20': '#FF0000',
-}
-
-const paintData = ref(spartakPaints)
+const paintData = ref({
+  '1_1': '#FF0000',
+})
 </script>
 
 <style lang="scss" scoped>
