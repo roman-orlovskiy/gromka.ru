@@ -51,7 +51,11 @@ const inputClass = computed(() => {
 })
 
 function handleInput(event) {
-  emit('update:modelValue', event.target.value)
+  let value = event.target.value
+  if (props.type === 'number') {
+    value = Number(value)
+  }
+  emit('update:modelValue', value)
 }
 </script>
 
