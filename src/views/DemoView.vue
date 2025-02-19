@@ -9,17 +9,26 @@
           <InputComp id="columns" label="Столбцы" type="number" v-model="columns" />
         </div>
       </div>
-      <div class="demo__editor-item"></div>
+
+      <div class="demo__editor-field" :style="fieldStyle">
+        <div class="demo__editor-item" v-for="i in itemCount" :key="i"></div>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import InputComp from '@/components/InputComp.vue'
 
-const rows = ref(0)
-const columns = ref(0)
+const rows = ref(6)
+const columns = ref(20)
+
+const itemCount = computed(() => rows.value * columns.value)
+const fieldStyle = computed(() => ({
+  gridTemplateRows: `repeat(${rows.value}, 1fr)`,
+  gridTemplateColumns: `repeat(${columns.value}, 1fr)`,
+}))
 </script>
 
 <style lang="scss" scoped>
@@ -33,6 +42,7 @@ const columns = ref(0)
   &__editor {
     display: flex;
     flex-direction: column;
+    align-items: center;
     gap: 2rem;
   }
 
@@ -53,6 +63,11 @@ const columns = ref(0)
 
   &__editor-input {
     width: 15rem;
+  }
+
+  &__editor-field {
+    display: grid;
+    gap: 0.2rem;
   }
 }
 </style>
