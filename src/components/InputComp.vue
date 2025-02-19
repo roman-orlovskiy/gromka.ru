@@ -9,6 +9,7 @@
       :placeholder="placeholder"
       :value="modelValue"
       @input="handleInput"
+      :style="inputStyle"
     />
   </div>
 </template>
@@ -48,6 +49,10 @@ const emit = defineEmits(['update:modelValue'])
 
 const inputClass = computed(() => {
   return `input ${props.mod ? `input--mod-${props.mod}` : ''}`
+})
+
+const inputStyle = computed(() => {
+  return props.type === 'color' ? { backgroundColor: props.modelValue } : {}
 })
 
 function handleInput(event) {
