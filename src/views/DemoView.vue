@@ -24,6 +24,8 @@ import InputComp from '@/components/InputComp.vue'
 
   &__editor {
     display: flex;
+    flex-direction: column;
+    gap: 2rem;
   }
 
   &__editor-item {
@@ -32,6 +34,15 @@ import InputComp from '@/components/InputComp.vue'
     background-color: $color-white;
     border-radius: 0.2rem;
     border: 1px solid $color-gray-300;
+  }
+
+  &__editor-inputs {
+    display: flex;
+    gap: 2rem;
+
+    & > input {
+      width: 10rem;
+    }
   }
 }
 </style>

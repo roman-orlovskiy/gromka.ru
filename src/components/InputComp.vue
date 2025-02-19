@@ -38,6 +38,7 @@ const inputClass = computed(() => {
 
 <style lang="scss" scoped>
 .input {
+  width: 100%;
   font-size: 3.5rem;
   padding: 1rem 2rem;
   background-color: $color-white;
