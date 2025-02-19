@@ -1,10 +1,24 @@
 <template>
-  <button class="button">
+  <button :class="buttonClass">
     <slot></slot>
   </button>
 </template>
 
-<script setup></script>
+<script setup>
+import { computed } from 'vue'
+
+const props = defineProps({
+  mod: {
+    type: String,
+    default: '',
+    oneOf: ['secondary'],
+  },
+})
+
+const buttonClass = computed(() => {
+  return `button ${props.mod ? `button--mod-${props.mod}` : ''}`
+})
+</script>
 
 <style lang="scss" scoped>
 .button {
@@ -17,6 +31,11 @@
   cursor: pointer;
   transition: opacity 0.3s;
   box-shadow: 0 0 10px 0 rgba($color-primary, 0.5);
+
+  &--mod-secondary {
+    background-color: $color-secondary;
+    box-shadow: 0 0 10px 0 rgba($color-secondary, 0.5);
+  }
 
   &:hover {
     opacity: 0.7;

@@ -7,6 +7,11 @@
         Ваш браузер не поддерживает видео.
       </video>
     </div>
+
+    <router-link to="/demo" class="home__button">
+      <ButtonComp mod="secondary"> Посмотреть демо </ButtonComp>
+    </router-link>
+
     <div class="home__description">
       Напишите нам и мы сделаем перформанс под конкретную площадку.
     </div>
@@ -44,6 +49,7 @@ import ButtonComp from '@/components/ButtonComp.vue'
     font-size: 2rem;
     font-weight: $font-weight-medium;
     margin-bottom: 1rem;
+    margin-top: 2rem;
     text-align: center;
 
     @include layout-aspect-mobile {
