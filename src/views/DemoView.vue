@@ -35,6 +35,7 @@
 import { ref } from 'vue'
 import InputComp from '@/components/InputComp.vue'
 import spartak from '@/assets/data/paints/spartak.json'
+import dynamo from '@/assets/data/paints/dynamo.json'
 
 const rows = ref(9)
 const columns = ref(22)
@@ -46,7 +47,7 @@ const getItemStyle = (row, column) => {
   }
 }
 
-const paintData = ref(spartak)
+const paintData = ref(dynamo)
 
 const selectColor = (row, column) => {
   paintData.value[`${row}_${column}`] = color.value
