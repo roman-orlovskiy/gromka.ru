@@ -25,6 +25,8 @@
       <div class="demo__editor-color">
         <InputComp id="color" label="Цвет" type="color" v-model="color" />
       </div>
+
+      <button @click="printPicture" class="demo__editor-button">Вывести рисунок</button>
     </div>
   </div>
 </template>
@@ -32,9 +34,10 @@
 <script setup>
 import { ref } from 'vue'
 import InputComp from '@/components/InputComp.vue'
+import spartak from '@/assets/data/paints/spartak.json'
 
-const rows = ref(6)
-const columns = ref(20)
+const rows = ref(9)
+const columns = ref(22)
 const color = ref('#FF0000')
 
 const getItemStyle = (row, column) => {
@@ -43,10 +46,14 @@ const getItemStyle = (row, column) => {
   }
 }
 
-const paintData = ref({})
+const paintData = ref(spartak)
 
 const selectColor = (row, column) => {
   paintData.value[`${row}_${column}`] = color.value
+}
+
+const printPicture = () => {
+  console.log(JSON.stringify(paintData.value))
 }
 </script>
 
