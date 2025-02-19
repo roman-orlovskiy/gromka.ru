@@ -10,25 +10,36 @@
         </div>
       </div>
 
-      <div class="demo__editor-field" :style="fieldStyle">
-        <div class="demo__editor-item" v-for="i in itemCount" :key="i"></div>
+      <div class="demo__editor-field">
+        <div class="demo__editor-row" v-for="i in rows" :key="i">
+          <div
+            class="demo__editor-item"
+            v-for="j in columns"
+            :key="j"
+            :style="getItemStyle(i, j)"
+          ></div>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref } from 'vue'
 import InputComp from '@/components/InputComp.vue'
 
 const rows = ref(6)
 const columns = ref(20)
 
-const itemCount = computed(() => rows.value * columns.value)
-const fieldStyle = computed(() => ({
-  gridTemplateRows: `repeat(${rows.value}, 1fr)`,
-  gridTemplateColumns: `repeat(${columns.value}, 1fr)`,
-}))
+const getItemStyle = (row, column) => {
+  return {
+    backgroundColor: paintData.value[`${row}_${column}`],
+  }
+}
+
+const paintData = ref({
+  '1_1': '#FF0000',
+})
 </script>
 
 <style lang="scss" scoped>
@@ -65,8 +76,14 @@ const fieldStyle = computed(() => ({
     width: 15rem;
   }
 
+  &__editor-row {
+    display: flex;
+    gap: 0.2rem;
+  }
+
   &__editor-field {
-    display: grid;
+    display: flex;
+    flex-direction: column;
     gap: 0.2rem;
   }
 }
