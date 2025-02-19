@@ -1,5 +1,30 @@
 <template>
   <div class="demo">
+    <div class="demo__description">
+      Перед вами схематично часть трибуны футбольного стадиона.
+      <br />
+      С помощью телефонов болельщиков вы можете нарисовать на трибуне любой рисунок.
+      <br /><br />
+      Примеры рисунков:
+    </div>
+
+    <div class="demo__editor-examples">
+      <div
+        @click="selectPaint('spartak')"
+        class="demo__editor-example demo__editor-example--spartak"
+      >
+        <span>Спартак</span>
+      </div>
+
+      <div @click="selectPaint('dynamo')" class="demo__editor-example demo__editor-example--dynamo">
+        <span>Динамо</span>
+      </div>
+
+      <div @click="selectPaint('clear')" class="demo__editor-example demo__editor-example--clear">
+        <span>Чистый лист</span>
+      </div>
+    </div>
+
     <div class="demo__editor">
       <div class="demo__editor-inputs">
         <div class="demo__editor-input">
@@ -26,7 +51,7 @@
         <InputComp id="color" label="Цвет" type="color" v-model="color" />
       </div>
 
-      <button @click="printPicture" class="demo__editor-button">Вывести рисунок</button>
+      <!-- <button @click="printPicture" class="demo__editor-button">Вывести рисунок</button> -->
     </div>
   </div>
 </template>
@@ -41,20 +66,34 @@ const rows = ref(9)
 const columns = ref(22)
 const color = ref('#FF0000')
 
+const paints = {
+  spartak,
+  dynamo,
+}
+
 const getItemStyle = (row, column) => {
   return {
     backgroundColor: paintData.value[`${row}_${column}`],
   }
 }
 
-const paintData = ref(dynamo)
+const paintData = ref(paints.dynamo)
 
 const selectColor = (row, column) => {
   paintData.value[`${row}_${column}`] = color.value
 }
 
-const printPicture = () => {
+/*const printPicture = () => {
   console.log(JSON.stringify(paintData.value))
+}*/
+
+const selectPaint = (paint) => {
+  if (paint === 'clear') {
+    paintData.value = {}
+    return
+  }
+
+  paintData.value = paints[paint]
 }
 </script>
 
@@ -106,6 +145,52 @@ const printPicture = () => {
 
   &__editor-color {
     width: 15rem;
+  }
+
+  &__description {
+    font-size: 2rem;
+    font-weight: $font-weight-medium;
+    margin-bottom: 1rem;
+    margin-top: 2rem;
+    text-align: center;
+
+    @include layout-aspect-mobile {
+      font-size: 1.7rem;
+      margin-bottom: 0.5rem;
+    }
+  }
+
+  &__editor-examples {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  &__editor-example {
+    background-color: $color-white;
+    border-radius: 0.2rem;
+    border: 1px solid $color-gray-300;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    color: $color-white;
+    font-size: 2.5rem;
+    text-transform: uppercase;
+    cursor: pointer;
+
+    &--spartak {
+      background-color: #ff0000;
+    }
+
+    &--dynamo {
+      background-color: #27579d;
+    }
+
+    &--clear {
+      background-color: $color-white;
+      color: $color-black;
+    }
   }
 }
 </style>
