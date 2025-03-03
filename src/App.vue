@@ -1,15 +1,12 @@
+<script setup>
+import { RouterView } from 'vue-router'
+</script>
+
 <template>
   <div class="app">
     <RouterView />
-
-    <AsideMenu />
   </div>
 </template>
-
-<script setup>
-import { RouterView } from 'vue-router'
-import AsideMenu from '@/components/AsideMenu.vue'
-</script>
 
 <style lang="scss">
 .app {
