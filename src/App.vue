@@ -31,7 +31,7 @@ body {
   -ms-text-size-adjust: 100%;
   -webkit-text-size-adjust: 100%;
   font-size: vh(10);
-  background-color: $color-white;
+  background-color: $color-primary-light;
   box-sizing: border-box;
 
   @include layout-aspect-tablet {
