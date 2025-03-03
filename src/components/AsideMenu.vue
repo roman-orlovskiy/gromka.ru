@@ -12,16 +12,16 @@
 .aside-menu {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 10px;
   position: fixed;
   top: 0;
   right: 0;
   bottom: 0;
-  width: 20rem;
+  width: 200px;
   background-color: $color-white;
   z-index: 1000;
-  border-radius: 1.5rem;
-  padding: 1.5rem;
-  box-shadow: 0 0 1rem rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
+  padding: 10px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
 }
 </style>
