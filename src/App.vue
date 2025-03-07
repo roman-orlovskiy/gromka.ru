@@ -14,6 +14,11 @@ import RightMenu from '@/components/RightMenu.vue'
 .app {
   height: 100%;
   min-height: 100%;
+  display: flex;
+
+  & div:first-child {
+    flex: 1;
+  }
 }
 
 html,

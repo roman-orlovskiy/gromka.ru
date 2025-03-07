@@ -50,11 +50,8 @@ const menuItems = [
 
 <style lang="scss">
 .right-menu {
-  position: fixed;
-  top: 0;
-  right: 0;
-  bottom: 0;
   width: 20rem;
+  height: 100%;
   background-color: $color-white;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
   z-index: 1000;
