@@ -10,6 +10,7 @@
 <script setup>
 import MainIcon from '@/components/icons/MainIcon.vue'
 import PerfIcon from '@/components/icons/PerfIcon.vue'
+import DemoIcon from '@/components/icons/DemoIcon.vue'
 import { RouterLink } from 'vue-router'
 
 const menuItems = [
@@ -24,7 +25,7 @@ const menuItems = [
     to: '/performances',
   },
   {
-    icon: MainIcon,
+    icon: DemoIcon,
     text: 'Демо',
     to: '/demo',
   },
@@ -60,6 +61,10 @@ const menuItems = [
 
     svg {
       width: 2.5rem;
+
+      path {
+        fill: $color-primary;
+      }
     }
   }
 }
