@@ -57,6 +57,10 @@ const menuItems = [
     &:hover {
       box-shadow: 0 1rem 1rem rgba(0, 0, 0, 0.1);
     }
+
+    svg {
+      width: 2.5rem;
+    }
   }
 }
 </style>
