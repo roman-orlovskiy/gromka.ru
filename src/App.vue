@@ -1,12 +1,14 @@
-<script setup>
-import { RouterView } from 'vue-router'
-</script>
-
 <template>
   <div class="app">
     <RouterView />
+    <RightMenu />
   </div>
 </template>
+
+<script setup>
+import { RouterView } from 'vue-router'
+import RightMenu from '@/components/RightMenu.vue'
+</script>
 
 <style lang="scss">
 .app {
