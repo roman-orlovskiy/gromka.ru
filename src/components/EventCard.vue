@@ -1,21 +1,21 @@
 <template>
   <div class="event-card">
-    <div class="event-image" :style="{ backgroundImage: `url(${photoUrl})` }"></div>
-    <div class="event-content">
-      <div class="event-header">
-        <div class="event-datetime">
-          <span class="event-date">{{ event.date }}</span>
-          <span class="event-time">{{ event.time }}</span>
+    <div class="event-card__image" :style="{ backgroundImage: `url(${photoUrl})` }"></div>
+    <div class="event-card__content">
+      <div class="event-card__header">
+        <div class="event-card__datetime">
+          <span class="event-card__date">{{ event.date }}</span>
+          <span class="event-card__time">{{ event.time }}</span>
         </div>
-        <div class="event-cost">{{ event.cost }}</div>
+        <div class="event-card__cost">{{ event.cost }}</div>
       </div>
-      <div class="event-place">
-        <h3>{{ event.place.name }}</h3>
-        <p>{{ event.place.address }}</p>
+      <div class="event-card__place">
+        <h3 class="event-card__place-name">{{ event.place.name }}</h3>
+        <p class="event-card__place-address">{{ event.place.address }}</p>
       </div>
-      <div class="event-details">
-        <span class="event-duration">{{ event.duration }}</span>
-        <span class="event-coverage">{{ event.place.coverage }}</span>
+      <div class="event-card__details">
+        <span class="event-card__duration">{{ event.duration }}</span>
+        <span class="event-card__coverage">{{ event.place.coverage }}</span>
       </div>
     </div>
   </div>
@@ -42,70 +42,74 @@ const photoUrl = computed(() => {
 
 <style scoped lang="scss">
 .event-card {
-  background: white;
-  border-radius: 12px;
+  background: $color-white;
+  border-radius: 1.2rem;
   overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 0.2rem 0.8rem rgba($color-black, 0.1);
   transition: transform 0.2s ease;
+  font-size: 1.2rem;
+  cursor: pointer;
 
   &:hover {
-    transform: translateY(-4px);
+    transform: translateY(-0.4rem);
   }
 
-  .event-image {
-    height: 200px;
+  &__image {
+    height: 20rem;
     background-size: cover;
     background-position: center;
-    background-color: #f0f0f0;
+    background-color: $color-gray-300;
   }
 
-  .event-content {
-    padding: 16px;
+  &__content {
+    padding: 1.6rem;
   }
 
-  .event-header {
+  &__header {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    margin-bottom: 12px;
+    margin-bottom: 1.2rem;
   }
 
-  .event-datetime {
-    .event-date {
-      font-size: 1.2em;
-      font-weight: bold;
+  &__datetime {
+    .event-card__date {
+      font-size: 1.9em;
+      font-weight: $font-weight-bold;
       display: block;
     }
-    .event-time {
-      color: #666;
+
+    .event-card__time {
+      color: $color-gray-600;
     }
   }
 
-  .event-cost {
+  &__cost {
     font-weight: bold;
-    color: #2c3e50;
+    color: $color-gray-600;
+    font-size: 1.8rem;
   }
 
-  .event-place {
-    margin-bottom: 12px;
-
-    h3 {
-      margin: 0 0 4px 0;
-      font-size: 1.1em;
-    }
-
-    p {
-      margin: 0;
-      color: #666;
-      font-size: 0.9em;
-    }
+  &__place {
+    margin-bottom: 1.2rem;
   }
 
-  .event-details {
+  &__place-name {
+    margin: 0 0 0.4rem 0;
+    font-size: 1.4em;
+  }
+
+  &__place-address {
+    margin: 0;
+    color: $color-gray-600;
+    font-size: 1.2rem;
+  }
+
+  &__details {
     display: flex;
-    gap: 12px;
+    gap: 1.2rem;
     font-size: 0.9em;
-    color: #666;
+    color: $color-gray-600;
   }
 }
 </style>
