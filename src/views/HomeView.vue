@@ -1,6 +1,6 @@
 <template>
   <div class="home">
-    <div class="home__title">Спортивные события</div>
+    <div class="home__title">События</div>
     <div class="home__grid">
       <EventCard v-for="event in events" :key="event.id_shard" :event="event" />
     </div>
