@@ -1,7 +1,7 @@
 <template>
   <div class="home">
-    <h1>Спортивные события</h1>
-    <div class="events-grid">
+    <div class="home__title">Спортивные события</div>
+    <div class="home__grid">
       <EventCard v-for="event in events" :key="event.id_shard" :event="event" />
     </div>
   </div>
@@ -26,25 +26,25 @@ onMounted(async () => {
 
 <style lang="scss">
 .home {
-  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2rem;
+  height: 100%;
+  overflow-y: auto;
 
-  h1 {
-    margin-bottom: 24px;
+  &__title {
+    margin-bottom: 2rem;
     text-align: center;
+    font-size: 2.4rem;
   }
-}
 
-.events-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 24px;
-  max-width: 1200px;
-  margin: 0 auto;
-}
-
-@media (min-width: 1024px) {
-  .events-grid {
-    grid-template-columns: repeat(3, 1fr);
+  &__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 2.4rem;
+    margin: 0 auto;
+    width: 100%;
   }
 }
 </style>
