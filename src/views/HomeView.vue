@@ -2,7 +2,8 @@
   <div class="home">
     <div class="home__title">События</div>
     <div class="home__grid">
-      <EventCard v-for="event in events" :key="event.id_shard" :event="event" />
+      <LoadingSpinner v-if="isLoading" />
+      <EventCard v-else v-for="event in events" :key="event.id_shard" :event="event" />
     </div>
   </div>
 </template>
@@ -11,8 +12,10 @@
 import { ref, onMounted } from 'vue'
 import { getEvents } from '@/services/api'
 import EventCard from '@/components/EventCard.vue'
+import LoadingSpinner from '@/components/LoadingSpinner.vue'
 
 const events = ref([])
+const isLoading = ref(true)
 
 onMounted(async () => {
   try {
@@ -20,6 +23,8 @@ onMounted(async () => {
     events.value = data
   } catch (error) {
     console.error('Error fetching events:', error)
+  } finally {
+    isLoading.value = false
   }
 })
 </script>
@@ -32,6 +37,7 @@ onMounted(async () => {
   padding: 2rem;
   height: 100%;
   overflow-y: auto;
+  position: relative;
 
   &__title {
     margin-bottom: 2rem;
