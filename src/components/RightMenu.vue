@@ -8,7 +8,7 @@
       :class="{ 'right-menu__item--active': isActive(item.name) }"
     >
       <component :is="item.icon" />
-      {{ item.text }}
+      <span>{{ item.text }}</span>
     </RouterLink>
   </div>
 </template>
@@ -58,6 +58,18 @@ const menuItems = [
   border-radius: 3rem 0 0 3rem;
   font-size: 1.5rem;
 
+  @include layout-aspect-mobile {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 5rem;
+    border-radius: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
   &__item {
     display: flex;
     align-items: center;
@@ -78,6 +90,22 @@ const menuItems = [
 
     &--active {
       background-color: $color-primary-light;
+    }
+
+    @include layout-aspect-mobile {
+      flex: 1;
+      justify-content: center;
+      padding: 0;
+      border-bottom: none;
+      height: 100%;
+
+      span {
+        display: none;
+      }
+
+      &:first-child {
+        border-radius: 0;
+      }
     }
 
     svg {

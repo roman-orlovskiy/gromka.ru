@@ -19,6 +19,11 @@ import RightMenu from '@/components/RightMenu.vue'
   & > div:first-child {
     flex: 1;
   }
+
+  @include layout-aspect-mobile {
+    flex-direction: column;
+    padding-bottom: 5rem;
+  }
 }
 
 html,

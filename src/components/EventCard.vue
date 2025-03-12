@@ -70,6 +70,10 @@ const organizerLink = computed(() => {
   font-size: 1.2rem;
   cursor: pointer;
 
+  @include layout-aspect-mobile {
+    width: 100%;
+  }
+
   &:hover {
     transform: translateY(-0.4rem);
   }

@@ -47,10 +47,14 @@ onMounted(async () => {
 
   &__grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(30rem, 1fr));
     gap: 2.4rem;
     margin: 0 auto;
     width: 100%;
+
+    @include layout-aspect-mobile {
+      grid-template-columns: repeat(auto-fill, minmax(20rem, 1fr));
+    }
   }
 }
 </style>
