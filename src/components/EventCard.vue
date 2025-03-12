@@ -17,6 +17,12 @@
         <span class="event-card__duration">{{ event.duration }}</span>
         <span class="event-card__coverage">{{ event.place.coverage }}</span>
       </div>
+      <div class="event-card__organizer">
+        <span class="event-card__organizer-label">Организатор: </span>
+        <a :href="organizerLink" target="_blank" class="event-card__organizer-link">{{
+          organizerName
+        }}</a>
+      </div>
     </div>
   </div>
 </template>
@@ -37,6 +43,20 @@ const photoUrl = computed(() => {
   if (!photo) return ''
 
   return `https://gromka.ru/images/fields/football/nn/${photo}.jpg`
+})
+
+const organizerName = computed(() => {
+  const user = props.event.user
+  return user.username || user.firstName
+})
+
+const organizerLink = computed(() => {
+  const user = props.event.user
+  if (/^\d+$/.test(user.userLink)) {
+    return `tel:${user.userLink}`
+  }
+
+  return user.username ? `https://t.me/${user.username}` : user.userLink
 })
 </script>
 
@@ -110,6 +130,24 @@ const photoUrl = computed(() => {
     gap: 1.2rem;
     font-size: 0.9em;
     color: $color-gray-600;
+    margin-bottom: 1.2rem;
+  }
+
+  &__organizer {
+    font-size: 1.4rem;
+
+    &-label {
+      color: $color-gray-600;
+    }
+
+    &-link {
+      color: $color-primary;
+      text-decoration: none;
+
+      &:hover {
+        text-decoration: underline;
+      }
+    }
   }
 }
 </style>
