@@ -35,8 +35,8 @@ const photoUrl = computed(() => {
   // Преобразуем ID фотографии из ВК в URL
   const photo = props.event.place.photo
   if (!photo) return ''
-  const [type, id] = photo.split('_')
-  return `https://vk.com/${type}?z=photo${type}_${id}`
+
+  return `https://gromka.ru/images/fields/football/nn/${photo}.jpg`
 })
 </script>
 
