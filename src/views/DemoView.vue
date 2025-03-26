@@ -78,13 +78,12 @@ import { ref, computed } from 'vue'
 import InputComp from '@/components/InputComp.vue'
 import spartak from '@/assets/data/paints/spartak.json'
 import dynamo from '@/assets/data/paints/dynamo.json'
-import paryNN from '@/assets/data/paints/pary_nn.json'
 
 const rows = ref(21)
 const columns = ref(34)
 const color = ref('#FF0000')
 const scale = ref(0.3)
-const position = ref({ x: 105.171875, y: 9.25 })
+const position = ref({ x: 186.6640625, y: 14.890625 })
 const isDragging = ref(false)
 const dragStart = ref({ ...position.value })
 
@@ -93,9 +92,10 @@ const generateParyNNPattern = () => {
   const blueColor = '#61aede'
 
   for (let row = 1; row <= rows.value; row++) {
+    const isBlue = (row >= 1 && row <= 4) || (row >= 9 && row <= 13) || (row >= 18 && row <= 21)
     for (let col = 1; col <= columns.value; col++) {
       // Чередуем синие и белые ряды
-      pattern[`${row}_${col}`] = row % 2 === 0 ? blueColor : ''
+      pattern[`${row}_${col}`] = isBlue ? blueColor : ''
     }
   }
 
