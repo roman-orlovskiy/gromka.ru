@@ -88,12 +88,6 @@ const position = ref({ x: 105.171875, y: 9.25 })
 const isDragging = ref(false)
 const dragStart = ref({ ...position.value })
 
-const paints = {
-  paryNN,
-  spartak,
-  dynamo,
-}
-
 const generateParyNNPattern = () => {
   const pattern = {}
   const blueColor = '#61aede'
@@ -106,6 +100,12 @@ const generateParyNNPattern = () => {
   }
 
   return pattern
+}
+
+const paints = {
+  paryNN: generateParyNNPattern(),
+  spartak,
+  dynamo,
 }
 
 const fieldStyle = computed(() => ({
@@ -133,11 +133,6 @@ const selectColor = (row, column) => {
 const selectPaint = (paint) => {
   if (paint === 'clear') {
     paintData.value = {}
-    return
-  }
-
-  if (paint === 'paryNN') {
-    paintData.value = generateParyNNPattern()
     return
   }
 
