@@ -35,15 +35,27 @@
         </div>
       </div>
 
-      <div class="demo__editor-field">
-        <div class="demo__editor-row" v-for="i in rows" :key="i">
-          <div
-            class="demo__editor-item"
-            v-for="j in columns"
-            :key="j"
-            :style="getItemStyle(i, j)"
-            @click="selectColor(i, j)"
-          ></div>
+      <div
+        class="demo__editor-field-container"
+        @wheel.prevent="handleWheel"
+        @mousedown="startDrag"
+        @mousemove="onDrag"
+        @mouseup="stopDrag"
+        @mouseleave="stopDrag"
+        @touchstart="startDrag"
+        @touchmove="onDrag"
+        @touchend="stopDrag"
+      >
+        <div class="demo__editor-field" :style="fieldStyle">
+          <div class="demo__editor-row" v-for="i in rows" :key="i">
+            <div
+              class="demo__editor-item"
+              v-for="j in columns"
+              :key="j"
+              :style="getItemStyle(i, j)"
+              @click="selectColor(i, j)"
+            ></div>
+          </div>
         </div>
       </div>
 
@@ -57,7 +69,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import InputComp from '@/components/InputComp.vue'
 import spartak from '@/assets/data/paints/spartak.json'
 import dynamo from '@/assets/data/paints/dynamo.json'
@@ -65,11 +77,21 @@ import dynamo from '@/assets/data/paints/dynamo.json'
 const rows = ref(9)
 const columns = ref(22)
 const color = ref('#FF0000')
+const scale = ref(1)
+const position = ref({ x: 0, y: 0 })
+const isDragging = ref(false)
+const dragStart = ref({ x: 0, y: 0 })
 
 const paints = {
   spartak,
   dynamo,
 }
+
+const fieldStyle = computed(() => ({
+  transform: `translate(${position.value.x}px, ${position.value.y}px) scale(${scale.value})`,
+  transformOrigin: '0 0',
+  cursor: isDragging.value ? 'grabbing' : 'grab',
+}))
 
 const getItemStyle = (row, column) => {
   return {
@@ -94,6 +116,37 @@ const selectPaint = (paint) => {
   }
 
   paintData.value = paints[paint]
+}
+
+const handleWheel = (e) => {
+  const delta = e.deltaY * -0.01
+  const newScale = Math.min(Math.max(0.5, scale.value + delta), 3)
+  scale.value = newScale
+}
+
+const startDrag = (e) => {
+  isDragging.value = true
+  const clientX = e.type === 'mousedown' ? e.clientX : e.touches[0].clientX
+  const clientY = e.type === 'mousedown' ? e.clientY : e.touches[0].clientY
+  dragStart.value = {
+    x: clientX - position.value.x,
+    y: clientY - position.value.y,
+  }
+}
+
+const onDrag = (e) => {
+  if (!isDragging.value) return
+  e.preventDefault()
+  const clientX = e.type === 'mousemove' ? e.clientX : e.touches[0].clientX
+  const clientY = e.type === 'mousemove' ? e.clientY : e.touches[0].clientY
+  position.value = {
+    x: clientX - dragStart.value.x,
+    y: clientY - dragStart.value.y,
+  }
+}
+
+const stopDrag = () => {
+  isDragging.value = false
 }
 </script>
 
@@ -132,14 +185,28 @@ const selectPaint = (paint) => {
     width: 10rem;
   }
 
-  &__editor-row {
-    display: flex;
-    gap: 0.2rem;
+  &__editor-field-container {
+    width: 60rem;
+    height: 25rem;
+    overflow: hidden;
+    border: 1px solid $color-gray-300;
+    border-radius: 0.2rem;
+    position: relative;
+    background-color: $color-white;
+    cursor: pointer;
   }
 
   &__editor-field {
+    position: absolute;
+    top: 0;
+    left: 0;
+    transform-origin: 0 0;
+    transition: transform 0.1s ease-out;
+    user-select: none;
+  }
+
+  &__editor-row {
     display: flex;
-    flex-direction: column;
     gap: 0.2rem;
   }
 
