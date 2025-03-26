@@ -40,35 +40,100 @@
       </div>
 
       <div class="demo__editor-zoom">* Можно зумить и перемещать рисунок</div>
-      <div
-        class="demo__editor-field-container"
-        @wheel.prevent="handleWheel"
-        @mousedown="startDrag"
-        @mousemove="onDrag"
-        @mouseup="stopDrag"
-        @mouseleave="stopDrag"
-        @touchstart="startDrag"
-        @touchmove="onDrag"
-        @touchend="stopDrag"
-      >
-        <div class="demo__editor-field" :style="fieldStyle">
-          <div class="demo__editor-row" v-for="i in rows" :key="i">
-            <div
-              class="demo__editor-item"
-              v-for="j in columns"
-              :key="j"
-              :style="getItemStyle(i, j)"
-              @click="selectColor(i, j)"
-            ></div>
+      <div class="demo__editor-field-wrapper">
+        <div class="demo__editor-tools">
+          <div
+            class="demo__editor-tool"
+            :class="{ 'demo__editor-tool--active': drawingMode === 'pencil' }"
+            @click="drawingMode = 'pencil'"
+          >
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M17 3C17.2626 2.73735 17.5744 2.52901 17.9176 2.38687C18.2608 2.24473 18.6286 2.17157 19 2.17157C19.3714 2.17157 19.7392 2.24473 20.0824 2.38687C20.4256 2.52901 20.7374 2.73735 21 3C21.2626 3.26264 21.471 3.57444 21.6131 3.9176C21.7553 4.26077 21.8284 4.62856 21.8284 5C21.8284 5.37143 21.7553 5.73923 21.6131 6.08239C21.471 6.42555 21.2626 6.73735 21 7L7.5 20.5L2 22L3.5 16.5L17 3Z"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </div>
+          <div
+            class="demo__editor-tool"
+            :class="{ 'demo__editor-tool--active': drawingMode === 'hand' }"
+            @click="drawingMode = 'hand'"
+          >
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M20 13V6C20 4.89543 19.1046 4 18 4H6C4.89543 4 4 4.89543 4 6V13"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <path
+                d="M4 13H20V18C20 19.1046 19.1046 20 18 20H6C4.89543 20 4 19.1046 4 18V13Z"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </div>
+        </div>
+        <div
+          class="demo__editor-field-container"
+          @wheel.prevent="handleWheel"
+          @mousedown="startDrag"
+          @mousemove="onDrag"
+          @mouseup="stopDrag"
+          @mouseleave="stopDrag"
+          @touchstart="startDrag"
+          @touchmove="onDrag"
+          @touchend="stopDrag"
+        >
+          <div class="demo__editor-field" :style="fieldStyle">
+            <div class="demo__editor-row" v-for="i in rows" :key="i">
+              <div
+                class="demo__editor-item"
+                v-for="j in columns"
+                :key="j"
+                :style="getItemStyle(i, j)"
+                @click="selectColor(i, j)"
+              ></div>
+            </div>
           </div>
         </div>
       </div>
 
       <div class="demo__editor-color">
         <InputComp id="color" label="Цвет" type="color" v-model="color" />
+        <div class="demo__editor-color-actions">
+          <button class="demo__editor-color-add" @click="addBasicColor">Добавить</button>
+        </div>
+        <div class="demo__editor-basic-colors">
+          <div
+            v-for="(basicColor, index) in basicColors"
+            :key="index"
+            class="demo__editor-basic-color"
+            :style="{ backgroundColor: basicColor }"
+            @click="color = basicColor"
+          ></div>
+        </div>
       </div>
 
-      <!-- <button @click="printPicture" class="demo__editor-button">Вывести рисунок</button> -->
+      <button @click="printPicture" class="demo__editor-button">Вывести рисунок</button>
     </div>
   </div>
 </template>
@@ -76,13 +141,17 @@
 <script setup>
 import { ref, computed } from 'vue'
 import InputComp from '@/components/InputComp.vue'
+
+import paryNN from '@/assets/data/paints/pary_nn.json'
 import spartak from '@/assets/data/paints/spartak.json'
 import dynamo from '@/assets/data/paints/dynamo.json'
 
 const rows = ref(21)
-const columns = ref(34)
+const columns = ref(35)
 const color = ref('#61aede')
+const basicColors = ref(['#61aede', '#ffffff'])
 const scale = ref(0.3)
+const drawingMode = ref('pencil')
 const position = ref({ x: 26.6640625, y: 14.890625 })
 const isDragging = ref(false)
 const dragStart = ref({ ...position.value })
@@ -103,7 +172,7 @@ const generateParyNNPattern = () => {
 }
 
 const paints = {
-  paryNN: generateParyNNPattern(),
+  paryNN,
   spartak,
   dynamo,
 }
@@ -123,12 +192,20 @@ const getItemStyle = (row, column) => {
 const paintData = ref(paints.paryNN)
 
 const selectColor = (row, column) => {
-  paintData.value[`${row}_${column}`] = color.value
+  if (drawingMode.value === 'pencil') {
+    paintData.value[`${row}_${column}`] = color.value
+  }
 }
 
-/*const printPicture = () => {
+const addBasicColor = () => {
+  if (!basicColors.value.includes(color.value)) {
+    basicColors.value.push(color.value)
+  }
+}
+
+const printPicture = () => {
   console.log(JSON.stringify(paintData.value))
-}*/
+}
 
 const selectPaint = (paint) => {
   if (paint === 'clear') {
@@ -146,6 +223,7 @@ const handleWheel = (e) => {
 }
 
 const startDrag = (e) => {
+  if (drawingMode.value === 'pencil') return
   isDragging.value = true
   const clientX = e.type === 'mousedown' ? e.clientX : e.touches[0].clientX
   const clientY = e.type === 'mousedown' ? e.clientY : e.touches[0].clientY
@@ -156,7 +234,7 @@ const startDrag = (e) => {
 }
 
 const onDrag = (e) => {
-  if (!isDragging.value) return
+  if (!isDragging.value || drawingMode.value === 'pencil') return
   e.preventDefault()
   const clientX = e.type === 'mousemove' ? e.clientX : e.touches[0].clientX
   const clientY = e.type === 'mousemove' ? e.clientY : e.touches[0].clientY
@@ -209,6 +287,47 @@ const stopDrag = () => {
     width: 10rem;
   }
 
+  &__editor-field-wrapper {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+  }
+
+  &__editor-tools {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding-top: 0.5rem;
+  }
+
+  &__editor-tool {
+    width: 3.2rem;
+    height: 3.2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.2rem;
+    border: 1px solid $color-gray-300;
+    cursor: pointer;
+    color: $color-gray-600;
+    transition: all 0.2s ease;
+
+    &:hover {
+      background-color: $color-gray-100;
+    }
+
+    &--active {
+      background-color: $color-gray-100;
+      border-color: $color-gray-600;
+      color: $color-secondary;
+    }
+
+    svg {
+      width: 2.4rem;
+      height: 2.4rem;
+    }
+  }
+
   &__editor-field-container {
     width: 28rem;
     height: 25rem;
@@ -247,6 +366,59 @@ const stopDrag = () => {
 
   &__editor-color {
     width: 15rem;
+  }
+
+  &__editor-color-actions {
+    display: flex;
+    justify-content: center;
+    margin-top: 1rem;
+  }
+
+  &__editor-color-add {
+    background-color: $color-white;
+    border: 1px solid $color-gray-300;
+    border-radius: 0.2rem;
+    padding: 0.5rem 1rem;
+    font-size: 1.4rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    &:hover {
+      background-color: $color-gray-100;
+    }
+  }
+
+  &__editor-basic-colors {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1rem;
+  }
+
+  &__editor-basic-color {
+    width: 3rem;
+    height: 3rem;
+    border-radius: 0.2rem;
+    border: 1px solid $color-gray-300;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+
+    &:hover {
+      transform: scale(1.1);
+    }
+  }
+
+  &__editor-button {
+    background-color: $color-white;
+    border: 1px solid $color-gray-300;
+    border-radius: 0.2rem;
+    padding: 1rem 2rem;
+    font-size: 1.6rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    &:hover {
+      background-color: $color-gray-100;
+    }
   }
 
   &__description {
