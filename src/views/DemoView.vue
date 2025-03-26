@@ -83,7 +83,7 @@ const rows = ref(21)
 const columns = ref(34)
 const color = ref('#61aede')
 const scale = ref(0.3)
-const position = ref({ x: 186.6640625, y: 14.890625 })
+const position = ref({ x: 26.6640625, y: 14.890625 })
 const isDragging = ref(false)
 const dragStart = ref({ ...position.value })
 
@@ -178,7 +178,9 @@ const stopDrag = () => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-height: 100%;
+  height: 100%;
+  padding: 2rem 0;
+  overflow-y: auto;
 
   &__editor {
     display: flex;
@@ -208,7 +210,7 @@ const stopDrag = () => {
   }
 
   &__editor-field-container {
-    width: 60rem;
+    width: 28rem;
     height: 25rem;
     overflow: hidden;
     border: 1px solid $color-gray-300;
@@ -216,6 +218,11 @@ const stopDrag = () => {
     position: relative;
     background-color: $color-white;
     cursor: pointer;
+
+    @include layout-aspect-mobile {
+      width: 28rem;
+      height: 25.5rem;
+    }
   }
 
   &__editor-zoom {
@@ -251,7 +258,8 @@ const stopDrag = () => {
 
     @include layout-aspect-mobile {
       font-size: 1.7rem;
-      margin-bottom: 0.5rem;
+      padding-bottom: 0.5rem;
+      padding-top: 10rem;
     }
   }
 
@@ -289,6 +297,10 @@ const stopDrag = () => {
     &--clear {
       background-color: $color-white;
       color: $color-black;
+    }
+
+    @include layout-aspect-mobile {
+      font-size: 0rem;
     }
   }
 }
