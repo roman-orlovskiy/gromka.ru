@@ -9,6 +9,10 @@
     </div>
 
     <div class="demo__editor-examples">
+      <div @click="selectPaint('paryNN')" class="demo__editor-example demo__editor-example--paryNN">
+        <span>Пари НН</span>
+      </div>
+
       <div
         @click="selectPaint('spartak')"
         class="demo__editor-example demo__editor-example--spartak"
@@ -74,16 +78,18 @@ import { ref, computed } from 'vue'
 import InputComp from '@/components/InputComp.vue'
 import spartak from '@/assets/data/paints/spartak.json'
 import dynamo from '@/assets/data/paints/dynamo.json'
+import paryNN from '@/assets/data/paints/pary_nn.json'
 
-const rows = ref(9)
-const columns = ref(22)
+const rows = ref(21)
+const columns = ref(34)
 const color = ref('#FF0000')
-const scale = ref(0.65)
-const position = ref({ x: 85.1015625, y: 11.88671875 })
+const scale = ref(0.3)
+const position = ref({ x: 105.171875, y: 9.25 })
 const isDragging = ref(false)
 const dragStart = ref({ ...position.value })
 
 const paints = {
+  paryNN,
   spartak,
   dynamo,
 }
@@ -100,7 +106,7 @@ const getItemStyle = (row, column) => {
   }
 }
 
-const paintData = ref(paints.spartak)
+const paintData = ref(paints.paryNN)
 
 const selectColor = (row, column) => {
   paintData.value[`${row}_${column}`] = color.value
@@ -121,7 +127,7 @@ const selectPaint = (paint) => {
 
 const handleWheel = (e) => {
   const delta = e.deltaY * -0.01
-  const newScale = Math.min(Math.max(0.5, scale.value + delta), 3)
+  const newScale = Math.min(Math.max(0.3, scale.value + delta), 3)
   scale.value = newScale
 }
 
@@ -254,6 +260,10 @@ const stopDrag = () => {
     font-size: 2.5rem;
     text-transform: uppercase;
     cursor: pointer;
+
+    &--paryNN {
+      background-color: #61aede;
+    }
 
     &--spartak {
       background-color: #ff0000;
