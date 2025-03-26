@@ -109,7 +109,7 @@ const paints = {
 }
 
 const fieldStyle = computed(() => ({
-  transform: `translate(${position.value.x}px, ${position.value.y}px) scale(${scale.value})`,
+  transform: `translate(${position.value.x / 10}rem, ${position.value.y / 10}rem) scale(${scale.value})`,
   transformOrigin: '0 0',
   cursor: isDragging.value ? 'grabbing' : 'grab',
 }))
@@ -168,7 +168,6 @@ const onDrag = (e) => {
 
 const stopDrag = () => {
   isDragging.value = false
-
   console.log(position.value, scale.value)
 }
 </script>
