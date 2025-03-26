@@ -81,7 +81,7 @@ import dynamo from '@/assets/data/paints/dynamo.json'
 
 const rows = ref(21)
 const columns = ref(34)
-const color = ref('#FF0000')
+const color = ref('#61aede')
 const scale = ref(0.3)
 const position = ref({ x: 186.6640625, y: 14.890625 })
 const isDragging = ref(false)
