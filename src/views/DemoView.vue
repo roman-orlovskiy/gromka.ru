@@ -35,6 +35,7 @@
         </div>
       </div>
 
+      <div class="demo__editor-zoom">* Можно зумить и перемещать рисунок</div>
       <div
         class="demo__editor-field-container"
         @wheel.prevent="handleWheel"
@@ -77,10 +78,10 @@ import dynamo from '@/assets/data/paints/dynamo.json'
 const rows = ref(9)
 const columns = ref(22)
 const color = ref('#FF0000')
-const scale = ref(1)
-const position = ref({ x: 0, y: 0 })
+const scale = ref(0.65)
+const position = ref({ x: 85.1015625, y: 11.88671875 })
 const isDragging = ref(false)
-const dragStart = ref({ x: 0, y: 0 })
+const dragStart = ref({ ...position.value })
 
 const paints = {
   spartak,
@@ -147,6 +148,8 @@ const onDrag = (e) => {
 
 const stopDrag = () => {
   isDragging.value = false
+
+  console.log(position.value, scale.value)
 }
 </script>
 
@@ -194,6 +197,12 @@ const stopDrag = () => {
     position: relative;
     background-color: $color-white;
     cursor: pointer;
+  }
+
+  &__editor-zoom {
+    font-size: 1.6rem;
+    color: $color-black;
+    margin-bottom: -1rem;
   }
 
   &__editor-field {
