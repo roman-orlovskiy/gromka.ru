@@ -328,8 +328,8 @@ const stopDrag = () => {
   }
 
   &__editor-field-container {
-    width: 28rem;
-    height: 25rem;
+    width: 48rem;
+    height: 35rem;
     overflow: hidden;
     border: 1px solid $color-gray-300;
     border-radius: 0.2rem;
