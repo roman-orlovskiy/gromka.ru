@@ -254,10 +254,11 @@ const stopDrag = () => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  height: 100%;
-  padding: 2rem 0;
+  justify-content: flex-start;
+  min-height: 100vh;
+  padding: 2rem 0 6rem 0;
   overflow-y: auto;
+  box-sizing: border-box;
 
   &__editor {
     display: flex;
@@ -430,7 +431,6 @@ const stopDrag = () => {
     @include layout-aspect-mobile {
       font-size: 1.7rem;
       padding-bottom: 0.5rem;
-      padding-top: 10rem;
     }
   }
 
