@@ -97,6 +97,7 @@
                 :key="j"
                 :style="getItemStyle(i, j)"
                 @click="selectColor(i, j)"
+                @mouseover="handleItemMouseOver(i, j)"
               ></div>
             </div>
           </div>
@@ -140,6 +141,7 @@ const scale = ref(0.3)
 const drawingMode = ref('pencil')
 const position = ref({ x: 26.6640625, y: 14.890625 })
 const isDragging = ref(false)
+const isPencilDragging = ref(false)
 const dragStart = ref({ ...position.value })
 
 const generateParyNNPattern = () => {
@@ -183,6 +185,12 @@ const selectColor = (row, column) => {
   }
 }
 
+const handleItemMouseOver = (row, column) => {
+  if (drawingMode.value === 'pencil' && isPencilDragging.value) {
+    paintData.value[`${row}_${column}`] = color.value
+  }
+}
+
 const addBasicColor = () => {
   if (!basicColors.value.includes(color.value)) {
     basicColors.value.push(color.value)
@@ -209,7 +217,11 @@ const handleWheel = (e) => {
 }
 
 const startDrag = (e) => {
-  if (drawingMode.value === 'pencil') return
+  if (drawingMode.value === 'pencil') {
+    isPencilDragging.value = true
+    return
+  }
+
   isDragging.value = true
   const clientX = e.type === 'mousedown' ? e.clientX : e.touches[0].clientX
   const clientY = e.type === 'mousedown' ? e.clientY : e.touches[0].clientY
@@ -232,6 +244,7 @@ const onDrag = (e) => {
 
 const stopDrag = () => {
   isDragging.value = false
+  isPencilDragging.value = false
   console.log(position.value, scale.value)
 }
 </script>
