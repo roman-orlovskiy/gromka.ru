@@ -94,6 +94,20 @@ const paints = {
   dynamo,
 }
 
+const generateParyNNPattern = () => {
+  const pattern = {}
+  const blueColor = '#61aede'
+
+  for (let row = 1; row <= rows.value; row++) {
+    for (let col = 1; col <= columns.value; col++) {
+      // Чередуем синие и белые ряды
+      pattern[`${row}_${col}`] = row % 2 === 0 ? blueColor : ''
+    }
+  }
+
+  return pattern
+}
+
 const fieldStyle = computed(() => ({
   transform: `translate(${position.value.x}px, ${position.value.y}px) scale(${scale.value})`,
   transformOrigin: '0 0',
@@ -119,6 +133,11 @@ const selectColor = (row, column) => {
 const selectPaint = (paint) => {
   if (paint === 'clear') {
     paintData.value = {}
+    return
+  }
+
+  if (paint === 'paryNN') {
+    paintData.value = generateParyNNPattern()
     return
   }
 
