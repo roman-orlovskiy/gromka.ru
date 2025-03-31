@@ -79,10 +79,7 @@ import BaseInput from '@/components/BaseInput.vue'
 import BaseSelect from '@/components/BaseSelect.vue'
 import BaseButton from '@/components/BaseButton.vue'
 import CloseIcon from '@/components/icons/CloseIcon.vue'
-import { ref, onMounted } from 'vue'
-import InAppSpy from 'inapp-spy'
-
-const { isInApp } = InAppSpy()
+import { ref } from 'vue'
 
 const rowValue = ref('')
 const seatValue = ref('')
@@ -217,12 +214,6 @@ const sectorOptions = ref([
   { label: 'D111', value: 'D111' },
   { label: 'D112', value: 'D112' },
 ])
-
-onMounted(() => {
-  if (isInApp) {
-    window.open('https://example.com', '_blank')
-  }
-})
 </script>
 
 <style scoped lang="scss">
