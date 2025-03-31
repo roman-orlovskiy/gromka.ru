@@ -8,14 +8,14 @@
           :value="rowValue"
           @handleInput="handleRowInput"
           :error="errors.row"
-          :show-shake="showShakeAnimation"
+          :show-shake="shakeFields.row"
         />
         <BaseInput
           placeholder="Место"
           :value="seatValue"
           @handleInput="handleSeatInput"
           :error="errors.seat"
-          :show-shake="showShakeAnimation"
+          :show-shake="shakeFields.seat"
         />
       </div>
       <BaseSelect
@@ -24,7 +24,7 @@
         placeholder="Сектор"
         @handleChange="handleSectorChange"
         :error="errors.sector"
-        :show-shake="showShakeAnimation"
+        :show-shake="shakeFields.sector"
       />
       <div class="pary__instructions">
         <div class="pary__instruction-item">
@@ -73,7 +73,11 @@ const rowValue = ref('')
 const seatValue = ref('')
 const selectedSector = ref('')
 const isLayerVisible = ref(false)
-const showShakeAnimation = ref(false)
+const shakeFields = ref({
+  row: false,
+  seat: false,
+  sector: false,
+})
 const errors = ref({
   row: '',
   seat: '',
@@ -87,26 +91,37 @@ const validateFields = () => {
     seat: '',
     sector: '',
   }
+  shakeFields.value = {
+    row: false,
+    seat: false,
+    sector: false,
+  }
 
   if (!rowValue.value.trim()) {
     errors.value.row = 'Введите ряд'
+    shakeFields.value.row = true
     isValid = false
   }
 
   if (!seatValue.value.trim()) {
     errors.value.seat = 'Введите место'
+    shakeFields.value.seat = true
     isValid = false
   }
 
   if (!selectedSector.value) {
     errors.value.sector = 'Выберите сектор'
+    shakeFields.value.sector = true
     isValid = false
   }
 
   if (!isValid) {
-    showShakeAnimation.value = true
     setTimeout(() => {
-      showShakeAnimation.value = false
+      shakeFields.value = {
+        row: false,
+        seat: false,
+        sector: false,
+      }
     }, 500)
   }
 
