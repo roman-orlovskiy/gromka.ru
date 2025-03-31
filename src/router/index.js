@@ -23,8 +23,8 @@ const router = createRouter({
       component: () => import('../views/DemoView.vue'),
     },
     {
-      path: '/pari-nn',
-      name: 'pari-nn',
+      path: '/parinn',
+      name: 'parinn',
       component: () => import('../views/PariView.vue'),
     },
   ],
