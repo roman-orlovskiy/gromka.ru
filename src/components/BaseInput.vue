@@ -28,8 +28,6 @@ const handleInput = (event) => {
 </script>
 
 <style scoped lang="scss">
-@import '@/assets/scss/variables.scss';
-
 .input-item {
   width: 100%;
   border: 0.2rem solid $color-primary;
