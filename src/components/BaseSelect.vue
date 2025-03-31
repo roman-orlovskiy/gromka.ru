@@ -1,6 +1,6 @@
 <template>
   <div class="select">
-    <div class="select__header" @click="toggleDropdown">
+    <div class="select__header" :class="{ 'select__header--error': error }" @click="toggleDropdown">
       <span class="select__current">{{ currentLabel || placeholder }}</span>
       <span class="select__arrow" :class="{ 'select__arrow--active': isOpen }"></span>
     </div>
@@ -15,6 +15,7 @@
         {{ option.label }}
       </div>
     </div>
+    <div v-if="error" class="select__error">{{ error }}</div>
   </div>
 </template>
 
@@ -33,6 +34,10 @@ const props = defineProps({
   options: {
     type: Array,
     default: () => [],
+  },
+  error: {
+    type: String,
+    default: '',
   },
 })
 
@@ -90,6 +95,11 @@ onUnmounted(() => {
     box-sizing: border-box;
     background-color: $color-white;
     cursor: pointer;
+
+    &--error {
+      border-color: $color-error;
+      animation: shake 0.5s ease-in-out;
+    }
   }
 
   &__current {
@@ -138,6 +148,13 @@ onUnmounted(() => {
     &--active {
       background-color: rgba($color-primary, 0.1);
     }
+  }
+
+  &__error {
+    color: $color-error;
+    font-size: 1.4rem;
+    margin-top: 0.5rem;
+    padding-left: 3rem;
   }
 
   @include layout-mobile {

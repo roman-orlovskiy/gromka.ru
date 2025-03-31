@@ -38,6 +38,8 @@ $color-secondary: #ff9999;
 $color-secondary-light: #ffe6e6;
 $color-secondary-dark: #e6b3b2;
 
+$color-error: #ff0000;
+
 /* Responsive breakpoints */
 @mixin layout-mobile {
   @media (max-width: $breakpoint-mobile) {
@@ -83,4 +85,28 @@ $color-secondary-dark: #e6b3b2;
 
 @function mvw($px-vw, $base-vw: 390) {
   @return math.div($px-vw * 100vw, $base-vw);
+}
+
+@keyframes shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-0.5rem);
+  }
+  75% {
+    transform: translateX(0.5rem);
+  }
+}
+
+// fade transition
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
 }

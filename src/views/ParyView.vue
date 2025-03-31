@@ -3,14 +3,25 @@
     <div class="pary__content">
       <div class="pary__title">Поддержи Пари НН</div>
       <div class="pary__inputs-row">
-        <BaseInput placeholder="Ряд" :value="rowValue" @handleInput="handleRowInput" />
-        <BaseInput placeholder="Место" :value="seatValue" @handleInput="handleSeatInput" />
+        <BaseInput
+          placeholder="Ряд"
+          :value="rowValue"
+          @handleInput="handleRowInput"
+          :error="errors.row"
+        />
+        <BaseInput
+          placeholder="Место"
+          :value="seatValue"
+          @handleInput="handleSeatInput"
+          :error="errors.seat"
+        />
       </div>
       <BaseSelect
         :options="sectorOptions"
         :value="selectedSector"
         placeholder="Сектор"
         @handleChange="handleSectorChange"
+        :error="errors.sector"
       />
       <div class="pary__instructions">
         <div class="pary__instruction-item">
@@ -38,7 +49,9 @@
       </div>
     </div>
 
-    <div class="pary__layer" v-if="isLayerVisible" />
+    <transition name="fade">
+      <div class="pary__layer" v-if="isLayerVisible" />
+    </transition>
   </div>
 </template>
 
@@ -52,21 +65,57 @@ const rowValue = ref('')
 const seatValue = ref('')
 const selectedSector = ref('')
 const isLayerVisible = ref(false)
+const errors = ref({
+  row: '',
+  seat: '',
+  sector: '',
+})
+
+const validateFields = () => {
+  let isValid = true
+  errors.value = {
+    row: '',
+    seat: '',
+    sector: '',
+  }
+
+  if (!rowValue.value.trim()) {
+    errors.value.row = 'Введите номер ряда'
+    isValid = false
+  }
+
+  if (!seatValue.value.trim()) {
+    errors.value.seat = 'Введите номер места'
+    isValid = false
+  }
+
+  if (!selectedSector.value) {
+    errors.value.sector = 'Выберите сектор'
+    isValid = false
+  }
+
+  return isValid
+}
 
 const handleRowInput = (event) => {
   rowValue.value = event.target.value
+  errors.value.row = ''
 }
 
 const handleSeatInput = (event) => {
   seatValue.value = event.target.value
+  errors.value.seat = ''
 }
 
 const handleSectorChange = (event) => {
   selectedSector.value = event.target.value
+  errors.value.sector = ''
 }
 
 const handleStart = () => {
-  isLayerVisible.value = true
+  if (validateFields()) {
+    isLayerVisible.value = true
+  }
 }
 
 const sectorOptions = ref([
