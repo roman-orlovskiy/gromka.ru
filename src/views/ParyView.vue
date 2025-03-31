@@ -34,9 +34,11 @@
       </div>
 
       <div class="pary__button">
-        <BaseButton>Начать</BaseButton>
+        <BaseButton @click="handleStart">Начать</BaseButton>
       </div>
     </div>
+
+    <div class="pary__layer" v-if="isLayerVisible" />
   </div>
 </template>
 
@@ -49,6 +51,7 @@ import { ref } from 'vue'
 const rowValue = ref('')
 const seatValue = ref('')
 const selectedSector = ref('')
+const isLayerVisible = ref(false)
 
 const handleRowInput = (event) => {
   rowValue.value = event.target.value
@@ -60,6 +63,10 @@ const handleSeatInput = (event) => {
 
 const handleSectorChange = (event) => {
   selectedSector.value = event.target.value
+}
+
+const handleStart = () => {
+  isLayerVisible.value = true
 }
 
 const sectorOptions = ref([
@@ -156,6 +163,16 @@ const sectorOptions = ref([
   &__instruction-text {
     font-size: 1.6rem;
     color: $color-gray-700;
+  }
+
+  &__layer {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+    background-color: $color-primary;
+    z-index: 1000;
   }
 }
 </style>
