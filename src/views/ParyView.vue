@@ -66,7 +66,7 @@
 
     <transition name="fade">
       <div class="pary__layer" v-if="isLayerVisible">
-        <div class="pary__close-button" @click="isLayerVisible = false">
+        <div class="pary__close-button" @click="handleCloseLayer">
           <CloseIcon />
         </div>
       </div>
@@ -158,7 +158,34 @@ const handleSectorChange = (event) => {
 const handleStart = () => {
   if (validateFields()) {
     isLayerVisible.value = true
+    enterFullscreen()
   }
+}
+
+const enterFullscreen = () => {
+  const element = document.documentElement
+  if (element.requestFullscreen) {
+    element.requestFullscreen()
+  } else if (element.webkitRequestFullscreen) {
+    element.webkitRequestFullscreen()
+  } else if (element.msRequestFullscreen) {
+    element.msRequestFullscreen()
+  }
+}
+
+const exitFullscreen = () => {
+  if (document.exitFullscreen) {
+    document.exitFullscreen()
+  } else if (document.webkitExitFullscreen) {
+    document.webkitExitFullscreen()
+  } else if (document.msExitFullscreen) {
+    document.msExitFullscreen()
+  }
+}
+
+const handleCloseLayer = () => {
+  isLayerVisible.value = false
+  exitFullscreen()
 }
 
 const sectorOptions = ref([
