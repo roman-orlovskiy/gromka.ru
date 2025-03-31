@@ -23,9 +23,9 @@ const router = createRouter({
       component: () => import('../views/DemoView.vue'),
     },
     {
-      path: '/pary-nn',
-      name: 'pary-nn',
-      component: () => import('../views/ParyView.vue'),
+      path: '/pari-nn',
+      name: 'pari-nn',
+      component: () => import('../views/PariView.vue'),
     },
   ],
 })
