@@ -11,7 +11,7 @@ import { computed } from 'vue'
 import RightMenu from '@/components/RightMenu.vue'
 
 const route = useRoute()
-const isParyPage = computed(() => route.name === 'pary-nn')
+const isParyPage = computed(() => route.name === 'pari-nn')
 </script>
 
 <style lang="scss">
