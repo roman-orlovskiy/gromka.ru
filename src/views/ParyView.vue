@@ -37,13 +37,25 @@
           <div>
             <div class="pary__instruction-number">2</div>
           </div>
-          <div class="pary__instruction-text">Включи на телефоне яркость на максимум</div>
+          <div class="pary__instruction-text">
+            Включи на телефоне <b>яркость&nbsp;на&nbsp;максимум</b>
+          </div>
         </div>
         <div class="pary__instruction-item">
           <div>
             <div class="pary__instruction-number">3</div>
           </div>
-          <div class="pary__instruction-text">Нажми "Начать" и разверни телефон к полю</div>
+          <div class="pary__instruction-text">
+            Нажми "Начать" и <b>разверни&nbsp;экран&nbsp;к&nbsp;полю</b>
+          </div>
+        </div>
+        <div class="pary__instruction-item">
+          <div>
+            <div class="pary__instruction-number">4</div>
+          </div>
+          <div class="pary__instruction-text">
+            Все телефоны вместе образуют красивую картину на стадионе
+          </div>
         </div>
       </div>
 
@@ -183,7 +195,7 @@ const sectorOptions = ref([
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
-  padding: 3rem 2rem 6rem 2rem;
+  padding: 1.5rem 2rem 6rem 2rem;
   min-height: 100%;
 
   &__title {
@@ -243,6 +255,10 @@ const sectorOptions = ref([
   &__instruction-text {
     font-size: 1.6rem;
     color: $color-gray-700;
+
+    b {
+      font-weight: $font-weight-bold;
+    }
   }
 
   &__layer {
