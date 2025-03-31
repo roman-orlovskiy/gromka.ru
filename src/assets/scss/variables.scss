@@ -92,11 +92,35 @@ $color-error: #ff0000;
   100% {
     transform: translateX(0);
   }
-  25% {
+  12.5% {
     transform: translateX(-0.5rem);
   }
-  75% {
+  25% {
     transform: translateX(0.5rem);
+  }
+  37.5% {
+    transform: translateX(-0.4rem);
+  }
+  50% {
+    transform: translateX(0.4rem);
+  }
+  62.5% {
+    transform: translateX(-0.3rem);
+  }
+  75% {
+    transform: translateX(0.3rem);
+  }
+  87.5% {
+    transform: translateX(-0.2rem);
+  }
+  93.75% {
+    transform: translateX(0.2rem);
+  }
+  96.875% {
+    transform: translateX(-0.1rem);
+  }
+  98.4375% {
+    transform: translateX(0.1rem);
   }
 }
 

@@ -1,6 +1,10 @@
 <template>
   <div class="select">
-    <div class="select__header" :class="{ 'select__header--error': error }" @click="toggleDropdown">
+    <div
+      class="select__header"
+      :class="{ 'select__header--error': error, 'select__header--shake': showShake }"
+      @click="toggleDropdown"
+    >
       <span class="select__current">{{ currentLabel || placeholder }}</span>
       <span class="select__arrow" :class="{ 'select__arrow--active': isOpen }"></span>
     </div>
@@ -38,6 +42,10 @@ const props = defineProps({
   error: {
     type: String,
     default: '',
+  },
+  showShake: {
+    type: Boolean,
+    default: false,
   },
 })
 
@@ -98,6 +106,9 @@ onUnmounted(() => {
 
     &--error {
       border-color: $color-error;
+    }
+
+    &--shake {
       animation: shake 0.5s ease-in-out;
     }
   }

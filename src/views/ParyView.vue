@@ -8,12 +8,14 @@
           :value="rowValue"
           @handleInput="handleRowInput"
           :error="errors.row"
+          :show-shake="showShakeAnimation"
         />
         <BaseInput
           placeholder="Место"
           :value="seatValue"
           @handleInput="handleSeatInput"
           :error="errors.seat"
+          :show-shake="showShakeAnimation"
         />
       </div>
       <BaseSelect
@@ -22,6 +24,7 @@
         placeholder="Сектор"
         @handleChange="handleSectorChange"
         :error="errors.sector"
+        :show-shake="showShakeAnimation"
       />
       <div class="pary__instructions">
         <div class="pary__instruction-item">
@@ -50,7 +53,11 @@
     </div>
 
     <transition name="fade">
-      <div class="pary__layer" v-if="isLayerVisible" />
+      <div class="pary__layer" v-if="isLayerVisible">
+        <div class="pary__close-button" @click="isLayerVisible = false">
+          <CloseIcon />
+        </div>
+      </div>
     </transition>
   </div>
 </template>
@@ -59,12 +66,14 @@
 import BaseInput from '@/components/BaseInput.vue'
 import BaseSelect from '@/components/BaseSelect.vue'
 import BaseButton from '@/components/BaseButton.vue'
+import CloseIcon from '@/components/icons/CloseIcon.vue'
 import { ref } from 'vue'
 
 const rowValue = ref('')
 const seatValue = ref('')
 const selectedSector = ref('')
 const isLayerVisible = ref(false)
+const showShakeAnimation = ref(false)
 const errors = ref({
   row: '',
   seat: '',
@@ -80,18 +89,25 @@ const validateFields = () => {
   }
 
   if (!rowValue.value.trim()) {
-    errors.value.row = 'Введите номер ряда'
+    errors.value.row = 'Введите ряд'
     isValid = false
   }
 
   if (!seatValue.value.trim()) {
-    errors.value.seat = 'Введите номер места'
+    errors.value.seat = 'Введите место'
     isValid = false
   }
 
   if (!selectedSector.value) {
     errors.value.sector = 'Выберите сектор'
     isValid = false
+  }
+
+  if (!isValid) {
+    showShakeAnimation.value = true
+    setTimeout(() => {
+      showShakeAnimation.value = false
+    }, 500)
   }
 
   return isValid
@@ -222,6 +238,25 @@ const sectorOptions = ref([
     right: 0;
     background-color: $color-primary;
     z-index: 1000;
+  }
+
+  &__close-button {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    svg {
+      width: 3.2rem;
+      height: 3.2rem;
+      fill: $color-white;
+    }
   }
 }
 </style>

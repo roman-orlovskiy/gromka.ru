@@ -3,7 +3,7 @@
     <input
       type="text"
       class="input-item"
-      :class="{ 'input-item--error': error }"
+      :class="{ 'input-item--error': error, 'input-item--shake': showShake }"
       :placeholder="placeholder"
       :value="value"
       @input="handleInput"
@@ -25,6 +25,10 @@ defineProps({
   error: {
     type: String,
     default: '',
+  },
+  showShake: {
+    type: Boolean,
+    default: false,
   },
 })
 
@@ -60,6 +64,9 @@ const handleInput = (event) => {
 
   &--error {
     border-color: $color-error;
+  }
+
+  &--shake {
     animation: shake 0.5s ease-in-out;
   }
 
