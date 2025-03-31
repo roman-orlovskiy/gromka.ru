@@ -170,7 +170,6 @@ onUnmounted(() => {
 
   @include layout-mobile {
     &__header {
-      border: 0.2rem solid $color-primary;
       border-radius: 1.5rem;
       font-size: 2.8rem;
     }
