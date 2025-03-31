@@ -32,6 +32,10 @@
           <div class="pary__instruction-text">Нажми "Начать" и разверни телефон к полю</div>
         </div>
       </div>
+
+      <div class="pary__button">
+        <BaseButton>Начать</BaseButton>
+      </div>
     </div>
   </div>
 </template>
@@ -39,6 +43,7 @@
 <script setup>
 import BaseInput from '@/components/BaseInput.vue'
 import BaseSelect from '@/components/BaseSelect.vue'
+import BaseButton from '@/components/BaseButton.vue'
 import { ref } from 'vue'
 
 const rowValue = ref('')

@@ -1,13 +1,17 @@
 <template>
   <div class="app">
     <RouterView />
-    <RightMenu />
+    <RightMenu v-if="!isParyPage" />
   </div>
 </template>
 
 <script setup>
-import { RouterView } from 'vue-router'
+import { RouterView, useRoute } from 'vue-router'
+import { computed } from 'vue'
 import RightMenu from '@/components/RightMenu.vue'
+
+const route = useRoute()
+const isParyPage = computed(() => route.name === 'pary-nn')
 </script>
 
 <style lang="scss">
