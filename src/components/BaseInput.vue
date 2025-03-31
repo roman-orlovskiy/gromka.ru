@@ -33,7 +33,7 @@ const handleInput = (event) => {
   border: 0.2rem solid $color-primary;
   border-radius: 1.5rem;
   font-size: 2.8rem;
-  padding: 2.5rem 3.5rem;
+  padding: 1rem 3rem;
   outline: none;
   color: $color-primary;
   font-family: $font-default;
@@ -50,7 +50,6 @@ const handleInput = (event) => {
     border: 0.2rem solid $color-primary;
     border-radius: 1.5rem;
     font-size: 2.8rem;
-    padding: 2.5rem 3.5rem;
   }
 }
 </style>

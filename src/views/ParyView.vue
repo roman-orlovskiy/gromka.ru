@@ -3,12 +3,14 @@
     <div class="pary__content">
       <div class="pary__title">Поддержи Пари НН</div>
       <BaseInput placeholder="Введите текст" :value="inputValue" @handleInput="handleInput" />
+      <BaseSelect :options="options" />
     </div>
   </div>
 </template>
 
 <script setup>
 import BaseInput from '@/components/BaseInput.vue'
+import BaseSelect from '@/components/BaseSelect.vue'
 import { ref } from 'vue'
 
 const inputValue = ref('')
@@ -16,6 +18,12 @@ const inputValue = ref('')
 const handleInput = (event) => {
   inputValue.value = event.target.value
 }
+
+const options = ref([
+  { label: 'Опция 1', value: 'option1' },
+  { label: 'Опция 2', value: 'option2' },
+  { label: 'Опция 3', value: 'option3' },
+])
 </script>
 
 <style scoped lang="scss">
