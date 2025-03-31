@@ -28,13 +28,13 @@ $color-gray-700: #404040;
 $color-black: #000;
 $color-white: #fff;
 
-$color-primary: #ff9999;
-$color-primary-light: #ffe6e6;
-$color-primary-dark: #e6b3b2;
+$color-primary: #61aede;
+$color-primary-light: #d0e8f0;
+$color-primary-dark: #80b8c8;
 
-$color-secondary: #87d0e8;
-$color-secondary-light: #d0e8f0;
-$color-secondary-dark: #80b8c8;
+$color-secondary: #ff9999;
+$color-secondary-light: #ffe6e6;
+$color-secondary-dark: #e6b3b2;
 
 /* Responsive breakpoints */
 @mixin layout-mobile {
