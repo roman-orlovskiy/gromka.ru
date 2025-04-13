@@ -1,6 +1,6 @@
 <?php
 // Подключение к базе данных
-require './utils/db.php';
+require '../utils/db.php';
 
 // Установка заголовков
 header("Content-Type: application/json");
