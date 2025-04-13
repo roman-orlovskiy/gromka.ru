@@ -2,9 +2,18 @@
 
 header("Content-Type: application/json");
 
-$response = [
-    "status" => "success",
-    "message" => "Hello, World!"
-];
+// Получение пути из URL
+$request = $_SERVER['REQUEST_URI'];
 
-echo json_encode($response); 
+switch ($request) {
+    case '/api/events':
+        require './events/events.php';
+        break;
+    // Добавьте другие маршруты здесь
+    default:
+        http_response_code(404);
+        echo json_encode(["message" => "Endpoint not found"]);
+        break;
+}
+
+?> 
