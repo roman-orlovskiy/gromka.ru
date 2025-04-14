@@ -22,8 +22,14 @@ switch ($method) {
         // Создание нового места
         $data = json_decode(file_get_contents("php://input"), true);
         $name = $data['name'];
-        $location = $data['location'];
-        $sql = "INSERT INTO places (name, location) VALUES ('$name', '$location')";
+        $address = $data['address'];
+        $photo = $data['photo'];
+        $type = $data['type'];
+        $coverage = $data['coverage'];
+        $latitude = $data['latitude'];
+        $longitude = $data['longitude'];
+        $createdAt = date('Y-m-d H:i:s');
+        $sql = "INSERT INTO places (name, address, photo, type, coverage, latitude, longitude, createdAt) VALUES ('$name', '$address', '$photo', '$type', '$coverage', '$latitude', '$longitude', '$createdAt')";
         if ($conn->query($sql) === TRUE) {
             echo json_encode(["message" => "Place created successfully"]);
         } else {
@@ -36,8 +42,14 @@ switch ($method) {
         $data = json_decode(file_get_contents("php://input"), true);
         $id = $data['id'];
         $name = $data['name'];
-        $location = $data['location'];
-        $sql = "UPDATE places SET name='$name', location='$location' WHERE id=$id";
+        $address = $data['address'];
+        $photo = $data['photo'];
+        $type = $data['type'];
+        $coverage = $data['coverage'];
+        $latitude = $data['latitude'];
+        $longitude = $data['longitude'];
+        $updatedAt = date('Y-m-d H:i:s');
+        $sql = "UPDATE places SET name='$name', address='$address', photo='$photo', type='$type', coverage='$coverage', latitude='$latitude', longitude='$longitude', updatedAt='$updatedAt' WHERE id=$id";
         if ($conn->query($sql) === TRUE) {
             echo json_encode(["message" => "Place updated successfully"]);
         } else {
