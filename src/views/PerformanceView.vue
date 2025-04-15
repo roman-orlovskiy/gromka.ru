@@ -3,7 +3,7 @@
     <h1 class="home__title">грОмка – платформа для перформансов</h1>
     <div class="home__description">Рисуйте динамические картины с помощью экранов телефонов.</div>
     <div class="home__card">
-      <video class="home__video" autoplay loop muted src="/video/gromka.mp4" type="video/mp4">
+      <video class="home__video" autoplay loop muted src="/videos/gromka.mp4" type="video/mp4">
         Ваш браузер не поддерживает видео.
       </video>
     </div>
