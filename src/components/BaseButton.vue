@@ -29,7 +29,7 @@ const handleClick = (event) => {
   transition: opacity 0.2s ease;
 
   @include layout-aspect-mobile {
-    font-size: 1.8rem;
+    font-size: 1.7rem;
     padding: 1rem 2rem;
     border-radius: 1rem;
   }

@@ -30,7 +30,7 @@
         >
           <h2 class="base-modal__title">Авторизация</h2>
           <p class="base-modal__description">
-            Для авторизации скопируйте код и вставьте его в адресную строку браузера
+            Для авторизации скопируйте ссылку и вставьте её в адресную строку браузера
           </p>
 
           <BaseInput
@@ -41,7 +41,7 @@
             @click="selectAndCopyCode"
           />
 
-          <BaseButton @click="copyCode">Скопировать код</BaseButton>
+          <BaseButton @click="copyLink">Скопировать ссылку</BaseButton>
         </div>
       </div>
     </div>
@@ -57,8 +57,9 @@ import BaseInput from '@/components/BaseInput.vue';
 const mainStore = useMainStore();
 const { modalType, signature } = storeToRefs(mainStore);
 
+const currentDomain = window.location.origin;
 const link = 'https://t.me/gromkaDevBot/events?startapp=auth';
-const code = ref(signature);
+const code = ref(`${currentDomain}?auth=${signature.value}`);
 const codeInput = ref(null);
 
 const handleCloseModal = () => {
