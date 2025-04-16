@@ -61,7 +61,7 @@ const currentDomain = window.location.origin;
 const link = 'https://t.me/gromkaDevBot/events?startapp=auth';
 const code = ref(`${currentDomain}?auth=${signature.value}`);
 const codeInput = ref(null);
-const copyButtonText = ref('Скопировать код');
+const copyButtonText = ref('Скопировать ссылку');
 const timeoutId = ref(null);
 const handleCloseModal = () => {
   mainStore.closeModal();
@@ -73,7 +73,7 @@ const copyCode = () => {
   copyButtonText.value = 'Скопировано!';
 
   timeoutId.value = setTimeout(() => {
-    copyButtonText.value = 'Скопировать код';
+    copyButtonText.value = 'Скопировать ссылку';
   }, 2000);
 };
 
