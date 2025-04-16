@@ -8,6 +8,7 @@
 </template>
 
 <script setup>
+import { onMounted } from 'vue'
 import { RouterView } from 'vue-router'
 import RightMenu from '@/components/RightMenu.vue'
 import BaseModal from '@/components/BaseModal.vue'
@@ -16,6 +17,10 @@ import { storeToRefs } from 'pinia'
 
 const mainStore = useMainStore()
 const { modalType } = storeToRefs(mainStore)
+
+onMounted(() => {
+  mainStore.getTelegramUser()
+})
 </script>
 
 <style lang="scss">
