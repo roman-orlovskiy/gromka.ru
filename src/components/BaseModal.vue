@@ -53,6 +53,7 @@ import { ref } from 'vue';
 import { useMainStore } from '@/stores/main';
 import { storeToRefs } from 'pinia';
 import BaseButton from '@/components/BaseButton.vue';
+import BaseInput from '@/components/BaseInput.vue';
 const mainStore = useMainStore();
 const { modalType, signature } = storeToRefs(mainStore);
 
@@ -92,7 +93,7 @@ const selectAndCopyCode = () => {
     padding: 4rem;
     border-radius: 0.5rem;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-    width: 100%;
+    width: 90%;
     max-width: 40rem;
 
     a {
@@ -113,12 +114,20 @@ const selectAndCopyCode = () => {
     font-size: 3rem;
     font-weight: 400;
     text-align: center;
+
+    @include layout-aspect-mobile {
+      font-size: 2.4rem;
+    }
   }
 
   &__description {
     font-size: 1.9rem;
     font-weight: 400;
     text-align: center;
+
+    @include layout-aspect-mobile {
+      font-size: 1.5rem;
+    }
   }
 }
 </style>
