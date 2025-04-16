@@ -1,15 +1,27 @@
 <template>
   <div class="right-menu">
-    <RouterLink
-      v-for="item in menuItems"
-      :key="item.text"
-      :to="item.to"
-      class="right-menu__item"
-      :class="{ 'right-menu__item--active': isActive(item.name) }"
-    >
-      <component :is="item.icon" />
-      <span>{{ item.text }}</span>
-    </RouterLink>
+    <div class="right-menu__items">
+      <RouterLink
+        v-for="item in menuItems"
+        :key="item.text"
+        :to="item.to"
+        class="right-menu__item"
+        :class="{ 'right-menu__item--active': isActive(item.name) }"
+      >
+        <component :is="item.icon" />
+        <span>{{ item.text }}</span>
+      </RouterLink>
+    </div>
+
+    <div class="right-menu__auth">
+      <RouterLink
+        class="right-menu__item right-menu__item--auth"
+        to="/login"
+      >
+        <AuthIcon />
+        <span>Войти</span>
+      </RouterLink>
+    </div>
   </div>
 </template>
 
@@ -18,7 +30,7 @@ import MainIcon from '@/components/icons/MainIcon.vue'
 import PerfIcon from '@/components/icons/PerfIcon.vue'
 import DemoIcon from '@/components/icons/DemoIcon.vue'
 import { RouterLink, useRoute } from 'vue-router'
-
+import AuthIcon from '@/components/icons/AuthIcon.vue'
 const route = useRoute()
 
 const isActive = (name) => {
@@ -57,6 +69,9 @@ const menuItems = [
   z-index: 1000;
   border-radius: 3rem 0 0 3rem;
   font-size: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
 
   @include layout-aspect-mobile {
     position: fixed;
@@ -65,9 +80,17 @@ const menuItems = [
     width: 100%;
     height: 5rem;
     border-radius: 0;
+  }
+
+  &__items {
     display: flex;
-    justify-content: center;
-    align-items: center;
+    flex-direction: column;
+
+    @include layout-aspect-mobile {
+      flex-direction: row;
+      justify-content: center;
+      align-items: center;
+    }
   }
 
   &__item {
@@ -113,6 +136,28 @@ const menuItems = [
 
       path {
         fill: $color-primary;
+      }
+    }
+
+    &--auth {
+      background-color: $color-primary;
+      color: $color-white;
+      border-radius: 0;
+      font-size: 2rem;
+
+      &:first-child {
+        border-radius: 0;
+      }
+
+      &:hover {
+        box-shadow: 0 -1rem 1rem rgba(0, 0, 0, 0.1);
+      }
+
+      svg {
+        width: 3.5rem;
+        path {
+          fill: $color-white;
+        }
       }
     }
   }
