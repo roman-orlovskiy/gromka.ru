@@ -4,6 +4,8 @@
     <RightMenu v-if="!isParyPage" />
 
     <BaseModal v-if="modalType" />
+
+    <TelegramAuth />
   </div>
 </template>
 
@@ -12,6 +14,7 @@ import { onMounted } from 'vue'
 import { RouterView } from 'vue-router'
 import RightMenu from '@/components/RightMenu.vue'
 import BaseModal from '@/components/BaseModal.vue'
+import TelegramAuth from '@/components/TelegramAuth.vue'
 import { useMainStore } from '@/stores/main'
 import { storeToRefs } from 'pinia'
 

@@ -12,8 +12,6 @@
         <span>{{ item.text }}</span>
       </RouterLink>
     </div>
-
-    <div class="right-menu__auth" ref="authContainer"></div>
   </div>
 </template>
 
@@ -22,11 +20,8 @@ import MainIcon from '@/components/icons/MainIcon.vue'
 import PerfIcon from '@/components/icons/PerfIcon.vue'
 import DemoIcon from '@/components/icons/DemoIcon.vue'
 import { RouterLink, useRoute } from 'vue-router'
-import { ref, onMounted } from 'vue'
 
 const route = useRoute()
-
-const authContainer = ref(null)
 
 const isActive = (name) => {
   console.log(route, name)
@@ -53,27 +48,6 @@ const menuItems = [
     name: 'demo',
   },
 ]
-
-onMounted(() => {
-  // Создаем скрипт виджета
-  const script = document.createElement('script')
-  script.async = true
-  script.src = 'https://telegram.org/js/telegram-widget.js?22'
-  script.dataset.telegramLogin = 'gromkaDevBot'
-  script.dataset.size = 'medium'
-  script.dataset.radius = '7'
-  script.dataset.onauth = 'onTelegramAuth(user)'
-  script.dataset.requestAccess = 'write'
-
-  // Добавляем скрипт в контейнер
-  if (authContainer.value) {
-    authContainer.value.appendChild(script)
-  }
-
-  window.onTelegramAuth = (user) => {
-    console.log(user)
-  }
-})
 </script>
 
 <style lang="scss">
