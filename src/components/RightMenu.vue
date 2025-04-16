@@ -16,11 +16,12 @@
     <div class="right-menu__auth">
       <div
         class="right-menu__item right-menu__item--auth"
-        @click="openModal('login')"
-      >
-        <AuthIcon />
-        <span>Войти</span>
-      </div>
+        id="telegram-login-gromka-bot"
+        data-size="large"
+        data-radius="10"
+        data-auth-url="https://your-backend.com/auth/telegram"
+        data-request-access="write"
+      ></div>
     </div>
   </div>
 </template>
@@ -30,11 +31,6 @@ import MainIcon from '@/components/icons/MainIcon.vue'
 import PerfIcon from '@/components/icons/PerfIcon.vue'
 import DemoIcon from '@/components/icons/DemoIcon.vue'
 import { RouterLink, useRoute } from 'vue-router'
-import AuthIcon from '@/components/icons/AuthIcon.vue'
-import { useMainStore } from '@/stores/main'
-
-const mainStore = useMainStore()
-const { openModal } = mainStore
 
 const route = useRoute()
 

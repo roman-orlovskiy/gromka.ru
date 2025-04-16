@@ -20,7 +20,6 @@ const { modalType } = storeToRefs(mainStore)
 
 onMounted(() => {
   mainStore.getTelegramUser()
-  mainStore.getStartAppParam()
 })
 </script>
 

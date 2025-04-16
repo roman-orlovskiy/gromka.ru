@@ -13,35 +13,7 @@
           v-if="modalType === 'login'"
           class="base-modal__content-inner"
         >
-          <h2 class="base-modal__title">Авторизация</h2>
-          <p class="base-modal__description">
-            Для авторизации перейдите в телеграм-приложение
-            <a :href="link" target="_blank">@gromkaBot/events</a>
-          </p>
-
-          <a :href="link" target="_blank">
-            <BaseButton>Войти</BaseButton>
-          </a>
-        </div>
-
-        <div
-          v-if="modalType === 'auth'"
-          class="base-modal__content-inner"
-        >
-          <h2 class="base-modal__title">Авторизация</h2>
-          <p class="base-modal__description">
-            Для авторизации скопируйте ссылку и вставьте её в адресную строку браузера
-          </p>
-
-          <BaseInput
-            ref="codeInput"
-            :value="code"
-            placeholder="Код авторизации"
-            :readonly="true"
-            @click="selectAndCopyCode"
-          />
-
-          <BaseButton @click="copyCode">{{ copyButtonText }}</BaseButton>
+          <ModalLogin />
         </div>
       </div>
     </div>
@@ -49,37 +21,15 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
 import { useMainStore } from '@/stores/main';
 import { storeToRefs } from 'pinia';
-import BaseButton from '@/components/BaseButton.vue';
-import BaseInput from '@/components/BaseInput.vue';
-const mainStore = useMainStore();
-const { modalType, signature } = storeToRefs(mainStore);
+import ModalLogin from '@/components/ModalLogin.vue';
 
-const currentDomain = window.location.origin;
-const link = 'https://t.me/gromkaDevBot/events?startapp=auth';
-const code = ref(`${currentDomain}?auth=${signature.value}`);
-const codeInput = ref(null);
-const copyButtonText = ref('Скопировать ссылку');
-const timeoutId = ref(null);
+const mainStore = useMainStore();
+const { modalType } = storeToRefs(mainStore);
+
 const handleCloseModal = () => {
   mainStore.closeModal();
-};
-
-const copyCode = () => {
-  clearTimeout(timeoutId.value);
-  navigator.clipboard.writeText(code.value);
-  copyButtonText.value = 'Скопировано!';
-
-  timeoutId.value = setTimeout(() => {
-    copyButtonText.value = 'Скопировать ссылку';
-  }, 2000);
-};
-
-const selectAndCopyCode = () => {
-  codeInput.value.$el.querySelector('input').select();
-  copyCode()
 };
 </script>
 
