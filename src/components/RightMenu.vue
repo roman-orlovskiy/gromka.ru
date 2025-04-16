@@ -14,13 +14,13 @@
     </div>
 
     <div class="right-menu__auth">
-      <RouterLink
+      <div
         class="right-menu__item right-menu__item--auth"
-        to="/login"
+        @click="openModal('login')"
       >
         <AuthIcon />
         <span>Войти</span>
-      </RouterLink>
+      </div>
     </div>
   </div>
 </template>
@@ -31,6 +31,11 @@ import PerfIcon from '@/components/icons/PerfIcon.vue'
 import DemoIcon from '@/components/icons/DemoIcon.vue'
 import { RouterLink, useRoute } from 'vue-router'
 import AuthIcon from '@/components/icons/AuthIcon.vue'
+import { useMainStore } from '@/stores/main'
+
+const mainStore = useMainStore()
+const { openModal } = mainStore
+
 const route = useRoute()
 
 const isActive = (name) => {

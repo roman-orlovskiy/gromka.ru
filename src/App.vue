@@ -2,16 +2,20 @@
   <div class="app">
     <RouterView />
     <RightMenu v-if="!isParyPage" />
+
+    <BaseModal v-if="modalType" />
   </div>
 </template>
 
 <script setup>
-import { RouterView, useRoute } from 'vue-router'
-import { computed } from 'vue'
+import { RouterView } from 'vue-router'
 import RightMenu from '@/components/RightMenu.vue'
+import BaseModal from '@/components/BaseModal.vue'
+import { useMainStore } from '@/stores/main'
+import { storeToRefs } from 'pinia'
 
-const route = useRoute()
-const isParyPage = computed(() => route.name === 'parinn')
+const mainStore = useMainStore()
+const { modalType } = storeToRefs(mainStore)
 </script>
 
 <style lang="scss">
@@ -74,5 +78,21 @@ body {
 #app {
   height: 100%;
   min-height: 100%;
+}
+
+//fade transition
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.5s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+.fade-enter-to,
+.fade-leave-from {
+  opacity: 1;
 }
 </style>
