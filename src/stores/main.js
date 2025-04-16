@@ -34,7 +34,7 @@ export const useMainStore = defineStore('main', () => {
 
   const getStartAppParam = () => {
     if (window.Telegram && window.Telegram.WebApp) {
-      startAppParam.value = window.Telegram.WebApp.initDataUnsafe.tgWebAppStartParam;
+      startAppParam.value = window.Telegram.WebApp.initDataUnsafe.start_param;
       console.log('StartApp Param:', startAppParam.value);
 
       if (startAppParam.value === 'auth') {
