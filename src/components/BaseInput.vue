@@ -58,9 +58,9 @@ const handleInput = (event) => {
   background-color: $color-white;
 
   @include layout-aspect-mobile {
-    font-size: 1.4rem;
-    padding: 0.5rem 1.2rem;
-    border-radius: 0.5rem;
+    font-size: 1.8rem;
+    padding: 0.7rem 1.4rem;
+    border-radius: 0.7rem;
   }
 
   &::placeholder {
@@ -74,11 +74,6 @@ const handleInput = (event) => {
 
   &--shake {
     animation: shake 0.5s ease-in-out;
-  }
-
-  @include layout-mobile {
-    border-radius: 1.5rem;
-    font-size: 2.8rem;
   }
 }
 

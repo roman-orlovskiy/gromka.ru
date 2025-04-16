@@ -29,18 +29,13 @@ const handleClick = (event) => {
   transition: opacity 0.2s ease;
 
   @include layout-aspect-mobile {
-    font-size: 1.4rem;
-    padding: 0.5rem 1.2rem;
-    border-radius: 0.5rem;
+    font-size: 1.8rem;
+    padding: 0.7rem 1.4rem;
+    border-radius: 0.7rem;
   }
 
   &:hover {
     opacity: 0.9;
-  }
-
-  @include layout-mobile {
-    border-radius: 1.5rem;
-    font-size: 2.8rem;
   }
 }
 </style>
