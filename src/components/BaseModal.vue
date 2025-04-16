@@ -1,7 +1,14 @@
 <template>
   <transition name="fade">
-    <div class="base-modal" v-if="modalType">
-      <div class="base-modal__content">
+    <div
+      class="base-modal"
+      v-if="modalType"
+      @click="handleCloseModal"
+    >
+      <div
+        class="base-modal__content"
+        @click.stop
+      >
         <div
           v-if="modalType === 'login'"
           class="base-modal__content-inner"
@@ -29,6 +36,10 @@ const mainStore = useMainStore();
 const { modalType } = storeToRefs(mainStore);
 
 const link = 'https://t.me/gromkaDevBot/events?startapp=auth';
+
+const handleCloseModal = () => {
+  mainStore.closeModal();
+};
 </script>
 
 <style scoped lang="scss">
