@@ -3,6 +3,8 @@ import { defineStore } from 'pinia';
 
 export const useMainStore = defineStore('main', () => {
   const modalType = ref(null);
+  const signature = ref(null);
+  const startAppParam = ref(null);
 
   const openModal = (type) => {
     console.log('openModal', type);
@@ -17,9 +19,11 @@ export const useMainStore = defineStore('main', () => {
   const getTelegramUser = () => {
     if (window.Telegram && window.Telegram.WebApp) {
       const user = window.Telegram.WebApp.initDataUnsafe.user;
+      signature.value = window.Telegram.WebApp.initDataUnsafe.signature;
       if (user) {
         console.log('Telegram User:', user);
-        console.log('Telegram Init Data:', window.Telegram.WebApp.initData);
+        console.log('Telegram Init Data:', window.Telegram.WebApp.initDataUnsafe);
+        console.log('Signature:', signature.value);
       } else {
         console.log('Пользователь не найден в Telegram.');
       }
@@ -28,5 +32,26 @@ export const useMainStore = defineStore('main', () => {
     }
   };
 
-  return { modalType, openModal, closeModal, getTelegramUser };
+  const getStartAppParam = () => {
+    if (window.Telegram && window.Telegram.WebApp) {
+      startAppParam.value = window.Telegram.WebApp.initDataUnsafe.tgWebAppStartParam;
+      console.log('StartApp Param:', startAppParam.value);
+
+      if (startAppParam.value === 'auth') {
+        openModal('auth')
+      }
+    } else {
+      console.log('Сайт запущен вне Telegram.');
+    }
+  };
+
+  return {
+    modalType,
+    openModal,
+    closeModal,
+    getTelegramUser,
+    signature,
+    startAppParam,
+    getStartAppParam,
+  };
 });

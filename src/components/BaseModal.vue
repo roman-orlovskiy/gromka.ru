@@ -23,22 +23,54 @@
             <BaseButton>Войти</BaseButton>
           </a>
         </div>
+
+        <div
+          v-if="modalType === 'auth'"
+          class="base-modal__content-inner"
+        >
+          <h2 class="base-modal__title">Авторизация</h2>
+          <p class="base-modal__description">
+            Для авторизации скопируйте код и вставьте его в браузере
+          </p>
+
+          <BaseInput
+            ref="codeInput"
+            v-model="code"
+            placeholder="Код авторизации"
+            :readonly="true"
+            @click="selectAndCopyCode"
+          />
+
+          <BaseButton @click="copyCode">Скопировать код</BaseButton>
+        </div>
       </div>
     </div>
   </transition>
 </template>
 
 <script setup>
+import { ref } from 'vue';
 import { useMainStore } from '@/stores/main';
 import { storeToRefs } from 'pinia';
 import BaseButton from '@/components/BaseButton.vue';
 const mainStore = useMainStore();
-const { modalType } = storeToRefs(mainStore);
+const { modalType, signature } = storeToRefs(mainStore);
 
 const link = 'https://t.me/gromkaDevBot/events?startapp=auth';
+const code = ref(signature);
+const codeInput = ref(null);
 
 const handleCloseModal = () => {
   mainStore.closeModal();
+};
+
+const copyCode = () => {
+  navigator.clipboard.writeText(code.value);
+};
+
+const selectAndCopyCode = () => {
+  codeInput.value.$el.querySelector('input').select();
+  copyCode()
 };
 </script>
 
