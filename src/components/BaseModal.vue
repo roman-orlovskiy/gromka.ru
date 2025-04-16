@@ -41,7 +41,7 @@
             @click="selectAndCopyCode"
           />
 
-          <BaseButton @click="copyLink">Скопировать ссылку</BaseButton>
+          <BaseButton @click="copyCode">{{ copyButtonText }}</BaseButton>
         </div>
       </div>
     </div>
@@ -61,13 +61,20 @@ const currentDomain = window.location.origin;
 const link = 'https://t.me/gromkaDevBot/events?startapp=auth';
 const code = ref(`${currentDomain}?auth=${signature.value}`);
 const codeInput = ref(null);
-
+const copyButtonText = ref('Скопировать код');
+const timeoutId = ref(null);
 const handleCloseModal = () => {
   mainStore.closeModal();
 };
 
 const copyCode = () => {
+  clearTimeout(timeoutId.value);
   navigator.clipboard.writeText(code.value);
+  copyButtonText.value = 'Скопировано!';
+
+  timeoutId.value = setTimeout(() => {
+    copyButtonText.value = 'Скопировать код';
+  }, 2000);
 };
 
 const selectAndCopyCode = () => {
