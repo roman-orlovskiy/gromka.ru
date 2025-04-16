@@ -58,7 +58,7 @@ const handleInput = (event) => {
   background-color: $color-white;
 
   @include layout-aspect-mobile {
-    font-size: 2.2rem;
+    font-size: 1.9rem;
     padding: 1rem 2rem;
     border-radius: 1rem;
   }
