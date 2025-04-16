@@ -35,7 +35,7 @@
 
           <BaseInput
             ref="codeInput"
-            v-model="code"
+            :value="code"
             placeholder="Код авторизации"
             :readonly="true"
             @click="selectAndCopyCode"

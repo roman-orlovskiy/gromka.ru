@@ -57,6 +57,12 @@ const handleInput = (event) => {
   box-sizing: border-box;
   background-color: $color-white;
 
+  @include layout-aspect-mobile {
+    font-size: 2.2rem;
+    padding: 1rem 2rem;
+    border-radius: 1rem;
+  }
+
   &::placeholder {
     color: $color-primary;
     opacity: 0.5;
