@@ -9,7 +9,7 @@
     "preview": "vite preview",
     "lint": "eslint . --fix",
     "format": "prettier --write src/",
-    "start-api": "php -S localhost:8000 -t public/api"
+    "server": "php -S localhost:8000 -t public/api"
   },
   "dependencies": {
     "axios": "^1.8.2",

@@ -1,4 +1,5 @@
 <?php
+$botToken = '6007443006:AAGnu25ziaZNRGPtKmenUtByx-5u-p_dQ5c';
 
 function checkTelegramAuthorization($data, $botToken) {
     $checkHash = $data['hash'];
@@ -19,7 +20,6 @@ function checkTelegramAuthorization($data, $botToken) {
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $data = json_decode(file_get_contents('php://input'), true);
-    $botToken = 'ВАШ_ТОКЕН_БОТА'; // Замените на ваш токен
     
     if (checkTelegramAuthorization($data, $botToken)) {
         echo json_encode(['status' => 'success', 'message' => 'Пользователь подлинный']);

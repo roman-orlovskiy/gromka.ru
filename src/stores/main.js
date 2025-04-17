@@ -1,6 +1,6 @@
 import { ref } from 'vue';
 import { defineStore } from 'pinia';
-
+import { saveUser, defaultTestUser } from '@/services/api';
 export const useMainStore = defineStore('main', () => {
   const modalType = ref(null);
   const signature = ref(null);
@@ -16,7 +16,7 @@ export const useMainStore = defineStore('main', () => {
   };
 
   // Функция для получения данных пользователя из Telegram
-  const getTelegramUser = () => {
+  const getTelegramUser = async () => {
     if (window.Telegram && window.Telegram.WebApp) {
       const user = window.Telegram.WebApp.initDataUnsafe.user;
       signature.value = window.Telegram.WebApp.initDataUnsafe.signature;
@@ -25,6 +25,9 @@ export const useMainStore = defineStore('main', () => {
         console.log('Telegram Init Data:', window.Telegram.WebApp.initDataUnsafe);
         console.log('Signature:', signature.value);
       } else {
+        // test user
+        const user = await saveUser(defaultTestUser);
+        console.log('User:', user);
         console.log('Пользователь не найден в Telegram.');
       }
     } else {
