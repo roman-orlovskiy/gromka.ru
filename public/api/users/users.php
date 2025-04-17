@@ -27,10 +27,50 @@ function checkTelegramAuthorization($data, $botToken) {
     return hash_equals($hash, $checkHash);
 }
 
+// Функция для генерации токена сессии
+function generateSessionToken($length = 32) {
+    return bin2hex(random_bytes($length));
+}
+
 // Обработка запросов
 switch ($method) {
+    case 'GET':
+        if (isset($_GET['id']) && $_GET['id'] === 'current') {
+            if (isset($_COOKIE['session_token'])) {
+                $sessionToken = $_COOKIE['session_token'];
+                $stmt = $conn->prepare('SELECT * FROM sessions WHERE token = ?');
+                $stmt->bind_param('s', $sessionToken);
+                $stmt->execute();
+                $result = $stmt->get_result();
+                $session = $result->fetch_assoc();
+
+                if ($session) {
+                    $userId = $session['user_id'];
+                    $stmt = $conn->prepare('SELECT * FROM users WHERE id = ?');
+                    $stmt->bind_param('i', $userId);
+                    $stmt->execute();
+                    $result = $stmt->get_result();
+                    $user = $result->fetch_assoc();
+
+                    if ($user) {
+                        echo json_encode(['status' => 'success', 'message' => 'Пользователь найден', 'user' => $user]);
+                    } else {
+                        echo json_encode(['status' => 'error', 'message' => 'Пользователь не найден']);
+                    }
+                } else {
+                    echo json_encode(['status' => 'error', 'message' => 'Сессия не найдена']);
+                }
+            } else {
+                echo json_encode(['status' => 'error', 'message' => 'Куки не найдены']);
+            }
+        } else {
+            echo json_encode(['status' => 'error', 'message' => 'Неверный параметр запроса']);
+        }
+        break;
+
     case 'POST':
         $data = json_decode(file_get_contents('php://input'), true);
+        $newUser = null; // Определяем переменную заранее
         if (checkTelegramAuthorization($data, $botToken)) {
             // Проверка существования пользователя
             $stmt = $conn->prepare('SELECT * FROM users WHERE tg_id = ?');
@@ -57,6 +97,16 @@ switch ($method) {
                 $newUser = $result->fetch_assoc();
                 
                 echo json_encode(['status' => 'success', 'message' => 'Пользователь создан', 'user' => $newUser]);
+            }
+
+            // После успешной авторизации и создания/получения пользователя
+            if (!isset($_COOKIE['session_token'])) {
+                $sessionToken = generateSessionToken();
+                $userId = isset($user) ? $user['id'] : $newUser['id'];
+                $stmt = $conn->prepare('INSERT INTO sessions (user_id, token, createdAt) VALUES (?, ?, NOW())');
+                $stmt->bind_param('is', $userId, $sessionToken);
+                $stmt->execute();
+                setcookie('session_token', $sessionToken, time() + (86400 * 30), "/", "", true, true); // Куки на 30 дней с флагами Secure и HttpOnly
             }
         } else {
             echo json_encode(['status' => 'error', 'message' => 'Пользователь не подлинный']);
