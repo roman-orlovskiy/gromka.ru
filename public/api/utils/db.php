@@ -11,4 +11,15 @@ $conn = new mysqli($servername, $username, $password, $dbname);
 if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
+
+function getSessionByToken($conn, $token) {
+    if (!$token) {
+        return null;
+    }
+    $stmt = $conn->prepare('SELECT * FROM sessions WHERE token = ?');
+    $stmt->bind_param('s', $token);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    return $result->fetch_assoc();
+}
 ?>

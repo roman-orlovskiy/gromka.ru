@@ -38,11 +38,7 @@ switch ($method) {
         if (isset($_GET['id']) && $_GET['id'] === 'current') {
             if (isset($_COOKIE['session_token'])) {
                 $sessionToken = $_COOKIE['session_token'];
-                $stmt = $conn->prepare('SELECT * FROM sessions WHERE token = ?');
-                $stmt->bind_param('s', $sessionToken);
-                $stmt->execute();
-                $result = $stmt->get_result();
-                $session = $result->fetch_assoc();
+                $session = getSessionByToken($conn, $sessionToken);
 
                 if ($session) {
                     $userId = $session['user_id'];
@@ -99,8 +95,9 @@ switch ($method) {
                 echo json_encode(['status' => 'success', 'message' => 'Пользователь создан', 'user' => $newUser]);
             }
 
+            $currentSession = getSessionByToken($conn, $_COOKIE['session_token']);
             // После успешной авторизации и создания/получения пользователя
-            if (!isset($_COOKIE['session_token'])) {
+            if (!$currentSession) {
                 $sessionToken = generateSessionToken();
                 $userId = isset($user) ? $user['id'] : $newUser['id'];
                 $stmt = $conn->prepare('INSERT INTO sessions (user_id, token, createdAt) VALUES (?, ?, NOW())');
