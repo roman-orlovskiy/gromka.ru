@@ -18,8 +18,9 @@ import { storeToRefs } from 'pinia'
 const mainStore = useMainStore()
 const { modalType } = storeToRefs(mainStore)
 
-onMounted(() => {
-  mainStore.getTelegramUser()
+onMounted(async () => {
+  await mainStore.getUserFromApi()
+  await mainStore.getTelegramUser()
 })
 </script>
 

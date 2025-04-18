@@ -33,4 +33,15 @@ export const saveUser = async (user) => {
     throw error
   }
 }
+
+export const getUser = async (id = 'current') => {
+  try {
+    const response = await api.get(`/users?id=${id}`)
+    return response.data
+  } catch (error) {
+    console.error('Error fetching user:', error)
+    throw error
+  }
+}
+
 export default api

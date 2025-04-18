@@ -22,7 +22,7 @@
           class="right-menu__item right-menu__item--auth"
         >
           <AuthIcon />
-          <span>Войти</span>
+          <span>{{ isUserLoaded ? user.first_name : 'Войти' }}</span>
         </RouterLink>
       </div>
     </div>
@@ -35,6 +35,11 @@ import PerfIcon from '@/components/icons/PerfIcon.vue'
 import DemoIcon from '@/components/icons/DemoIcon.vue'
 import AuthIcon from '@/components/icons/AuthIcon.vue'
 import { RouterLink, useRoute } from 'vue-router'
+import { useMainStore } from '@/stores/main'
+import { storeToRefs } from 'pinia'
+
+const mainStore = useMainStore()
+const { user, isUserLoaded } = storeToRefs(mainStore)
 
 const route = useRoute()
 

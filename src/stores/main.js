@@ -1,10 +1,14 @@
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { defineStore } from 'pinia';
-import { saveUser } from '@/services/api';
+import { saveUser, getUser } from '@/services/api';
+
 export const useMainStore = defineStore('main', () => {
   const modalType = ref(null);
   const signature = ref(null);
   const startAppParam = ref(null);
+  const user = ref({});
+
+  const isUserLoaded = computed(() => user.value.id);
 
   const openModal = (type) => {
     console.log('openModal', type);
@@ -15,16 +19,27 @@ export const useMainStore = defineStore('main', () => {
     modalType.value = null;
   };
 
+  const getUserFromApi = async () => {
+    const userData = await getUser();
+    user.value = userData.user;
+    console.log('User:', userData);
+  };
+
   // Функция для получения данных пользователя из Telegram
   const getTelegramUser = async () => {
+    if (user.value.id) {
+      return;
+    }
+
     if (window.Telegram && window.Telegram.WebApp) {
-      const user = window.Telegram.WebApp.initDataUnsafe.user;
+      const tgUser = window.Telegram.WebApp.initDataUnsafe.user;
       signature.value = window.Telegram.WebApp.initDataUnsafe.signature;
-      if (user) {
-        console.log('Telegram User:', user);
+      if (tgUser) {
+        console.log('Telegram User:', tgUser);
         console.log('Telegram Init Data:', window.Telegram.WebApp.initDataUnsafe);
         console.log('Signature:', signature.value);
-        const userData = await saveUser(user);
+        const userData = await saveUser(tgUser);
+        user.value = userData.user;
         console.log('User:', userData);
       }
     }
@@ -51,5 +66,8 @@ export const useMainStore = defineStore('main', () => {
     signature,
     startAppParam,
     getStartAppParam,
+    user,
+    getUserFromApi,
+    isUserLoaded,
   };
 });
