@@ -1,0 +1,24 @@
+<IfModule mod_headers.c>
+    # Разрешить запросы только с определенных доменов
+    SetEnvIf Origin "^https?://(localhost:\d+|gromka-dev\.website\.yandexcloud\.net|gromka\.ru)$" ORIGIN=$0
+    Header always set Access-Control-Allow-Origin "%{ORIGIN}e" env=ORIGIN
+
+    # Разрешенные методы
+    Header always set Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
+
+    # Разрешенные заголовки
+    Header always set Access-Control-Allow-Headers "Content-Type, Authorization, X-Requested-With"
+
+    # Разрешить передачу кук и авторизации
+    Header always set Access-Control-Allow-Credentials "true"
+
+    # Кэширование CORS-настроек на 1 день
+    Header always set Access-Control-Max-Age "86400"
+</IfModule>
+
+# Обработка предварительных OPTIONS-запросов
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteCond %{REQUEST_METHOD} OPTIONS
+    RewriteRule ^(.*)$ $1 [R=200,L]
+</IfModule>
