@@ -34,6 +34,25 @@ function generateSessionToken($length = 32) {
     return bin2hex(random_bytes($length));
 }
 
+function saveSession($conn, $userId) {
+    $sessionToken = generateSessionToken();
+    $stmt = $conn->prepare('INSERT INTO sessions (user_id, token, createdAt) VALUES (?, ?, NOW())');
+    $stmt->bind_param('is', $userId, $sessionToken);
+    $stmt->execute();
+    setcookie('session_token', $sessionToken, time() + (86400 * 30), "/", "", true, true); // Куки на 30 дней с флагами Secure и HttpOnly
+}
+
+function manageSession($conn, $user) {
+    if (isset($_COOKIE['session_token'])) {
+        $currentSession = getSessionByToken($conn, $_COOKIE['session_token']);
+        if (!$currentSession) {
+            saveSession($conn, $user['id']);
+        }
+    } else {
+        saveSession($conn, $user['id']);
+    }
+}
+
 // Обработка запросов
 switch ($method) {
     case 'GET':
@@ -78,6 +97,7 @@ switch ($method) {
             $user = $result->fetch_assoc();
 
             if ($user) {
+                manageSession($conn, $user);
                 // Пользователь найден, возвращаем его данные
                 echo json_encode(['status' => 'success', 'message' => 'Пользователь подлинный', 'data' => $user]);
             } else {
@@ -93,19 +113,10 @@ switch ($method) {
                 $stmt->execute();
                 $result = $stmt->get_result();
                 $newUser = $result->fetch_assoc();
+
+                manageSession($conn, $newUser);
                 
                 echo json_encode(['status' => 'success', 'message' => 'Пользователь создан', 'data' => $newUser]);
-            }
-
-            $currentSession = getSessionByToken($conn, $_COOKIE['session_token']);
-            // После успешной авторизации и создания/получения пользователя
-            if (!$currentSession) {
-                $sessionToken = generateSessionToken();
-                $userId = isset($user) ? $user['id'] : $newUser['id'];
-                $stmt = $conn->prepare('INSERT INTO sessions (user_id, token, createdAt) VALUES (?, ?, NOW())');
-                $stmt->bind_param('is', $userId, $sessionToken);
-                $stmt->execute();
-                setcookie('session_token', $sessionToken, time() + (86400 * 30), "/", "", true, true); // Куки на 30 дней с флагами Secure и HttpOnly
             }
         } else {
             echo json_encode(['status' => 'error', 'message' => 'Пользователь не подлинный', 'data' => (object)[]]);
