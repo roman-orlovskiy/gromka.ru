@@ -7,7 +7,12 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { saveUser } from '@/services/api'
+import { useMainStore } from '@/stores/main'
+import { storeToRefs } from 'pinia'
+
 const authContainer = ref(null)
+const mainStore = useMainStore()
+const { user } = storeToRefs(mainStore)
 
 
 onMounted(() => {
@@ -24,9 +29,10 @@ onMounted(() => {
     authContainer.value.appendChild(script)
   }
 
-  window.onTelegramAuth = async (user) => {
-    const userData = await saveUser(user)
-    console.log(userData)
+  window.onTelegramAuth = async (userData) => {
+    const response = await saveUser(userData)
+    console.log(response, 'onTelegramAuth')
+    user.value = response.data
   }
 })
 </script>

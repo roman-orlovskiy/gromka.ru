@@ -20,9 +20,9 @@ export const useMainStore = defineStore('main', () => {
   };
 
   const getUserFromApi = async () => {
-    const userData = await getUser();
-    user.value = userData.user;
-    console.log('User:', userData);
+    const response = await getUser();
+    user.value = response.data;
+    console.log('getUserFromApi:', response.data);
   };
 
   // Функция для получения данных пользователя из Telegram
@@ -38,9 +38,9 @@ export const useMainStore = defineStore('main', () => {
         console.log('Telegram User:', tgUser);
         console.log('Telegram Init Data:', window.Telegram.WebApp.initDataUnsafe);
         console.log('Signature:', signature.value);
-        const userData = await saveUser(tgUser);
-        user.value = userData.user;
-        console.log('User:', userData);
+        const response = await saveUser(tgUser);
+        user.value = response.data;
+        console.log('getTelegramUser:', response.data);
       }
     }
   };
