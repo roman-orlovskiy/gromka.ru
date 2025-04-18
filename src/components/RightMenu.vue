@@ -17,10 +17,13 @@
 
     <div>
       <div class="right-menu__items">
-        <div class="right-menu__item right-menu__item--auth">
+        <RouterLink
+          to="/auth"
+          class="right-menu__item right-menu__item--auth"
+        >
           <AuthIcon />
           <span>Войти</span>
-        </div>
+        </RouterLink>
       </div>
     </div>
   </div>

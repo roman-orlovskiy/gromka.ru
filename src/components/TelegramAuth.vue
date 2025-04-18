@@ -32,19 +32,11 @@ onMounted(() => {
 
 <style lang="scss">
 .telegram-auth {
-  position: fixed;
-  left: 0;
-  bottom: 8rem;
-  right: 20rem;
-  z-index: 1200;
   display: flex;
   justify-content: center;
 
   @include layout-aspect-mobile {
     right: 0;
-  }
-
-  &__container {
   }
 }
 </style>
