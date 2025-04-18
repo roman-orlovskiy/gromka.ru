@@ -10,7 +10,8 @@
     "lint": "eslint . --fix",
     "format": "prettier --write src/",
     "server": "php -S localhost:8000 -t public/api",
-    "apache": "sudo service apache2 start"
+    "apache": "sudo service apache2 start",
+    "mysql": "sudo service mysql start"
   },
   "dependencies": {
     "axios": "^1.8.2",

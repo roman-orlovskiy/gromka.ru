@@ -1,16 +1,27 @@
 <template>
   <div class="right-menu">
-    <div class="right-menu__items">
-      <RouterLink
-        v-for="item in menuItems"
-        :key="item.text"
-        :to="item.to"
-        class="right-menu__item"
-        :class="{ 'right-menu__item--active': isActive(item.name) }"
-      >
-        <component :is="item.icon" />
-        <span>{{ item.text }}</span>
-      </RouterLink>
+    <div>
+      <div class="right-menu__items">
+        <RouterLink
+          v-for="item in menuItems"
+          :key="item.text"
+          :to="item.to"
+          class="right-menu__item"
+          :class="{ 'right-menu__item--active': isActive(item.name) }"
+        >
+          <component :is="item.icon" />
+          <span>{{ item.text }}</span>
+        </RouterLink>
+      </div>
+    </div>
+
+    <div>
+      <div class="right-menu__items">
+        <div class="right-menu__item right-menu__item--auth">
+          <AuthIcon />
+          <span>Войти</span>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -19,6 +30,7 @@
 import MainIcon from '@/components/icons/MainIcon.vue'
 import PerfIcon from '@/components/icons/PerfIcon.vue'
 import DemoIcon from '@/components/icons/DemoIcon.vue'
+import AuthIcon from '@/components/icons/AuthIcon.vue'
 import { RouterLink, useRoute } from 'vue-router'
 
 const route = useRoute()
@@ -130,13 +142,13 @@ const menuItems = [
     }
 
     &--auth {
-      background-color: $color-primary;
-      color: $color-white;
+      background-color: $color-primary-light;
+      color: $color-black;
       border-radius: 0;
       font-size: 2rem;
 
       &:first-child {
-        border-radius: 0;
+        border-radius: 0 0 0 3rem;
       }
 
       &:hover {
@@ -146,7 +158,7 @@ const menuItems = [
       svg {
         width: 3.5rem;
         path {
-          fill: $color-white;
+          fill: $color-primary;
         }
       }
     }
