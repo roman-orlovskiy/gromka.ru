@@ -6,7 +6,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-
+import { saveUser } from '@/services/api'
 const authContainer = ref(null)
 
 
@@ -24,8 +24,9 @@ onMounted(() => {
     authContainer.value.appendChild(script)
   }
 
-  window.onTelegramAuth = (user) => {
-    console.log(user)
+  window.onTelegramAuth = async (user) => {
+    const userData = await saveUser(user)
+    console.log(userData)
   }
 })
 </script>
