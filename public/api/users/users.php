@@ -39,7 +39,14 @@ function saveSession($conn, $userId) {
     $stmt = $conn->prepare('INSERT INTO sessions (user_id, token, createdAt) VALUES (?, ?, NOW())');
     $stmt->bind_param('is', $userId, $sessionToken);
     $stmt->execute();
-    setcookie('session_token', $sessionToken, time() + (86400 * 30), "/", "", true, true); // Куки на 30 дней с флагами Secure и HttpOnly
+    setcookie('session_token', $sessionToken, [
+        'expires' => time() + (86400 * 30),
+        'path' => '/',
+        'domain' => '', // Укажите домен, если необходимо
+        'secure' => true, // Убедитесь, что ваш сайт работает по HTTPS
+        'httponly' => true,
+        'samesite' => 'None' // Установите 'None' для междоменных запросов
+    ]);
 }
 
 function manageSession($conn, $user) {
