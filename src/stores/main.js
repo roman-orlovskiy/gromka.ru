@@ -8,7 +8,7 @@ export const useMainStore = defineStore('main', () => {
   const startAppParam = ref(null);
   const user = ref({});
 
-  const isUserLoaded = computed(() => user.value.id);
+  const isUserLoaded = computed(() => user.value?.id);
 
   const openModal = (type) => {
     console.log('openModal', type);
@@ -27,7 +27,7 @@ export const useMainStore = defineStore('main', () => {
 
   // Функция для получения данных пользователя из Telegram
   const getTelegramUser = async () => {
-    if (user.value.id) {
+    if (user.value?.id) {
       return;
     }
 

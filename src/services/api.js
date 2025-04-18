@@ -7,7 +7,7 @@ const api = axios.create({
 
 export const getEvents = async () => {
   try {
-    const response = await api.get('/events')
+    const response = await api.get('/events/')
     return response.data
   } catch (error) {
     console.error('Error fetching events:', error)
@@ -27,7 +27,7 @@ export const defaultTestUser = {
 
 export const saveUser = async (user) => {
   try {
-    const response = await api.post('/users', user)
+    const response = await api.post('/users/', user)
     return response.data
   } catch (error) {
     console.error('Error saving user:', error)
