@@ -37,7 +37,7 @@ export const saveUser = async (user) => {
 
 export const getUser = async (id = 'current') => {
   try {
-    const response = await api.get(`/users?id=${id}`)
+    const response = await api.get(`/users/?id=${id}`)
     return response.data
   } catch (error) {
     console.error('Error fetching user:', error)
