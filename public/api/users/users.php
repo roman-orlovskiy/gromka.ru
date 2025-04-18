@@ -51,18 +51,18 @@ switch ($method) {
                     $user = $result->fetch_assoc();
 
                     if ($user) {
-                        echo json_encode(['status' => 'success', 'message' => 'Пользователь найден', 'user' => $user]);
+                        echo json_encode(['status' => 'success', 'message' => 'Пользователь найден', 'data' => $user]);
                     } else {
-                        echo json_encode(['status' => 'error', 'message' => 'Пользователь не найден']);
+                        echo json_encode(['status' => 'error', 'message' => 'Пользователь не найден', 'data' => (object)[]]);
                     }
                 } else {
-                    echo json_encode(['status' => 'error', 'message' => 'Сессия не найдена']);
+                    echo json_encode(['status' => 'error', 'message' => 'Сессия не найдена', 'data' => (object)[]]);
                 }
             } else {
-                echo json_encode(['status' => 'error', 'message' => 'Куки не найдены']);
+                echo json_encode(['status' => 'error', 'message' => 'Куки не найдены', 'data' => (object)[]]);
             }
         } else {
-            echo json_encode(['status' => 'error', 'message' => 'Неверный параметр запроса']);
+            echo json_encode(['status' => 'error', 'message' => 'Неверный параметр запроса', 'data' => (object)[]]);
         }
         break;
 
@@ -79,7 +79,7 @@ switch ($method) {
 
             if ($user) {
                 // Пользователь найден, возвращаем его данные
-                echo json_encode(['status' => 'success', 'message' => 'Пользователь подлинный', 'user' => $user]);
+                echo json_encode(['status' => 'success', 'message' => 'Пользователь подлинный', 'data' => $user]);
             } else {
                 // Пользователь не найден, создаем нового
                 $stmt = $conn->prepare('INSERT INTO users (tg_id, first_name, last_name, photo_url, tg_username, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, NOW(), NOW())');
@@ -94,7 +94,7 @@ switch ($method) {
                 $result = $stmt->get_result();
                 $newUser = $result->fetch_assoc();
                 
-                echo json_encode(['status' => 'success', 'message' => 'Пользователь создан', 'user' => $newUser]);
+                echo json_encode(['status' => 'success', 'message' => 'Пользователь создан', 'data' => $newUser]);
             }
 
             $currentSession = getSessionByToken($conn, $_COOKIE['session_token']);
@@ -108,12 +108,12 @@ switch ($method) {
                 setcookie('session_token', $sessionToken, time() + (86400 * 30), "/", "", true, true); // Куки на 30 дней с флагами Secure и HttpOnly
             }
         } else {
-            echo json_encode(['status' => 'error', 'message' => 'Пользователь не подлинный']);
+            echo json_encode(['status' => 'error', 'message' => 'Пользователь не подлинный', 'data' => (object)[]]);
         }
         break;
 
     default:
-        echo json_encode(['message' => 'Method not allowed']);
+        echo json_encode(['status' => 'error', 'message' => 'Method not allowed', 'data' => (object)[]]);
         break;
 }
 
