@@ -5,6 +5,8 @@ $botToken = '6007443006:AAGnu25ziaZNRGPtKmenUtByx-5u-p_dQ5c';
 require '../utils/db.php';
 
 // Установка заголовков
+require '../utils/cors.php';
+setupCORS();
 header("Content-Type: application/json");
 
 // Получение метода запроса

@@ -3,6 +3,8 @@
 require '../utils/db.php';
 
 // Установка заголовков
+require '../utils/cors.php';
+setupCORS();
 header("Content-Type: application/json");
 
 // Получение метода запроса
