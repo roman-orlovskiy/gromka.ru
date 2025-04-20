@@ -105,6 +105,13 @@ switch ($method) {
 
             if ($user) {
                 manageSession($conn, $user);
+                if (isset($data['username'])) {
+                    $stmt = $conn->prepare('UPDATE users SET tg_username = ? WHERE id = ?');
+                    $stmt->bind_param('si', $data['username'], $user['id']);
+                    $stmt->execute();
+                    $user['tg_username'] = $data['username'];
+                }
+                
                 // Пользователь найден, возвращаем его данные
                 echo json_encode(['status' => 'success', 'message' => 'Пользователь подлинный', 'data' => $user]);
             } else {
