@@ -27,10 +27,6 @@ export const useMainStore = defineStore('main', () => {
 
   // Функция для получения данных пользователя из Telegram
   const getTelegramUser = async () => {
-    if (user.value?.id) {
-      return;
-    }
-
     if (window.Telegram && window.Telegram.WebApp) {
       const tgUser = window.Telegram.WebApp.initDataUnsafe.user;
       signature.value = window.Telegram.WebApp.initDataUnsafe.signature;
