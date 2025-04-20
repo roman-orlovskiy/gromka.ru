@@ -9,6 +9,12 @@ export const useMainStore = defineStore('main', () => {
   const user = ref({});
 
   const isUserLoaded = computed(() => user.value?.id);
+  const tgUsernameError = computed(() => {
+    if (isUserLoaded.value && !user.value?.tg_username) {
+      return 'Настройте логин в телеграм и перезайдите'
+    }
+    return ''
+  })
 
   const openModal = (type) => {
     console.log('openModal', type);
@@ -66,5 +72,6 @@ export const useMainStore = defineStore('main', () => {
     user,
     getUserFromApi,
     isUserLoaded,
+    tgUsernameError,
   };
 });

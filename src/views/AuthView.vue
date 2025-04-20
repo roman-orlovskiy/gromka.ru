@@ -31,12 +31,10 @@ import { storeToRefs } from 'pinia'
 import BaseButton from '@/components/BaseButton.vue'
 import BaseInput from '@/components/BaseInput.vue'
 const mainStore = useMainStore()
-const { user, isUserLoaded } = storeToRefs(mainStore)
+const { user, isUserLoaded, tgUsernameError } = storeToRefs(mainStore)
 import { updateUser } from '@/services/api'
-import { ref, onMounted } from 'vue'
 
 let updateTimeout
-const tgUsernameError = ref('')
 
 const debounceUpdateUser = () => {
   clearTimeout(updateTimeout)
@@ -62,14 +60,6 @@ const handleLastNameInput = (event) => {
     debounceUpdateUser()
   }
 }
-
-const emptyTgUsernameError = 'Настройте логин в телеграм и перезайдите'
-
-onMounted(() => {
-  if (!user.value.tg_username) {
-    tgUsernameError.value = emptyTgUsernameError
-  }
-})
 </script>
 
 <style scoped lang="scss">
