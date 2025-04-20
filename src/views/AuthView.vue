@@ -63,7 +63,7 @@ const handleLastNameInput = (event) => {
   }
 }
 
-const emptyTgUsernameError = 'Настройте логин в телеграм и переззайдите'
+const emptyTgUsernameError = 'Настройте логин в телеграм и перезайдите'
 
 onMounted(() => {
   if (!user.value.tg_username) {
