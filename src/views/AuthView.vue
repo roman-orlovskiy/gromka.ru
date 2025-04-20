@@ -34,12 +34,18 @@ const debounceUpdateUser = () => {
 
 const handleFirstNameInput = (event) => {
   user.value.first_name = event.target.value
-  debounceUpdateUser()
+
+  if (user.value.first_name) {
+    debounceUpdateUser()
+  }
 }
 
 const handleLastNameInput = (event) => {
   user.value.last_name = event.target.value
-  debounceUpdateUser()
+
+  if (user.value.last_name) {
+    debounceUpdateUser()
+  }
 }
 </script>
 
@@ -61,7 +67,7 @@ const handleLastNameInput = (event) => {
   &__content {
     display: flex;
     flex-direction: column;
-    gap: 1rem;
+    gap: 2rem;
   }
 
   &__logout {
