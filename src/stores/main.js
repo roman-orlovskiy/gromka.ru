@@ -44,11 +44,11 @@ export const useMainStore = defineStore('main', () => {
         const response = await saveUser({
           auth_date: initData.auth_date,
           first_name: tgUser.first_name,
+          hash: initData.hash,
+          id: tgUser.id,
           last_name: tgUser.last_name,
           photo_url: tgUser.photo_url,
           username: tgUser.username,
-          hash: initData.hash,
-          id: tgUser.id,
         });
         user.value = response.data;
         console.log('getTelegramUser:', response.data);
