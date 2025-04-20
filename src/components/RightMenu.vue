@@ -31,8 +31,6 @@
 
 <script setup>
 import MainIcon from '@/components/icons/MainIcon.vue'
-import PerfIcon from '@/components/icons/PerfIcon.vue'
-import DemoIcon from '@/components/icons/DemoIcon.vue'
 import AuthIcon from '@/components/icons/AuthIcon.vue'
 import { RouterLink, useRoute } from 'vue-router'
 import { useMainStore } from '@/stores/main'
@@ -54,18 +52,6 @@ const menuItems = [
     text: 'События',
     to: '/',
     name: 'home',
-  },
-  {
-    icon: PerfIcon,
-    text: 'Перформансы',
-    to: '/performances',
-    name: 'performances',
-  },
-  {
-    icon: DemoIcon,
-    text: 'Демо',
-    to: '/demo',
-    name: 'demo',
   },
 ]
 </script>
