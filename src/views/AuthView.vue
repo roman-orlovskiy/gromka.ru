@@ -4,8 +4,18 @@
     <TelegramAuth v-if="!isUserLoaded" />
 
     <div v-if="isUserLoaded" class="auth-view__content">
+      <div class="auth-view__avatar">
+        <img :src="user.photo_url" alt="avatar" />
+      </div>
       <BaseInput :value="user.first_name" @input="handleFirstNameInput" placeholder="Имя" />
       <BaseInput :value="user.last_name" @input="handleLastNameInput" placeholder="Фамилия" />
+      <BaseInput
+        :value="user.tg_username"
+        @input="handleTgUsernameInput"
+        placeholder="Телеграм"
+        mask="t.me/"
+      />
+
       <div class="auth-view__logout">
         <BaseButton @click="mainStore.logout">Выйти</BaseButton>
       </div>
@@ -31,6 +41,8 @@ const debounceUpdateUser = () => {
     updateUser(user.value)
   }, 1000)
 }
+
+console.log(user.value)
 
 const handleFirstNameInput = (event) => {
   user.value.first_name = event.target.value
@@ -58,6 +70,19 @@ const handleLastNameInput = (event) => {
   min-height: 100%;
   font-size: 2rem;
   padding: 2rem;
+
+  &__avatar {
+    width: 10rem;
+    height: 10rem;
+    border-radius: 50%;
+    overflow: hidden;
+
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+  }
 
   &__title {
     font-size: 5rem;
