@@ -1,19 +1,23 @@
 <template>
   <div class="base-input">
     <div class="base-input__wrapper">
-      <span v-if="mask" class="base-input__mask">{{ mask }}</span>
-      <input
-        type="text"
-        class="base-input__item"
-        :class="{
-          'base-input__item--error': error,
-          'base-input__item--shake': showShake,
-          'base-input__item--mask': mask,
-        }"
-        :placeholder="placeholder"
-        :value="value"
-        @input="handleInput"
-      />
+      <div class="base-input__input-wrapper">
+        <span v-if="mask" class="base-input__mask">{{ mask }}</span>
+        <input
+          type="text"
+          class="base-input__item"
+          :class="{
+            'base-input__item--error': error,
+            'base-input__item--shake': showShake,
+            'base-input__item--mask': mask,
+          }"
+          :placeholder="placeholder"
+          :value="value"
+          @input="handleInput"
+          :disabled="disabled"
+        />
+        <div v-if="disabled" class="base-input__overlay"></div>
+      </div>
       <div v-if="error" class="base-input__error">{{ error }}</div>
       <div v-if="value" class="base-input__placeholder">{{ placeholder }}</div>
     </div>
@@ -42,6 +46,10 @@ defineProps({
     type: String,
     default: '',
   },
+  disabled: {
+    type: Boolean,
+    default: false,
+  },
 })
 
 const emit = defineEmits(['handleInput'])
@@ -60,13 +68,17 @@ const handleInput = (event) => {
 
   &__mask {
     position: absolute;
-    top: 50%;
+    top: 3rem;
     left: 2rem;
     transform: translateY(-50%);
     font-size: 2.8rem;
     color: $color-primary;
     opacity: 0.8;
     pointer-events: none;
+  }
+
+  &__input-wrapper {
+    position: relative;
   }
 
   &__item {
@@ -110,9 +122,9 @@ const handleInput = (event) => {
 
   &__placeholder {
     position: absolute;
-    top: -1.5rem;
+    top: -2rem;
     left: 2rem;
-    font-size: 1rem;
+    font-size: 1.4rem;
     color: $color-primary;
     transition: all 0.3s ease;
   }
@@ -122,6 +134,21 @@ const handleInput = (event) => {
     font-size: 1.4rem;
     margin-top: 0.5rem;
     padding-left: 3rem;
+  }
+
+  &__overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(255, 255, 255, 0.5);
+    pointer-events: none;
+    border-radius: 1.5rem;
+
+    @include layout-aspect-mobile {
+      border-radius: 0.7rem;
+    }
   }
 }
 </style>

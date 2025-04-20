@@ -10,10 +10,11 @@
       <BaseInput :value="user.first_name" @input="handleFirstNameInput" placeholder="Имя" />
       <BaseInput :value="user.last_name" @input="handleLastNameInput" placeholder="Фамилия" />
       <BaseInput
+        :disabled="true"
         :value="user.tg_username"
-        @input="handleTgUsernameInput"
         placeholder="Телеграм"
         mask="t.me/"
+        :error="tgUsernameError"
       />
 
       <div class="auth-view__logout">
@@ -32,8 +33,10 @@ import BaseInput from '@/components/BaseInput.vue'
 const mainStore = useMainStore()
 const { user, isUserLoaded } = storeToRefs(mainStore)
 import { updateUser } from '@/services/api'
+import { ref, onMounted } from 'vue'
 
 let updateTimeout
+const tgUsernameError = ref('')
 
 const debounceUpdateUser = () => {
   clearTimeout(updateTimeout)
@@ -59,6 +62,14 @@ const handleLastNameInput = (event) => {
     debounceUpdateUser()
   }
 }
+
+const emptyTgUsernameError = 'У вас не установлен username в профиле Telegram'
+
+onMounted(() => {
+  if (!user.value.tg_username) {
+    tgUsernameError.value = emptyTgUsernameError
+  }
+})
 </script>
 
 <style scoped lang="scss">
@@ -92,7 +103,7 @@ const handleLastNameInput = (event) => {
   &__content {
     display: flex;
     flex-direction: column;
-    gap: 2rem;
+    gap: 3rem;
   }
 
   &__logout {
