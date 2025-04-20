@@ -63,7 +63,7 @@ const handleLastNameInput = (event) => {
   }
 }
 
-const emptyTgUsernameError = 'У вас не установлен username в профиле Telegram'
+const emptyTgUsernameError = 'Настройте логин в телеграм и переззайдите'
 
 onMounted(() => {
   if (!user.value.tg_username) {
@@ -81,6 +81,19 @@ onMounted(() => {
   min-height: 100%;
   font-size: 2rem;
   padding: 2rem;
+
+  &__content {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    align-items: center;
+    width: 100%;
+    max-width: 40rem;
+
+    @include layout-aspect-mobile {
+      padding-bottom: 8rem;
+    }
+  }
 
   &__avatar {
     width: 10rem;

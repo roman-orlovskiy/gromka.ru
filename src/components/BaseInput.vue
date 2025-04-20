@@ -61,6 +61,7 @@ const handleInput = (event) => {
 
 <style scoped lang="scss">
 .base-input {
+  width: 100%;
   &__wrapper {
     width: 100%;
     position: relative;
@@ -75,6 +76,11 @@ const handleInput = (event) => {
     color: $color-primary;
     opacity: 0.8;
     pointer-events: none;
+
+    @include layout-aspect-mobile {
+      font-size: 1.8rem;
+      top: 2rem;
+    }
   }
 
   &__input-wrapper {
@@ -97,7 +103,6 @@ const handleInput = (event) => {
     @include layout-aspect-mobile {
       font-size: 1.8rem;
       padding: 0.7rem 1.4rem;
-      padding-left: calc(1.4rem + 1.8rem); /* Учитываем ширину маски */
       border-radius: 0.7rem;
     }
 
@@ -117,6 +122,10 @@ const handleInput = (event) => {
 
     &--mask {
       padding-left: 10rem;
+
+      @include layout-aspect-mobile {
+        padding-left: 6rem;
+      }
     }
   }
 
@@ -127,6 +136,11 @@ const handleInput = (event) => {
     font-size: 1.4rem;
     color: $color-primary;
     transition: all 0.3s ease;
+
+    @include layout-aspect-mobile {
+      font-size: 1.2rem;
+      left: 1.6rem;
+    }
   }
 
   &__error {
@@ -134,6 +148,11 @@ const handleInput = (event) => {
     font-size: 1.4rem;
     margin-top: 0.5rem;
     padding-left: 3rem;
+
+    @include layout-aspect-mobile {
+      font-size: 1.2rem;
+      padding-left: 2rem;
+    }
   }
 
   &__overlay {
