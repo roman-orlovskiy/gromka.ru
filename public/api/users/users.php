@@ -130,6 +130,25 @@ switch ($method) {
         }
         break;
 
+    case 'PUT':
+        if (isset($_COOKIE['session_token'])) {
+            $sessionToken = $_COOKIE['session_token'];
+            $session = getSessionByToken($conn, $sessionToken);
+            if ($session) {
+                $data = json_decode(file_get_contents('php://input'), true);
+                $userId = $session['user_id'];
+                $stmt = $conn->prepare('UPDATE users SET first_name = ?, last_name = ? WHERE id = ?');
+                $stmt->bind_param('ssi', $data['first_name'], $data['last_name'], $userId);
+                $stmt->execute();
+                echo json_encode(['status' => 'success', 'message' => 'Данные пользователя обновлены']);
+            } else {
+                echo json_encode(['status' => 'error', 'message' => 'Сессия не найдена', 'data' => (object)[]]);
+            }
+        } else {
+            echo json_encode(['status' => 'error', 'message' => 'Сессия не найдена или не совпадает', 'data' => (object)[]]);
+        }
+        break;
+
     default:
         echo json_encode(['status' => 'error', 'message' => 'Method not allowed', 'data' => (object)[]]);
         break;

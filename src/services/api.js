@@ -46,4 +46,14 @@ export const getUser = async (id = 'current') => {
   }
 }
 
+export const updateUser = async (user) => {
+  try {
+    const response = await api.put('/users/', user)
+    return response.data
+  } catch (error) {
+    console.error('Error updating user:', error)
+    throw error
+  }
+}
+
 export default api

@@ -3,10 +3,11 @@
     <h1 class="auth-view__title">Авторизация</h1>
     <TelegramAuth v-if="!isUserLoaded" />
 
-    <div v-if="isUserLoaded">
-      <div>Добро пожаловать, {{ user.first_name }}</div>
-      <div>
-        <button @click="mainStore.logout">Выйти</button>
+    <div v-if="isUserLoaded" class="auth-view__content">
+      <BaseInput :value="user.first_name" @input="handleFirstNameInput" placeholder="Имя" />
+      <BaseInput :value="user.last_name" @input="handleLastNameInput" placeholder="Фамилия" />
+      <div class="auth-view__logout">
+        <BaseButton @click="mainStore.logout">Выйти</BaseButton>
       </div>
     </div>
   </div>
@@ -16,23 +17,55 @@
 import TelegramAuth from '@/components/TelegramAuth.vue'
 import { useMainStore } from '@/stores/main'
 import { storeToRefs } from 'pinia'
-
+import BaseButton from '@/components/BaseButton.vue'
+import BaseInput from '@/components/BaseInput.vue'
 const mainStore = useMainStore()
 const { user, isUserLoaded } = storeToRefs(mainStore)
+import { updateUser } from '@/services/api'
+
+let updateTimeout
+
+const debounceUpdateUser = () => {
+  clearTimeout(updateTimeout)
+  updateTimeout = setTimeout(() => {
+    updateUser(user.value)
+  }, 1000)
+}
+
+const handleFirstNameInput = (event) => {
+  user.value.first_name = event.target.value
+  debounceUpdateUser()
+}
+
+const handleLastNameInput = (event) => {
+  user.value.last_name = event.target.value
+  debounceUpdateUser()
+}
 </script>
 
 <style scoped lang="scss">
 .auth-view {
   display: flex;
-  justify-content: center;
   align-items: center;
+  flex-direction: column;
   gap: 2rem;
   min-height: 100%;
-  flex-direction: column;
+  font-size: 2rem;
+  padding: 2rem;
 
   &__title {
     font-size: 5rem;
     font-weight: 700;
+  }
+
+  &__content {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  &__logout {
+    margin-top: 2rem;
   }
 }
 </style>
