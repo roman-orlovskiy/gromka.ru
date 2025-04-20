@@ -91,7 +91,7 @@ onMounted(() => {
     max-width: 40rem;
 
     @include layout-aspect-mobile {
-      padding-bottom: 8rem;
+      padding-bottom: 9rem;
     }
   }
 

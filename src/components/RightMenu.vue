@@ -74,7 +74,7 @@ const menuItems = [
     bottom: 0;
     left: 0;
     width: 100%;
-    height: 5rem;
+    height: 8rem;
     border-radius: 0;
   }
 
@@ -114,13 +114,7 @@ const menuItems = [
     @include layout-aspect-mobile {
       flex: 1;
       justify-content: center;
-      padding: 0;
       border-bottom: none;
-      height: 100%;
-
-      span {
-        display: none;
-      }
 
       &:first-child {
         border-radius: 0;
@@ -136,7 +130,7 @@ const menuItems = [
     }
 
     &--auth {
-      background-color: $color-primary-light;
+      background-color: $color-secondary-light;
       color: $color-black;
       border-radius: 0;
       font-size: 2rem;
@@ -153,6 +147,12 @@ const menuItems = [
         width: 3.5rem;
         path {
           fill: $color-primary;
+        }
+      }
+
+      @include layout-aspect-mobile {
+        &:first-child {
+          border-radius: 0;
         }
       }
     }
