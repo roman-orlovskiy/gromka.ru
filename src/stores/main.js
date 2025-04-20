@@ -37,11 +37,19 @@ export const useMainStore = defineStore('main', () => {
       const tgUser = window.Telegram.WebApp.initDataUnsafe.user;
       signature.value = window.Telegram.WebApp.initDataUnsafe.signature;
       if (tgUser) {
-        console.log('Telegram User:', tgUser);
-        console.log('Telegram Init Data:', window.Telegram.WebApp.initDataUnsafe);
+        const initData = window.Telegram.WebApp.initDataUnsafe;
+        console.log('Telegram Init Data:', initData);
         console.log('Signature:', signature.value);
-        tgUser.hash = window.Telegram.WebApp.initDataUnsafe.hash;
-        const response = await saveUser(tgUser);
+        tgUser.hash = initData.hash;
+        const response = await saveUser({
+          auth_date: initData.auth_date,
+          first_name: tgUser.first_name,
+          last_name: tgUser.last_name,
+          photo_url: tgUser.photo_url,
+          username: tgUser.username,
+          hash: initData.hash,
+          id: tgUser.id,
+        });
         user.value = response.data;
         console.log('getTelegramUser:', response.data);
       }
