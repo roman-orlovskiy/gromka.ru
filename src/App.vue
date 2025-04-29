@@ -18,6 +18,8 @@ import { storeToRefs } from 'pinia'
 const mainStore = useMainStore()
 const { modalType } = storeToRefs(mainStore)
 
+const isParyPage = true;
+
 onMounted(async () => {
   await mainStore.getUserFromApi()
   await mainStore.getTelegramUser()
