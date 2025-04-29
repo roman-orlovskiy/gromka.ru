@@ -49,7 +49,7 @@ const isActive = (name) => {
 const menuItems = [
   {
     icon: MainIcon,
-    text: 'События',
+    text: 'Главная',
     to: '/',
     name: 'home',
   },
@@ -134,6 +134,7 @@ const menuItems = [
       color: $color-black;
       border-radius: 0;
       font-size: 2rem;
+      display: none;
 
       &:first-child {
         border-radius: 0 0 0 3rem;
