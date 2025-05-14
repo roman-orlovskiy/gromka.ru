@@ -1,7 +1,10 @@
 <template>
   <div class="pary">
     <div class="pary__content">
-      <div class="pary__title">Поддержи Пари НН</div>
+      <div class="pary__title">
+        Поддержи Пари НН<br />
+        и учавствуй в розыгрыше
+      </div>
       <div class="pary__inputs-row">
         <BaseInput
           placeholder="Ряд"
@@ -226,12 +229,13 @@ const sectorOptions = ref([
   min-height: 100%;
 
   &__title {
-    font-size: 4.2rem;
+    font-size: 2.5rem;
     font-weight: $font-weight-bold;
     color: $color-primary;
     margin-bottom: 1rem;
     width: 100%;
     text-align: center;
+    line-height: 1.2;
   }
 
   &__content {

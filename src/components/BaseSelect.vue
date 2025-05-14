@@ -95,7 +95,7 @@ onUnmounted(() => {
     border: 0.2rem solid $color-primary;
     border-radius: 1.5rem;
     font-size: 2.8rem;
-    padding: 1rem 3rem;
+    padding: 1rem 2rem;
     outline: none;
     color: $color-primary;
     font-family: $font-default;
@@ -103,6 +103,12 @@ onUnmounted(() => {
     box-sizing: border-box;
     background-color: $color-white;
     cursor: pointer;
+
+    @include layout-aspect-mobile {
+      font-size: 1.8rem;
+      padding: 0.7rem 1.4rem;
+      border-radius: 0.7rem;
+    }
 
     &--error {
       border-color: $color-error;
@@ -152,6 +158,11 @@ onUnmounted(() => {
     cursor: pointer;
     transition: background-color 0.3s ease;
 
+    @include layout-aspect-mobile {
+      font-size: 1.8rem;
+      padding: 0.7rem 1.4rem;
+    }
+
     &:hover {
       background-color: rgba($color-primary, 0.1);
     }
@@ -166,13 +177,6 @@ onUnmounted(() => {
     font-size: 1.4rem;
     margin-top: 0.5rem;
     padding-left: 3rem;
-  }
-
-  @include layout-mobile {
-    &__header {
-      border-radius: 1.5rem;
-      font-size: 2.8rem;
-    }
   }
 }
 </style>
