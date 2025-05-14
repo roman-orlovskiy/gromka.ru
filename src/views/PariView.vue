@@ -367,7 +367,6 @@ const sectorOptions = ref([
     right: 0;
     background-color: $color-pary;
     z-index: 1000;
-    border: 5px solid $color-white;
     color: $color-white;
     display: flex;
     flex-direction: column;
