@@ -386,7 +386,7 @@ const sectorOptions = ref([
     svg {
       width: 3.2rem;
       height: 3.2rem;
-      fill: $color-white;
+      fill: rgba($color-white, 0.5);
     }
   }
 }
