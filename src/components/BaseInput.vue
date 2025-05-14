@@ -4,13 +4,13 @@
       <div class="base-input__input-wrapper">
         <span v-if="mask" class="base-input__mask">{{ mask }}</span>
         <input
-          type="text"
           class="base-input__item"
           :class="{
             'base-input__item--error': error,
             'base-input__item--shake': showShake,
             'base-input__item--mask': mask,
           }"
+          :type="type"
           :placeholder="placeholder"
           :value="value"
           @input="handleInput"
@@ -49,6 +49,10 @@ defineProps({
   disabled: {
     type: Boolean,
     default: false,
+  },
+  type: {
+    type: String,
+    default: 'text',
   },
 })
 

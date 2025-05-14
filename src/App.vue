@@ -8,7 +8,6 @@
 </template>
 
 <script setup>
-import { onMounted } from 'vue'
 import { RouterView } from 'vue-router'
 import RightMenu from '@/components/RightMenu.vue'
 import BaseModal from '@/components/BaseModal.vue'
@@ -19,11 +18,6 @@ const mainStore = useMainStore()
 const { modalType } = storeToRefs(mainStore)
 
 const isParyPage = true;
-
-onMounted(async () => {
-  await mainStore.getUserFromApi()
-  await mainStore.getTelegramUser()
-})
 </script>
 
 <style lang="scss">

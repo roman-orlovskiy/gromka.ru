@@ -12,6 +12,7 @@
           @handleInput="handleRowInput"
           :error="errors.row"
           :show-shake="shakeFields.row"
+          type="number"
         />
         <BaseInput
           placeholder="Место"
@@ -19,6 +20,7 @@
           @handleInput="handleSeatInput"
           :error="errors.seat"
           :show-shake="shakeFields.seat"
+          type="number"
         />
       </div>
       <BaseSelect
