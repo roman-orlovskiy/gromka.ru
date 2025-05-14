@@ -36,7 +36,9 @@
           <div>
             <div class="pary__instruction-number">1</div>
           </div>
-          <div class="pary__instruction-text">Введи своё место</div>
+          <div class="pary__instruction-text">
+            <b>Отключи автояркость</b> на телефоне
+          </div>
         </div>
         <div class="pary__instruction-item">
           <div>
@@ -74,6 +76,35 @@
         <div class="pary__close-button" @click="handleCloseLayer">
           <CloseIcon />
         </div>
+
+        <transition name="fade">
+          <div class="pary__instructions" v-if="isInstructionVisible">
+            <div class="pary__instruction-item">
+              <div>
+                <div class="pary__instruction-number">1</div>
+              </div>
+              <div class="pary__instruction-text">
+                <b>Отключи автояркость</b> на телефоне
+              </div>
+            </div>
+            <div class="pary__instruction-item">
+              <div>
+                <div class="pary__instruction-number">2</div>
+              </div>
+              <div class="pary__instruction-text">
+                Включи на телефоне <b>яркость&nbsp;на&nbsp;максимум</b>
+              </div>
+            </div>
+            <div class="pary__instruction-item">
+              <div>
+                <div class="pary__instruction-number">3</div>
+              </div>
+              <div class="pary__instruction-text">
+                <b>Разверни&nbsp;экран&nbsp;к&nbsp;полю</b>
+              </div>
+            </div>
+          </div>
+        </transition>
       </div>
     </transition>
   </div>
@@ -90,6 +121,8 @@ const rowValue = ref('')
 const seatValue = ref('')
 const selectedSector = ref('')
 const isLayerVisible = ref(false)
+const isInstructionVisible = ref(true)
+
 const shakeFields = ref({
   row: false,
   seat: false,
@@ -160,10 +193,17 @@ const handleSectorChange = (event) => {
   errors.value.sector = ''
 }
 
+let instructionTimeout = null
+
 const handleStart = () => {
   if (validateFields()) {
     isLayerVisible.value = true
     enterFullscreen()
+
+    clearTimeout(instructionTimeout)
+    instructionTimeout = setTimeout(() => {
+      isInstructionVisible.value = false
+    }, 4000)
   }
 }
 
@@ -190,6 +230,7 @@ const exitFullscreen = () => {
 
 const handleCloseLayer = () => {
   isLayerVisible.value = false
+  clearTimeout(instructionTimeout)
   exitFullscreen()
 }
 
@@ -303,6 +344,24 @@ const sectorOptions = ref([
     background-color: $color-pary;
     z-index: 1000;
     border: 5px solid $color-white;
+    color: $color-white;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+
+    & .pary__instruction-text {
+      color: $color-white;
+    }
+
+    & .pary__instruction-item {
+      &:last-child {
+        & .pary__instruction-text {
+          font-size: 2.5rem;
+        }
+      }
+    }
 
     &--info {
       display: flex;
