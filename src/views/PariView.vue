@@ -300,7 +300,7 @@ const sectorOptions = ref([
     left: 0;
     bottom: 0;
     right: 0;
-    background-color: $color-primary;
+    background-color: $color-pary;
     z-index: 1000;
 
     &--info {
