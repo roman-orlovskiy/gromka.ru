@@ -3,7 +3,7 @@
     <div class="pary__content">
       <div class="pary__title">
         Поддержи Пари НН<br />
-        и учавствуй в розыгрыше
+        и участвуй в розыгрыше
       </div>
       <div class="pary__inputs-row">
         <BaseInput
@@ -397,7 +397,8 @@ const sectorOptions = ref([
   &__close-button {
     position: absolute;
     top: 1rem;
-    right: 1rem;
+    left: 50%;
+    transform: translateX(-50%);
     background: none;
     border: none;
     cursor: pointer;
