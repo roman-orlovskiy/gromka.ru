@@ -122,6 +122,7 @@ const seatValue = ref('')
 const selectedSector = ref('')
 const isLayerVisible = ref(false)
 const isInstructionVisible = ref(true)
+let wakeLock = null
 
 const shakeFields = ref({
   row: false,
@@ -133,6 +134,27 @@ const errors = ref({
   seat: '',
   sector: '',
 })
+
+const requestWakeLock = async () => {
+  try {
+    if ('wakeLock' in navigator) {
+      wakeLock = await navigator.wakeLock.request('screen')
+    }
+  } catch (err) {
+    console.error('Ошибка при запросе Wake Lock:', err)
+  }
+}
+
+const releaseWakeLock = async () => {
+  if (wakeLock) {
+    try {
+      await wakeLock.release()
+      wakeLock = null
+    } catch (err) {
+      console.error('Ошибка при освобождении Wake Lock:', err)
+    }
+  }
+}
 
 const validateFields = () => {
   let isValid = true
@@ -199,6 +221,7 @@ const handleStart = () => {
   if (validateFields()) {
     isLayerVisible.value = true
     enterFullscreen()
+    requestWakeLock()
 
     clearTimeout(instructionTimeout)
     instructionTimeout = setTimeout(() => {
@@ -232,6 +255,7 @@ const handleCloseLayer = () => {
   isLayerVisible.value = false
   clearTimeout(instructionTimeout)
   exitFullscreen()
+  releaseWakeLock()
 }
 
 const sectorOptions = ref([
