@@ -23,6 +23,11 @@ const router = createRouter({
       component: () => import('../views/PariView.vue'),
     },
     {
+      path: '/parinn-list',
+      name: 'parinn-list',
+      component: () => import('../views/ParinnList.vue'),
+    },
+    {
       path: '/auth',
       name: 'auth',
       component: () => import('../views/AuthView.vue'),
