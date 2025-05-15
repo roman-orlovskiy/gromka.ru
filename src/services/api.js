@@ -1,9 +1,7 @@
-/* global process */
 import axios from 'axios'
 
 const api = axios.create({
-  baseURL: process.env.NODE_ENV === 'production' ? 'https://gromka.ru/api' : '/api',
-  withCredentials: true,
+  baseURL: 'https://d5dfdjso9in9g25dtq1d.k1mxzkh0.apigw.yandexcloud.net/api',
 })
 
 export const getEvents = async () => {
@@ -12,6 +10,16 @@ export const getEvents = async () => {
     return response.data
   } catch (error) {
     console.error('Error fetching events:', error)
+    throw error
+  }
+}
+
+export const getParinn = async () => {
+  try {
+    const response = await api.get('/parinn')
+    return response.data
+  } catch (error) {
+    console.error('Error fetching parinn:', error)
     throw error
   }
 }

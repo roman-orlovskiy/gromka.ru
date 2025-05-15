@@ -92,7 +92,8 @@ import BaseInput from '@/components/BaseInput.vue'
 import BaseSelect from '@/components/BaseSelect.vue'
 import BaseButton from '@/components/BaseButton.vue'
 import CloseIcon from '@/components/icons/CloseIcon.vue'
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
+import { getParinn } from '@/services/api'
 
 const rowValue = ref('')
 const seatValue = ref('')
@@ -262,6 +263,11 @@ const sectorOptions = ref([
   { label: 'D111', value: 'D111' },
   { label: 'D112', value: 'D112' },
 ])
+
+onMounted(async () => {
+  const parinn = await getParinn()
+  console.log(parinn)
+})
 </script>
 
 <style scoped lang="scss">
