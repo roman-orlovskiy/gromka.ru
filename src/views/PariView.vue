@@ -93,7 +93,7 @@ import BaseSelect from '@/components/BaseSelect.vue'
 import BaseButton from '@/components/BaseButton.vue'
 import CloseIcon from '@/components/icons/CloseIcon.vue'
 import { ref, onMounted } from 'vue'
-import { getParinn } from '@/services/api'
+import { getParinn, saveParinn } from '@/services/api'
 
 const rowValue = ref('')
 const seatValue = ref('')
@@ -206,6 +206,8 @@ const handleStart = () => {
     instructionTimeout = setTimeout(() => {
       isInstructionVisible.value = false
     }, 4000)
+
+    saveParinn(`${selectedSector.value}__${rowValue.value}__${seatValue.value}`)
   }
 }
 

@@ -2,6 +2,9 @@ import axios from 'axios'
 
 const api = axios.create({
   baseURL: 'https://d5dfdjso9in9g25dtq1d.k1mxzkh0.apigw.yandexcloud.net/api',
+  headers: {
+    'Content-Type': 'application/json',
+  }
 })
 
 export const getEvents = async () => {
@@ -20,6 +23,22 @@ export const getParinn = async () => {
     return response.data
   } catch (error) {
     console.error('Error fetching parinn:', error)
+    throw error
+  }
+}
+
+export const saveParinn = async (itemId) => {
+  try {
+    const response = await api.post('/parinn', { id: itemId })
+    return response.data
+  } catch (error) {
+    console.error('Error saving parinn:', {
+      message: error.message,
+      status: error.response?.status,
+      statusText: error.response?.statusText,
+      headers: error.response?.headers,
+      data: error.response?.data
+    })
     throw error
   }
 }
