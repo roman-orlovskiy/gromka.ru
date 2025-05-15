@@ -4,31 +4,37 @@
       <h1 class="parinn__title">Список Parinn</h1>
       <div v-if="loading" class="parinn__loading">Загрузка...</div>
       <div v-else-if="error" class="parinn__error">{{ error }}</div>
-      <ul v-else class="parinn__list">
-        <li v-for="item in parinnItems" :key="item.id" class="parinn__item">
-          <div class="parinn__item-info">
-            <div class="parinn__item-details">
-              <div class="parinn__item-detail">
-                <span class="parinn__item-label">Сектор</span>
-                <span class="parinn__item-value">{{ item.sector || '-' }}</span>
-              </div>
-              <div class="parinn__item-detail">
-                <span class="parinn__item-label">Ряд</span>
-                <span class="parinn__item-value">{{ item.row || '-' }}</span>
-              </div>
-              <div class="parinn__item-detail">
-                <span class="parinn__item-label">Место</span>
-                <span class="parinn__item-value">{{ item.seat || '-' }}</span>
+      <div class="parinn__fullwidth" v-else>
+        <ul class="parinn__list">
+          <li v-for="item in parinnItems" :key="item.id" class="parinn__item">
+            <div class="parinn__item-info">
+              <div class="parinn__item-details">
+                <div class="parinn__item-detail">
+                  <span class="parinn__item-label">Сектор</span>
+                  <span class="parinn__item-value">{{ item.sector || '-' }}</span>
+                </div>
+                <div class="parinn__item-detail">
+                  <span class="parinn__item-label">Ряд</span>
+                  <span class="parinn__item-value">{{ item.row || '-' }}</span>
+                </div>
+                <div class="parinn__item-detail">
+                  <span class="parinn__item-label">Место</span>
+                  <span class="parinn__item-value">{{ item.seat || '-' }}</span>
+                </div>
               </div>
             </div>
-          </div>
-          <button class="parinn__delete-button" @click="handleDelete(item.id)">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-          </button>
-        </li>
-      </ul>
+            <button class="parinn__delete-button" @click="handleDelete(item.id)">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+          </li>
+        </ul>
+
+        <BaseButton class="parinn__copy-button" @click="copyToClipboard">
+          Копировать все
+        </BaseButton>
+      </div>
     </div>
   </div>
 </template>
@@ -36,6 +42,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { getParinn, deleteParinn } from '@/services/api'
+import BaseButton from '@/components/BaseButton.vue'
 
 const parinnItems = ref([])
 const loading = ref(true)
@@ -47,6 +54,23 @@ const parseId = (id) => {
     sector: parts[0] || '-',
     row: parts[1] || '-',
     seat: parts[2] || '-'
+  }
+}
+
+const formatItemText = (item) => {
+  return `${item.sector} ${item.row} ${item.seat}`
+}
+
+const copyToClipboard = async () => {
+  const text = [
+    'Список победителей',
+    'Сектор Ряд Место',
+    ...parinnItems.value.map(formatItemText)
+  ].join('\n')
+  try {
+    await navigator.clipboard.writeText(text)
+  } catch (err) {
+    console.error('Ошибка при копировании:', err)
   }
 }
 
@@ -91,6 +115,10 @@ onMounted(async () => {
   justify-content: flex-start;
   padding: 1.5rem 2rem 6rem 2rem;
   min-height: 100%;
+
+  &__fullwidth {
+    width: 100%;
+  }
 
   &__content {
     display: flex;
@@ -201,6 +229,11 @@ onMounted(async () => {
 
   &__error {
     color: $color-error;
+  }
+
+  &__copy-button {
+    margin-top: 1.5rem;
+    align-self: flex-start;
   }
 }
 </style>
