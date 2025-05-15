@@ -32,7 +32,7 @@
         </ul>
 
         <BaseButton class="parinn__copy-button" @click="copyToClipboard">
-          Копировать все
+          Копировать список
         </BaseButton>
       </div>
     </div>
@@ -198,7 +198,7 @@ onMounted(async () => {
   }
 
   &__delete-button {
-    display: flex;
+    display: none;
     align-items: center;
     justify-content: center;
     width: 2.4rem;
