@@ -20,7 +20,9 @@ export const getEvents = async () => {
 export const getParinn = async () => {
   try {
     const response = await api.get('/parinn')
-    return response.data
+    const data = response.data
+    // Перемешиваем массив и берем первые 5 элементов
+    return data.sort(() => Math.random() - 0.5).slice(0, 5)
   } catch (error) {
     console.error('Error fetching parinn:', error)
     throw error
