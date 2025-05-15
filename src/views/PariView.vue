@@ -69,20 +69,12 @@
                 <div class="pary__instruction-number">1</div>
               </div>
               <div class="pary__instruction-text">
-                <b>Отключи автояркость</b> на телефоне
-              </div>
-            </div>
-            <div class="pary__instruction-item">
-              <div>
-                <div class="pary__instruction-number">2</div>
-              </div>
-              <div class="pary__instruction-text">
                 Включи на телефоне <b>яркость&nbsp;на&nbsp;максимум</b>
               </div>
             </div>
             <div class="pary__instruction-item">
               <div>
-                <div class="pary__instruction-number">3</div>
+                <div class="pary__instruction-number">2</div>
               </div>
               <div class="pary__instruction-text">
                 <b>Разверни&nbsp;экран&nbsp;к&nbsp;полю</b>
@@ -205,6 +197,7 @@ let instructionTimeout = null
 const handleStart = () => {
   if (validateFields()) {
     isLayerVisible.value = true
+    isInstructionVisible.value = true
     enterFullscreen()
     requestWakeLock()
 
