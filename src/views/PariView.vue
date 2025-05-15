@@ -52,7 +52,7 @@
       </div>
 
       <div class="pary__button">
-        <BaseButton @click="handleStart">Начать</BaseButton>
+        <BaseButton mode="big" @click="handleStart">Начать</BaseButton>
       </div>
     </div>
 
@@ -390,6 +390,10 @@ const sectorOptions = ref([
       height: 3.2rem;
       fill: rgba($color-white, 0.5);
     }
+  }
+
+  &__button {
+    margin-top: 2rem;
   }
 }
 </style>
