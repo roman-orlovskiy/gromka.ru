@@ -45,6 +45,16 @@ export const saveParinn = async (itemId) => {
   }
 }
 
+export const deleteParinn = async (itemId) => {
+  try {
+    const response = await api.delete(`/parinn/${itemId}`)
+    return response.data
+  } catch (error) {
+    console.error('Error deleting parinn:', error)
+    throw error
+  }
+}
+
 export const defaultTestUser = {
   auth_date: 1744873236,
   first_name: 'Роман',

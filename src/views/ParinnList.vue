@@ -6,7 +6,12 @@
       <div v-else-if="error" class="parinn__error">{{ error }}</div>
       <ul v-else class="parinn__list">
         <li v-for="item in parinnItems" :key="item.id" class="parinn__item">
-          {{ formatId(item.id) }}
+          <span class="parinn__item-text">{{ formatId(item.id) }}</span>
+          <button class="parinn__delete-button" @click="handleDelete(item.id)">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
         </li>
       </ul>
     </div>
@@ -15,7 +20,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { getParinn } from '@/services/api'
+import { getParinn, deleteParinn } from '@/services/api'
 
 const parinnItems = ref([])
 const loading = ref(true)
@@ -34,6 +39,16 @@ const fetchParinn = async () => {
     console.error(err)
   } finally {
     loading.value = false
+  }
+}
+
+const handleDelete = async (id) => {
+  try {
+    await deleteParinn(id)
+    parinnItems.value = parinnItems.value.filter(item => item.id !== id)
+  } catch (err) {
+    error.value = 'Ошибка при удалении'
+    console.error(err)
   }
 }
 
@@ -77,12 +92,43 @@ onMounted(fetchParinn)
   }
 
   &__item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
     padding: 1rem;
     margin: 0.5rem 0;
     background-color: #f5f5f5;
     border-radius: 0.4rem;
     font-size: 1.6rem;
     color: $color-gray-700;
+  }
+
+  &__item-text {
+    flex: 1;
+  }
+
+  &__delete-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.4rem;
+    height: 2.4rem;
+    padding: 0;
+    margin-left: 1rem;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: $color-gray-700;
+    transition: color 0.2s ease;
+
+    &:hover {
+      color: $color-error;
+    }
+
+    svg {
+      width: 100%;
+      height: 100%;
+    }
   }
 
   &__loading,
