@@ -3,7 +3,8 @@
     <div class="pary__content">
       <div class="pary__title">
         Поддержи Пари НН<br />
-        и участвуй в розыгрыше
+        и участвуй<br />
+        в розыгрыше призов
       </div>
       <div class="pary__inputs-row">
         <BaseInput
@@ -37,7 +38,7 @@
             <div class="pary__instruction-number">1</div>
           </div>
           <div class="pary__instruction-text">
-            <b>Отключи автояркость</b> на телефоне
+            Включи на телефоне <b>яркость&nbsp;на&nbsp;максимум</b>
           </div>
         </div>
         <div class="pary__instruction-item">
@@ -45,23 +46,7 @@
             <div class="pary__instruction-number">2</div>
           </div>
           <div class="pary__instruction-text">
-            Включи на телефоне <b>яркость&nbsp;на&nbsp;максимум</b>
-          </div>
-        </div>
-        <div class="pary__instruction-item">
-          <div>
-            <div class="pary__instruction-number">3</div>
-          </div>
-          <div class="pary__instruction-text">
             Нажми "Начать" и <b>разверни&nbsp;экран&nbsp;к&nbsp;полю</b>
-          </div>
-        </div>
-        <div class="pary__instruction-item">
-          <div>
-            <div class="pary__instruction-number">4</div>
-          </div>
-          <div class="pary__instruction-text">
-            Все телефоны вместе образуют красивую картину на стадионе
           </div>
         </div>
       </div>
@@ -296,7 +281,7 @@ const sectorOptions = ref([
   min-height: 100%;
 
   &__title {
-    font-size: 2.5rem;
+    font-size: 2.3rem;
     font-weight: $font-weight-bold;
     color: $color-primary;
     margin-bottom: 1rem;
