@@ -347,6 +347,7 @@ const sectorOptions = ref([
     bottom: 0;
     right: 0;
     background-color: $color-pary;
+    animation: colorShift 1.5s infinite;
     z-index: 1000;
     color: $color-white;
     display: flex;
@@ -397,6 +398,18 @@ const sectorOptions = ref([
 
   &__button {
     margin-top: 2rem;
+  }
+}
+
+@keyframes colorShift {
+  0% {
+    background-color: $color-pary;
+  }
+  50% {
+    background-color: $color-primary;
+  }
+  100% {
+    background-color: $color-pary;
   }
 }
 </style>
