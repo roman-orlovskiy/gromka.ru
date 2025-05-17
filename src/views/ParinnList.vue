@@ -198,7 +198,7 @@ onMounted(async () => {
   }
 
   &__delete-button {
-    display: none;
+    display: flex;
     align-items: center;
     justify-content: center;
     width: 2.4rem;
