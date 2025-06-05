@@ -53,7 +53,12 @@ body {
   -ms-text-size-adjust: 100%;
   -webkit-text-size-adjust: 100%;
   font-size: vh(10);
-  background-color: $color-primary-light;
+  background: linear-gradient(135deg,
+    $color-vibrant-blue 0%,
+    $color-vibrant-purple 35%,
+    $color-vibrant-pink 65%,
+    $color-vibrant-orange 100%
+  );
   box-sizing: border-box;
 
   @include layout-aspect-tablet {

@@ -1,32 +1,20 @@
 <template>
   <div class="home">
-    <div class="home__title">События</div>
-    <div class="home__grid">
-      <LoadingSpinner v-if="isLoading" />
-      <EventCard v-else v-for="event in events" :key="event.id_shard" :event="event" />
+    <h1 class="home__title">Игровые виджеты для вашего сайта</h1>
+    <p class="home__description">
+      Легко интегрируйте игровые виджеты на свой сайт.<br>
+      Увеличьте вовлеченность пользователей с помощью интерактивных игр.<br>
+      Простая настройка и быстрый запуск.
+    </p>
+    <div class="home__buttons">
+      <BaseButton class="home__button">Играть</BaseButton>
+      <BaseButton class="home__button">Каталог виджетов</BaseButton>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import { getEvents } from '@/services/api'
-import EventCard from '@/components/EventCard.vue'
-import LoadingSpinner from '@/components/LoadingSpinner.vue'
-
-const events = ref([])
-const isLoading = ref(true)
-
-onMounted(async () => {
-  try {
-    const data = await getEvents()
-    events.value = data
-  } catch (error) {
-    console.error('Error fetching events:', error)
-  } finally {
-    isLoading.value = false
-  }
-})
+import BaseButton from '@/components/BaseButton.vue'
 </script>
 
 <style lang="scss">
@@ -34,27 +22,34 @@ onMounted(async () => {
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   padding: 2rem;
-  height: 100%;
+  height: 100vh;
   overflow-y: auto;
   position: relative;
+  color: $color-white;
 
   &__title {
     margin-bottom: 2rem;
     text-align: center;
-    font-size: 2.4rem;
+    font-size: 4.4rem;
   }
 
-  &__grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(30rem, 1fr));
-    gap: 2.4rem;
-    margin: 0 auto;
-    width: 100%;
+  &__description {
+    text-align: center;
+    font-size: 2.2rem;
+    line-height: 1.6;
+    margin-bottom: 3rem;
+  }
 
-    @include layout-aspect-mobile {
-      grid-template-columns: repeat(auto-fill, minmax(20rem, 1fr));
-    }
+  &__buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  &__button {
+    min-width: 200px;
   }
 }
 </style>

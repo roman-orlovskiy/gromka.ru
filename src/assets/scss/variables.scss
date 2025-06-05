@@ -42,6 +42,21 @@ $color-secondary-dark: #e6b3b2;
 
 $color-error: #ff0000;
 
+/* Яркие цвета */
+$color-vibrant-blue: #4A90E2;
+$color-vibrant-purple: #9B51E0;
+$color-vibrant-pink: #FF61D2;
+$color-vibrant-orange: #FF9F1C;
+$color-vibrant-teal: #2EC4B6;
+$color-vibrant-mint: #7FFFD4;
+$color-vibrant-coral: #FF6B6B;
+$color-vibrant-lavender: #E6E6FA;
+
+/* Градиентные цвета */
+$gradient-start: $color-vibrant-blue;
+$gradient-middle: $color-vibrant-purple;
+$gradient-end: $color-vibrant-pink;
+
 /* Responsive breakpoints */
 @mixin layout-mobile {
   @media (max-width: $breakpoint-mobile) {
