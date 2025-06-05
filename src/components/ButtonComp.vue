@@ -10,8 +10,8 @@ import { computed } from 'vue'
 const props = defineProps({
   mod: {
     type: String,
-    default: '',
-    oneOf: ['secondary'],
+    default: 'secondary',
+    oneOf: ['secondary', 'gradient-1', 'gradient-2', 'gradient-3', 'gradient-4', 'gradient-5', 'gradient-6', 'gradient-7'],
   },
 })
 
@@ -35,6 +35,41 @@ const buttonClass = computed(() => {
   &--mod-secondary {
     background-color: $color-secondary;
     box-shadow: 0 0 10px 0 rgba($color-secondary, 0.5);
+  }
+
+  &--mod-gradient-1 {
+    background: linear-gradient(45deg, $color-vibrant-blue, $color-vibrant-purple);
+    box-shadow: 0 0 10px 0 rgba($color-vibrant-blue, 0.5);
+  }
+
+  &--mod-gradient-2 {
+    background: linear-gradient(45deg, $color-vibrant-purple, $color-vibrant-pink);
+    box-shadow: 0 0 10px 0 rgba($color-vibrant-purple, 0.5);
+  }
+
+  &--mod-gradient-3 {
+    background: linear-gradient(45deg, $color-vibrant-pink, $color-vibrant-orange);
+    box-shadow: 0 0 10px 0 rgba($color-vibrant-pink, 0.5);
+  }
+
+  &--mod-gradient-4 {
+    background: linear-gradient(45deg, $color-vibrant-orange, $color-vibrant-teal);
+    box-shadow: 0 0 10px 0 rgba($color-vibrant-orange, 0.5);
+  }
+
+  &--mod-gradient-5 {
+    background: linear-gradient(45deg, $color-vibrant-teal, $color-vibrant-mint);
+    box-shadow: 0 0 10px 0 rgba($color-vibrant-teal, 0.5);
+  }
+
+  &--mod-gradient-6 {
+    background: linear-gradient(45deg, $color-vibrant-mint, $color-vibrant-coral);
+    box-shadow: 0 0 10px 0 rgba($color-vibrant-mint, 0.5);
+  }
+
+  &--mod-gradient-7 {
+    background: linear-gradient(45deg, $color-vibrant-coral, $color-vibrant-lavender);
+    box-shadow: 0 0 10px 0 rgba($color-vibrant-coral, 0.5);
   }
 
   &:hover {

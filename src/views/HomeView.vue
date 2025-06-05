@@ -1,20 +1,20 @@
 <template>
   <div class="home">
     <h1 class="home__title">Игровые виджеты для вашего сайта</h1>
-    <p class="home__description">
-      Легко интегрируйте игровые виджеты на свой сайт.<br>
-      Увеличьте вовлеченность пользователей с помощью интерактивных игр.<br>
-      Простая настройка и быстрый запуск.
-    </p>
+    <ul class="home__description">
+      <li>Легко интегрируйте игровые виджеты на свой сайт</li>
+      <li>Увеличьте вовлеченность пользователей с помощью интерактивных игр</li>
+      <li>Простая настройка и быстрый запуск</li>
+    </ul>
     <div class="home__buttons">
-      <BaseButton class="home__button">Играть</BaseButton>
-      <BaseButton class="home__button">Каталог виджетов</BaseButton>
+      <ButtonComp class="home__button" mod="gradient-3">Играть</ButtonComp>
+      <ButtonComp class="home__button" mod="gradient-5">Каталог виджетов</ButtonComp>
     </div>
   </div>
 </template>
 
 <script setup>
-import BaseButton from '@/components/BaseButton.vue'
+import ButtonComp from '@/components/ButtonComp.vue'
 </script>
 
 <style lang="scss">
@@ -36,16 +36,18 @@ import BaseButton from '@/components/BaseButton.vue'
   }
 
   &__description {
-    text-align: center;
+    text-align: left;
     font-size: 2.2rem;
     line-height: 1.6;
     margin-bottom: 3rem;
+    padding-left: 10rem;
   }
 
   &__buttons {
     display: flex;
     flex-direction: column;
     gap: 1rem;
+    margin-top: 2rem;
   }
 
   &__button {
