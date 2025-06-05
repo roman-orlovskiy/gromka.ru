@@ -1,5 +1,6 @@
 <template>
   <div class="home">
+    <CarouselComp />
     <h1 class="home__title">Игровые виджеты для вашего сайта</h1>
     <ul class="home__description">
       <li>Легко интегрируйте игровые виджеты на свой сайт</li>
@@ -15,6 +16,7 @@
 
 <script setup>
 import ButtonComp from '@/components/ButtonComp.vue'
+import CarouselComp from '@/components/CarouselComp.vue'
 </script>
 
 <style lang="scss">
@@ -24,6 +26,7 @@ import ButtonComp from '@/components/ButtonComp.vue'
   align-items: center;
   justify-content: center;
   padding: 2rem;
+  padding-top: 0;
   height: 100vh;
   overflow-y: auto;
   position: relative;
