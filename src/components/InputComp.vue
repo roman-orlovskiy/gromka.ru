@@ -1,102 +1,177 @@
 <template>
-  <div class="input-wrapper">
-    <label class="input__label" v-if="label" :for="id">{{ label }}</label>
-
-    <input
-      :id="id"
-      :class="inputClass"
-      :type="type"
-      :placeholder="placeholder"
-      :value="modelValue"
-      @input="handleInput"
-      :style="inputStyle"
-    />
+  <div class="input-comp">
+    <div class="input-comp__wrapper">
+      <div class="input-comp__input-wrapper">
+        <span v-if="mask" class="input-comp__mask">{{ mask }}</span>
+        <input
+          class="input-comp__item"
+          :class="{
+            'input-comp__item--error': error,
+            'input-comp__item--shake': showShake,
+            'input-comp__item--mask': mask,
+          }"
+          :type="type"
+          :placeholder="placeholder"
+          :value="value"
+          @input="handleInput"
+          :disabled="disabled"
+        />
+        <div v-if="disabled" class="input-comp__overlay"></div>
+      </div>
+      <div v-if="error" class="input-comp__error">{{ error }}</div>
+      <div v-if="value" class="input-comp__placeholder">{{ placeholder }}</div>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { computed } from 'vue'
-
-const props = defineProps({
-  modelValue: {
-    type: [String, Number],
-    default: '',
-  },
-  mod: {
+defineProps({
+  placeholder: {
     type: String,
     default: '',
-    oneOf: ['secondary'],
+  },
+  value: {
+    type: String,
+    default: '',
+  },
+  error: {
+    type: String,
+    default: '',
+  },
+  showShake: {
+    type: Boolean,
+    default: false,
+  },
+  mask: {
+    type: String,
+    default: '',
+  },
+  disabled: {
+    type: Boolean,
+    default: false,
   },
   type: {
     type: String,
     default: 'text',
   },
-  placeholder: {
-    type: String,
-    default: '',
-  },
-  label: {
-    type: String,
-    default: '',
-  },
-  id: {
-    type: String,
-    required: true,
-  },
 })
 
-const emit = defineEmits(['update:modelValue'])
+const emit = defineEmits(['handleInput'])
 
-const inputClass = computed(() => {
-  return `input ${props.mod ? `input--mod-${props.mod}` : ''}`
-})
-
-const inputStyle = computed(() => {
-  return props.type === 'color' ? { backgroundColor: props.modelValue } : {}
-})
-
-function handleInput(event) {
-  let value = event.target.value
-  if (props.type === 'number') {
-    value = Number(value)
-  }
-  emit('update:modelValue', value)
+const handleInput = (event) => {
+  emit('handleInput', event)
 }
 </script>
 
-<style lang="scss" scoped>
-.input {
+<style scoped lang="scss">
+.input-comp {
   width: 100%;
-  font-size: 3.5rem;
-  padding: 1rem 2rem;
-  background-color: $color-white;
-  color: $color-primary;
-  border: 1px solid $color-primary;
-  border-radius: 0.5rem;
-  cursor: pointer;
-  transition: opacity 0.3s;
-  box-shadow: 0 0 10px 0 rgba($color-primary, 0.5);
-
-  &--mod-secondary {
-    background-color: $color-white;
-    border: 1px solid $color-secondary;
-    box-shadow: 0 0 10px 0 rgba($color-secondary, 0.5);
-  }
-
-  &:hover {
-    opacity: 0.7;
-  }
-
   &__wrapper {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
     width: 100%;
+    position: relative;
   }
 
-  &__label {
-    font-size: 2.5rem;
-    font-weight: 600;
+  &__mask {
+    position: absolute;
+    top: 3rem;
+    left: 2rem;
+    transform: translateY(-50%);
+    font-size: 2.8rem;
+    color: $color-primary;
+    opacity: 0.8;
+    pointer-events: none;
+
+    @include layout-aspect-mobile {
+      font-size: 1.8rem;
+      top: 2rem;
+    }
+  }
+
+  &__input-wrapper {
+    position: relative;
+  }
+
+  &__item {
+    width: 100%;
+    border: 0.2rem solid $color-primary;
+    border-radius: 1.5rem;
+    font-size: 2.8rem;
+    padding: 1rem 2rem;
+    outline: none;
+    color: $color-primary;
+    font-family: $font-default;
+    font-weight: $font-weight-medium;
+    box-sizing: border-box;
+    background-color: $color-white;
+
+    @include layout-aspect-mobile {
+      font-size: 1.8rem;
+      padding: 0.7rem 1.4rem;
+      border-radius: 0.7rem;
+    }
+
+    &::placeholder {
+      color: $color-primary;
+      opacity: 0.5;
+      transition: all 0.3s ease;
+    }
+
+    &--error {
+      border-color: $color-error;
+    }
+
+    &--shake {
+      animation: shake 0.5s ease-in-out;
+    }
+
+    &--mask {
+      padding-left: 10rem;
+
+      @include layout-aspect-mobile {
+        padding-left: 6rem;
+      }
+    }
+  }
+
+  &__placeholder {
+    position: absolute;
+    top: -2rem;
+    left: 2rem;
+    font-size: 1.4rem;
+    color: $color-primary;
+    transition: all 0.3s ease;
+
+    @include layout-aspect-mobile {
+      font-size: 1.2rem;
+      left: 1.6rem;
+    }
+  }
+
+  &__error {
+    color: $color-error;
+    font-size: 1.4rem;
+    margin-top: 0.5rem;
+    padding-left: 3rem;
+
+    @include layout-aspect-mobile {
+      font-size: 1.2rem;
+      padding-left: 2rem;
+    }
+  }
+
+  &__overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(255, 255, 255, 0.5);
+    pointer-events: none;
+    border-radius: 1.5rem;
+
+    @include layout-aspect-mobile {
+      border-radius: 0.7rem;
+    }
   }
 }
 </style>

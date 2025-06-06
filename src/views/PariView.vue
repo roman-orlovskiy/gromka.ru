@@ -7,7 +7,7 @@
         в розыгрыше призов
       </div>
       <div class="pary__inputs-row">
-        <BaseInput
+        <InputComp
           placeholder="Ряд"
           :value="rowValue"
           @handleInput="handleRowInput"
@@ -15,7 +15,7 @@
           :show-shake="shakeFields.row"
           type="number"
         />
-        <BaseInput
+        <InputComp
           placeholder="Место"
           :value="seatValue"
           @handleInput="handleSeatInput"
@@ -24,7 +24,7 @@
           type="number"
         />
       </div>
-      <BaseSelect
+      <SelectComp
         :options="sectorOptions"
         :value="selectedSector"
         placeholder="Сектор"
@@ -52,7 +52,7 @@
       </div>
 
       <div class="pary__button">
-        <BaseButton mode="big" @click="handleStart">Начать</BaseButton>
+        <ButtonComp mode="big" @click="handleStart">Начать</ButtonComp>
       </div>
     </div>
 
@@ -88,9 +88,9 @@
 </template>
 
 <script setup>
-import BaseInput from '@/components/BaseInput.vue'
-import BaseSelect from '@/components/BaseSelect.vue'
-import BaseButton from '@/components/BaseButton.vue'
+import InputComp from '@/components/InputComp.vue'
+import SelectComp from '@/components/SelectComp.vue'
+import ButtonComp from '@/components/ButtonComp.vue'
 import CloseIcon from '@/components/icons/CloseIcon.vue'
 import { ref } from 'vue'
 import { saveParinn } from '@/services/api'
