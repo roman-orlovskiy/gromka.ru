@@ -31,9 +31,9 @@
           </li>
         </ul>
 
-        <BaseButton class="parinn__copy-button" @click="copyToClipboard">
+        <ButtonComp class="parinn__copy-button" @click="copyToClipboard">
           Копировать список
-        </BaseButton>
+        </ButtonComp>
       </div>
     </div>
   </div>
@@ -42,7 +42,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { getParinn, deleteParinn } from '@/services/api'
-import BaseButton from '@/components/BaseButton.vue'
+import ButtonComp from '@/components/ButtonComp.vue'
 
 const parinnItems = ref([])
 const loading = ref(true)
