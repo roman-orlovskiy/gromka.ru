@@ -7,9 +7,9 @@
       <div class="auth-view__avatar">
         <img :src="user.photo_url" alt="avatar" />
       </div>
-      <BaseInput :value="user.first_name" @input="handleFirstNameInput" placeholder="Имя" />
-      <BaseInput :value="user.last_name" @input="handleLastNameInput" placeholder="Фамилия" />
-      <BaseInput
+      <InputComp :value="user.first_name" @input="handleFirstNameInput" placeholder="Имя" />
+      <InputComp :value="user.last_name" @input="handleLastNameInput" placeholder="Фамилия" />
+      <InputComp
         :disabled="true"
         :value="user.tg_username"
         placeholder="Телеграм"
@@ -18,7 +18,7 @@
       />
 
       <div class="auth-view__logout">
-        <BaseButton @click="mainStore.logout">Выйти</BaseButton>
+        <ButtonComp @click="mainStore.logout">Выйти</ButtonComp>
       </div>
     </div>
   </div>
@@ -28,8 +28,8 @@
 import TelegramAuth from '@/components/TelegramAuth.vue'
 import { useMainStore } from '@/stores/main'
 import { storeToRefs } from 'pinia'
-import BaseButton from '@/components/BaseButton.vue'
-import BaseInput from '@/components/BaseInput.vue'
+import ButtonComp from '@/components/ButtonComp.vue'
+import InputComp from '@/components/InputComp.vue'
 const mainStore = useMainStore()
 const { user, isUserLoaded, tgUsernameError } = storeToRefs(mainStore)
 import { updateUser } from '@/services/api'
