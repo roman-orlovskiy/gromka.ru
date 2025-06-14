@@ -40,7 +40,7 @@
         <SelectComp
           :options="hoursOptions"
           :value="selectedHour"
-          placeholder="Час начало"
+          placeholder="Час начала"
           @handleChange="handleHourChange"
           :error="errors.hour"
           :show-shake="shakeFields.hour"
@@ -48,7 +48,7 @@
         <SelectComp
           :options="minutesOptions"
           :value="selectedMinute"
-          placeholder="Минуты"
+          placeholder="Мин. начала"
           @handleChange="handleMinuteChange"
           :error="errors.minute"
           :show-shake="shakeFields.minute"
