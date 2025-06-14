@@ -34,8 +34,8 @@ const router = createRouter({
       component: () => import('../views/AuthView.vue'),
     },
     {
-      path: '/vkpost',
-      name: 'vkpost',
+      path: '/create-event',
+      name: 'create-event',
       component: () => import('../views/VkPostView.vue'),
     },
   ],

@@ -56,10 +56,11 @@
       </div>
 
       <div class="vk-post__inputs-row">
-        <InputComp
-          placeholder="Продолжительность"
+        <SelectComp
+          :options="durationOptions"
           :value="durationValue"
-          @handleInput="handleDurationInput"
+          placeholder="Продолжительность"
+          @handleChange="handleDurationChange"
           :error="errors.duration"
           :show-shake="shakeFields.duration"
         />
@@ -83,12 +84,13 @@
           @handleInput="handlePriceInput"
           :error="errors.price"
           :show-shake="shakeFields.price"
+          type="number"
         />
       </div>
 
       <div class="vk-post__inputs-row">
         <InputComp
-          placeholder="Имя контактного лица"
+          placeholder="Имя"
           :value="contactNameValue"
           @handleInput="handleContactNameInput"
           :error="errors.contactName"
@@ -187,13 +189,20 @@ const hoursOptions = computed(() => {
   }))
 })
 
-// Опции для минут (с шагом 15)
+// Опции для минут (с шагом 5)
 const minutesOptions = computed(() => {
-  return Array.from({ length: 4 }, (_, i) => ({
-    label: String(i * 15).padStart(2, '0'),
-    value: String(i * 15).padStart(2, '0')
+  return Array.from({ length: 12 }, (_, i) => ({
+    label: String(i * 5).padStart(2, '0'),
+    value: String(i * 5).padStart(2, '0')
   }))
 })
+
+// Опции для продолжительности
+const durationOptions = ref([
+  { label: '1 час', value: '1 час' },
+  { label: '1 час 30 мин', value: '1 час 30 мин' },
+  { label: '2 часа', value: '2 часа' }
+])
 
 // Обработчики ввода
 const handleFieldInput = (event) => {
@@ -206,22 +215,22 @@ const handleAddressInput = (event) => {
   errors.value.address = ''
 }
 
-const handleDateChange = (value) => {
-  selectedDate.value = value
+const handleDateChange = (event) => {
+  selectedDate.value = event.target.value
   errors.value.date = ''
 }
 
-const handleHourChange = (value) => {
-  selectedHour.value = value
+const handleHourChange = (event) => {
+  selectedHour.value = event.target.value
   errors.value.hour = ''
 }
 
-const handleMinuteChange = (value) => {
-  selectedMinute.value = value
+const handleMinuteChange = (event) => {
+  selectedMinute.value = event.target.value
   errors.value.minute = ''
 }
 
-const handleDurationInput = (event) => {
+const handleDurationChange = (event) => {
   durationValue.value = event.target.value
   errors.value.duration = ''
 }
@@ -323,7 +332,7 @@ const validateFields = () => {
   }
 
   if (!contactNameValue.value.trim()) {
-    errors.value.contactName = 'Введите имя контактного лица'
+    errors.value.contactName = 'Введите имя'
     shakeFields.value.contactName = true
     isValid = false
   }
@@ -364,7 +373,7 @@ const handleSubmit = async () => {
       time: `${selectedHour.value}:${selectedMinute.value}`,
       duration: durationValue.value,
       spots: spotsValue.value,
-      price: priceValue.value,
+      price: `${priceValue.value}₽`,
       contactName: contactNameValue.value,
       contact: contactValue.value
     }
@@ -412,7 +421,7 @@ const handleSubmit = async () => {
     flex-direction: column;
     align-items: center;
     justify-content: flex-start;
-    gap: 1.5rem;
+    gap: 2.5rem;
     width: 100%;
     max-width: 120rem;
   }
