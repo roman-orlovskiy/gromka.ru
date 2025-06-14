@@ -420,6 +420,7 @@ const handleSubmit = async () => {
 
   &__full-width {
     width: 100%;
+    max-width: 40rem;
   }
 
   &__title {
@@ -451,6 +452,7 @@ const handleSubmit = async () => {
 
   &__button {
     margin-top: 2rem;
+    margin-bottom: 3rem;
   }
 
   &__time-title {
