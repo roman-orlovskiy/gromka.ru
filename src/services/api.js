@@ -43,6 +43,16 @@ export const saveParinn = async (itemId) => {
   }
 }
 
+export const vkPost = async (data) => {
+  try {
+    const response = await api.post('/vkpost', data)
+    return response.data
+  } catch (error) {
+    console.error('Error posting to vk:', error)
+    throw error
+  }
+}
+
 export const deleteParinn = async (itemId) => {
   try {
     const response = await api.delete(`/parinn/${itemId}`)

@@ -33,6 +33,11 @@ const router = createRouter({
       name: 'auth',
       component: () => import('../views/AuthView.vue'),
     },
+    {
+      path: '/vkpost',
+      name: 'vkpost',
+      component: () => import('../views/VkPostView.vue'),
+    },
   ],
 })
 
