@@ -21,6 +21,7 @@ export const useMainStore = defineStore('main', () => {
     console.log('openModal', type);
     modalType.value = type;
     modalParams.value = params;
+    console.log(params);
   };
 
   const closeModal = () => {
@@ -74,6 +75,7 @@ export const useMainStore = defineStore('main', () => {
 
   return {
     modalType,
+    modalParams,
     openModal,
     closeModal,
     getTelegramUser,
