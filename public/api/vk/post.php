@@ -27,11 +27,30 @@ function handler($event, $context)
     
     // Получаем тело запроса
     $body = json_decode($event['body'] ?? '{}', true);
-    $messageFromBody = $body['message'] ?? '';
+    
+    // Получаем параметры из body
+    $field = $body['field'] ?? '';
+    $address = $body['address'] ?? '';
+    $date = $body['date'] ?? '';
+    $time = $body['time'] ?? '';
+    $duration = $body['duration'] ?? '';
+    $spots = $body['spots'] ?? '';
+    $price = $body['price'] ?? '';
+    $contactName = $body['contactName'] ?? '';
+    $contact = $body['contact'] ?? '';
 
     $accessToken = "vk1.a.W9Q-upY2yPAeupeDyaM9_AJgJtXjzxrqEYRIalCXs3lggi3WzVu3uZqkRoOUgjsImu2LaJyNQ7J7Kl8mfu87NkF8x_I8fjoPlDc9cJqZUdAse7auv8yE_pfALgwNBXuhXeZM71OEmM2odnSIIxsQses1_lRQUu2lctaJcnlzbsyjc_b0IkB--Vwo3XdcceWYskh21swYYXtCqD-LAzEuWw";
     $groupId = 138155699;
-    $message = 'Hello world ' . $messageFromBody;
+    
+    // Форматируем сообщение
+    $message = "Привет, есть новое событие!\n\n" .
+               "Где: {$field} ({$address})\n" .
+               "Когда: {$date} в {$time}\n" .
+               "Продолжительность: {$duration}\n\n" .
+               "Количество мест: {$spots}\n" .
+               "Стоимость: {$price} с человека\n\n" .
+               "Кому интересно, пишите автору.\n" .
+               "Контакты: {$contact} {$contactName}";
 
     if (!$accessToken || !$groupId) {
         return [
