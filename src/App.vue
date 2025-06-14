@@ -2,12 +2,23 @@
   <div class="app">
     <RouterView />
     <RightMenu v-if="!isParyPage" />
+
+    <BaseModal
+      v-if="modalType"
+    />
   </div>
 </template>
 
 <script setup>
 import { RouterView } from 'vue-router'
 import RightMenu from '@/components/RightMenu.vue'
+import BaseModal from '@/components/BaseModal.vue';
+
+import { useMainStore } from './stores/main';
+import { storeToRefs } from 'pinia';
+
+const mainStore = useMainStore();
+const { modalType } = storeToRefs(mainStore)
 
 const isParyPage = true;
 </script>

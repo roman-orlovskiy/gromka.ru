@@ -40,7 +40,7 @@
         <SelectComp
           :options="hoursOptions"
           :value="selectedHour"
-          placeholder="Часы"
+          placeholder="Час начало"
           @handleChange="handleHourChange"
           :error="errors.hour"
           :show-shake="shakeFields.hour"
@@ -121,6 +121,9 @@ import SelectComp from '@/components/SelectComp.vue'
 import ButtonComp from '@/components/ButtonComp.vue'
 import { ref, computed } from 'vue'
 import { vkPost } from '@/services/api'
+import { useMainStore } from '@/stores/main'
+
+const mainStore = useMainStore()
 
 // Значения полей
 const fieldValue = ref('')
@@ -379,7 +382,13 @@ const handleSubmit = async () => {
     }
 
     try {
-      await vkPost(postData)
+      const response = await vkPost(postData)
+      if (response?.response?.post_id) {
+        mainStore.openModal('vkpost',
+          {
+            post_id: response.response.post_id
+          })
+      }
       // Очистка формы после успешной отправки
       fieldValue.value = ''
       addressValue.value = ''

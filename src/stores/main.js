@@ -4,6 +4,7 @@ import { saveUser, getUser } from '@/services/api';
 
 export const useMainStore = defineStore('main', () => {
   const modalType = ref(null);
+  const modalParams = ref({});
   const signature = ref(null);
   const startAppParam = ref(null);
   const user = ref({});
@@ -16,13 +17,15 @@ export const useMainStore = defineStore('main', () => {
     return ''
   })
 
-  const openModal = (type) => {
+  const openModal = (type, params = {}) => {
     console.log('openModal', type);
     modalType.value = type;
+    modalParams.value = params;
   };
 
   const closeModal = () => {
     modalType.value = null;
+    modalParams.value = {};
   };
 
   const getUserFromApi = async () => {
