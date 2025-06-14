@@ -36,23 +36,26 @@
         />
       </div>
 
-      <div class="vk-post__inputs-row">
-        <SelectComp
-          :options="hoursOptions"
-          :value="selectedHour"
-          placeholder="Час начала"
-          @handleChange="handleHourChange"
-          :error="errors.hour"
-          :show-shake="shakeFields.hour"
-        />
-        <SelectComp
-          :options="minutesOptions"
-          :value="selectedMinute"
-          placeholder="Мин. начала"
-          @handleChange="handleMinuteChange"
-          :error="errors.minute"
-          :show-shake="shakeFields.minute"
-        />
+      <div class="vk-post__full-width">
+        <div class="vk-post__time-title">Время начала</div>
+        <div class="vk-post__inputs-row">
+          <SelectComp
+            :options="hoursOptions"
+            :value="selectedHour"
+            placeholder="Часы"
+            @handleChange="handleHourChange"
+            :error="errors.hour"
+            :show-shake="shakeFields.hour"
+          />
+          <SelectComp
+            :options="minutesOptions"
+            :value="selectedMinute"
+            placeholder="Минуты"
+            @handleChange="handleMinuteChange"
+            :error="errors.minute"
+            :show-shake="shakeFields.minute"
+          />
+        </div>
       </div>
 
       <div class="vk-post__inputs-row">
@@ -415,6 +418,10 @@ const handleSubmit = async () => {
   justify-content: flex-start;
   padding: 1.5rem 2rem 6rem 2rem;
 
+  &__full-width {
+    width: 100%;
+  }
+
   &__title {
     font-size: 4.3rem;
     font-weight: $font-weight-bold;
@@ -444,6 +451,14 @@ const handleSubmit = async () => {
 
   &__button {
     margin-top: 2rem;
+  }
+
+  &__time-title {
+    font-size: 1.6rem;
+    color: $color-white;
+    margin-bottom: 0.5rem;
+    width: 100%;
+    text-align: left;
   }
 }
 </style>
