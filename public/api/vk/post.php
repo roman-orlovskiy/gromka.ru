@@ -24,10 +24,14 @@ function handler($event, $context)
 {
     // Разбор параметров из $event['queryStringParameters']
     $params = $event['queryStringParameters'] ?? [];
+    
+    // Получаем тело запроса
+    $body = json_decode($event['body'] ?? '{}', true);
+    $messageFromBody = $body['message'] ?? '';
 
     $accessToken = "vk1.a.W9Q-upY2yPAeupeDyaM9_AJgJtXjzxrqEYRIalCXs3lggi3WzVu3uZqkRoOUgjsImu2LaJyNQ7J7Kl8mfu87NkF8x_I8fjoPlDc9cJqZUdAse7auv8yE_pfALgwNBXuhXeZM71OEmM2odnSIIxsQses1_lRQUu2lctaJcnlzbsyjc_b0IkB--Vwo3XdcceWYskh21swYYXtCqD-LAzEuWw";
     $groupId = 138155699;
-    $message = 'Hello world 345';
+    $message = 'Hello world ' . $messageFromBody;
 
     if (!$accessToken || !$groupId) {
         return [
