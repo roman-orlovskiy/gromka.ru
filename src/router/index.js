@@ -11,6 +11,11 @@ const router = createRouter({
       component: PerformanceView,
     },
     {
+      path: '/spartak',
+      name: 'spartak',
+      component: () => import('../views/SpartakView.vue'),
+    },
+    {
       path: '/demo',
       name: 'demo',
       // route level code-splitting

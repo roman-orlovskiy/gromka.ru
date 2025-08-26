@@ -35,7 +35,6 @@ const isParyPage = true;
 
   @include layout-aspect-mobile {
     flex-direction: column;
-    padding-bottom: 5rem;
   }
 }
 
