@@ -99,7 +99,7 @@ const handleStart = () => {
   clearTimeout(instructionTimeout)
   instructionTimeout = setTimeout(() => {
     isInstructionVisible.value = false
-  }, 4000)
+  }, 7000)
 }
 
 const enterFullscreen = () => {
@@ -205,7 +205,7 @@ const handleCloseLayer = () => {
     bottom: 0;
     right: 0;
     background-color: $color-spartak;
-    animation: spartakColorShift 1.2s infinite;
+    animation: spartakColorShift 2.2s infinite;
     z-index: 1000;
     color: $color-white;
     display: flex;
@@ -263,7 +263,10 @@ const handleCloseLayer = () => {
   0% {
     background-color: $color-spartak;
   }
-  50% {
+  25% {
+    background-color: $color-spartak;
+  }
+  70% {
     background-color: $color-white;
   }
   100% {
