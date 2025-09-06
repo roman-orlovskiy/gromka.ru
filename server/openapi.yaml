@@ -1,0 +1,107 @@
+openapi: 3.0.0
+info:
+  title: Gromka
+  version: 1.0.0
+servers:
+- url: https://d5dfdjso9in9g25dtq1d.k1mxzkh0.apigw.yandexcloud.net
+- url: https://gromka.ru
+x-yc-apigateway-cors:
+  allow-origin: "*"
+  allow-methods: "GET,POST,PUT,DELETE,OPTIONS"
+  allow-headers: "Content-Type,Authorization"
+  expose-headers: "*"
+  allow-credentials: true
+paths:
+  /{proxy+}:
+    parameters:
+      - name: proxy
+        in: path
+        required: true
+        schema:
+          type: string
+    options:
+      x-yc-apigateway-integration:
+        type: dummy
+        content:
+          '*': ''
+        http_code: 200
+        http_headers:
+          Access-Control-Allow-Origin: "*"
+          Access-Control-Allow-Methods: "GET,POST,PUT,DELETE,OPTIONS"
+          Access-Control-Allow-Headers: "Content-Type,Authorization"
+          Access-Control-Max-Age: "3600"
+  /:
+    get:
+      x-yc-apigateway-integration:
+        database: /ru-central1/b1gl9td94vo809chfkpg/etn03t7e35bf32dhtqoh
+        action: Scan
+        type: cloud_ydb
+        table_name: parinn
+        service_account_id: aje7rv6fp17nfo1o1h15
+        query: |
+          SELECT * FROM parinn
+          ORDER BY RANDOM()
+          LIMIT 5
+  /api/parinn:
+    post:
+      x-yc-apigateway-integration:
+        database: /ru-central1/b1gl9td94vo809chfkpg/etn03t7e35bf32dhtqoh
+        action: PutItem
+        type: cloud_ydb
+        table_name: parinn
+        service_account_id: aje7rv6fp17nfo1o1h15
+    get:
+      x-yc-apigateway-integration:
+        database: /ru-central1/b1gl9td94vo809chfkpg/etn03t7e35bf32dhtqoh
+        action: Scan
+        type: cloud_ydb
+        table_name: parinn
+        service_account_id: aje7rv6fp17nfo1o1h15
+  /api/parinn/{itemId}:
+    parameters:
+      - name: itemId
+        in: path
+        required: true
+        schema:
+          type: string
+    delete:
+      x-yc-apigateway-integration:
+        database: /ru-central1/b1gl9td94vo809chfkpg/etn03t7e35bf32dhtqoh
+        action: DeleteItem
+        type: cloud_ydb
+        table_name: parinn
+        service_account_id: aje7rv6fp17nfo1o1h15
+        key: '{"id": "{itemId}"}'
+  /api/vkpost:
+    post:
+      x-yc-apigateway-integration:
+        payload_format_version: '0.1'
+        function_id: d4eqb6oabp658elttch4
+        tag: ''
+        type: cloud_functions
+        service_account_id: aje7rv6fp17nfo1o1h15
+  /connections:
+    x-yc-apigateway-websocket-message:
+      summary: Get connection identifier
+      operationId: getConnectionID
+      parameters:
+        - name: X-Yc-Apigateway-Websocket-Connection-Id
+          in: header
+          description: Websocket connection identifier
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Connection identifier
+          content:
+            text/plain:
+              schema:
+                type: string
+      x-yc-apigateway-integration:
+        type: dummy
+        http_code: 200
+        http_headers:
+          Content-Type: application/json
+        content:
+          text/plain: '{"connection_id":"{X-Yc-Apigateway-Websocket-Connection-Id}"}'
