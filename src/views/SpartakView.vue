@@ -71,6 +71,17 @@ let wakeLock = null
 // WebSocket instance
 let ws = null
 
+// Converts Blob or string to text (universal fallback)
+const blobToText = async (data) => {
+  if (typeof data === 'string') return data
+  if (data && typeof data.text === 'function') return await data.text()
+  return await new Promise((resolve) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(reader.result)
+    reader.readAsText(data)
+  })
+}
+
 const requestWakeLock = async () => {
   try {
     if ('wakeLock' in navigator) {
@@ -106,10 +117,11 @@ const handleStart = () => {
       ws = connectConnectionsWS()
       ws.onopen = () => {
         console.log('WS connected')
+        ws.send('ping');
       }
-      ws.onmessage = () => {
-        // Обрабатывайте входящие сообщения при необходимости
-        // console.log('WS message:', event.data)
+      ws.onmessage = async (event) => {
+        const message = await blobToText(event.data)
+        console.log('WS message:', message)
       }
       ws.onerror = (event) => {
         console.error('WS error:', event)
