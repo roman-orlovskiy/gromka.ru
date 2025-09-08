@@ -1,7 +1,9 @@
 import axios from 'axios'
 
+const baseURL = 'd5dfdjso9in9g25dtq1d.k1mxzkh0.apigw.yandexcloud.net'
+
 const api = axios.create({
-  baseURL: 'https://d5dfdjso9in9g25dtq1d.k1mxzkh0.apigw.yandexcloud.net/api',
+  baseURL: `https://${baseURL}/api`,
   headers: {
     'Content-Type': 'application/json',
   }
@@ -101,6 +103,15 @@ export const updateUser = async (user) => {
     console.error('Error updating user:', error)
     throw error
   }
+}
+
+// Подключение к WebSocket: wss://<baseURL>/connections
+export const connectConnectionsWS = (params = {}) => {
+  const protocol = 'wss'
+  const url = `${protocol}://${baseURL}/connections`
+  const queryString = new URLSearchParams(params).toString()
+  const fullUrl = queryString ? `${url}?${queryString}` : url
+  return new WebSocket(fullUrl)
 }
 
 export default api

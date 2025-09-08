@@ -61,11 +61,15 @@
 <script setup>
 import ButtonComp from '@/components/ButtonComp.vue'
 import CloseIcon from '@/components/icons/CloseIcon.vue'
-import { ref } from 'vue'
+import { ref, onBeforeUnmount } from 'vue'
+import { connectConnectionsWS } from '@/services/api'
 
 const isLayerVisible = ref(false)
 const isInstructionVisible = ref(true)
 let wakeLock = null
+
+// WebSocket instance
+let ws = null
 
 const requestWakeLock = async () => {
   try {
@@ -95,6 +99,28 @@ const handleStart = () => {
   isInstructionVisible.value = true
   enterFullscreen()
   requestWakeLock()
+
+  // Open WS connection
+  if (!ws || ws.readyState === WebSocket.CLOSED) {
+    try {
+      ws = connectConnectionsWS()
+      ws.onopen = () => {
+        console.log('WS connected')
+      }
+      ws.onmessage = () => {
+        // Обрабатывайте входящие сообщения при необходимости
+        // console.log('WS message:', event.data)
+      }
+      ws.onerror = (event) => {
+        console.error('WS error:', event)
+      }
+      ws.onclose = () => {
+        console.log('WS closed')
+      }
+    } catch (e) {
+      console.error('Не удалось открыть WebSocket:', e)
+    }
+  }
 
   clearTimeout(instructionTimeout)
   instructionTimeout = setTimeout(() => {
@@ -128,7 +154,22 @@ const handleCloseLayer = () => {
   clearTimeout(instructionTimeout)
   exitFullscreen()
   releaseWakeLock()
+
+  // Close WS connection
+  if (ws && ws.readyState === WebSocket.OPEN) {
+    ws.close()
+  }
+  ws = null
 }
+
+onBeforeUnmount(() => {
+  if (ws && ws.readyState === WebSocket.OPEN) {
+    ws.close()
+  }
+  ws = null
+  clearTimeout(instructionTimeout)
+  releaseWakeLock()
+})
 </script>
 
 <style scoped lang="scss">
