@@ -5,6 +5,7 @@
 	"dependencies": {
 		"@ydbjs/core": "^7.0.0-alpha.33",
 		"@ydbjs/query": "^7.0.0-alpha.33",
-		"@ydbjs/value": "^7.0.0-alpha.33"
+		"@ydbjs/value": "^7.0.0-alpha.33",
+		"@yandex-cloud/nodejs-sdk": "^2.9.0"
 	}
 }
