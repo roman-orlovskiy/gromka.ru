@@ -3,7 +3,7 @@ import { query } from '@ydbjs/query'
 import { MetadataCredentialsProvider } from '@ydbjs/auth/metadata'
 
 export async function handler(event) {
-  const connectionId = event && event.requestContext && event.requestContext.connectionId;
+  const connectionId = (event && event.requestContext && event.requestContext.connectionId) || 'test1';
 
   if (!connectionId) {
     return {
@@ -17,7 +17,7 @@ export async function handler(event) {
   const connectionString = 'grpcs://ydb.serverless.yandexcloud.net:2135/?database=/ru-central1/b1gl9td94vo809chfkpg/etn03t7e35bf32dhtqoh';
   let driver = new Driver(connectionString, {
     credentialsProvider,
-    'ydb.sdk.enable_discovery': false,
+    'ydb.sdk.enable_discovery': false, // Улучшает производительность холодного старта
   });
 
   try {
@@ -29,7 +29,7 @@ export async function handler(event) {
     return {
       statusCode: 200,
       headers: { 'Content-Type': 'application/json; charset=utf-8' },
-      body: JSON.stringify({ 'Close wss': connectionId })
+      body: JSON.stringify({ deleted: connectionId })
     };
   } catch (error) {
     return {
@@ -41,5 +41,3 @@ export async function handler(event) {
     driver.close();
   }
 };
-
-
