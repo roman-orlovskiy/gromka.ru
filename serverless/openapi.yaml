@@ -90,3 +90,12 @@ paths:
         tag: ''
         service_account_id: aje7rv6fp17nfo1o1h15
         payload_format_version: '0.1'
+    x-yc-apigateway-websocket-disconnect:
+      summary: Handle websocket disconnect via Cloud Function
+      operationId: onWebsocketDisconnect
+      x-yc-apigateway-integration:
+        type: cloud_functions
+        function_id: d4e05k6luv35ktjclhhf
+        tag: ''
+        service_account_id: aje7rv6fp17nfo1o1h15
+        payload_format_version: '0.1'
