@@ -2,24 +2,18 @@ import { Driver } from '@ydbjs/core'
 import { query } from '@ydbjs/query'
 import { MetadataCredentialsProvider } from '@ydbjs/auth/metadata'
 import { cloudApi, serviceClients, Session } from '@yandex-cloud/nodejs-sdk'
-import { gzipSync } from 'zlib'
 
 const { serverless: { apigateway_connection_service: connectionService } } = cloudApi;
 
 const cloudApiSession = new Session();
 const wsClient = cloudApiSession.client(serviceClients.WebSocketConnectionServiceClient);
 
-const compressMessage = (message) => {
-    const stringified = JSON.stringify(message);
-    // eslint-disable-next-line no-undef
-    return gzipSync(Buffer.from(stringified, 'utf8'));
-};
-
-const sendCompressedMessage = async (connectionId, message) => {
+const sendMessage = async (connectionId, message) => {
     const request = connectionService.SendToConnectionRequest.fromPartial({
         connectionId,
-        type: connectionService.SendToConnectionRequest_DataType.BINARY,
-        data: compressMessage(message),
+        type: connectionService.SendToConnectionRequest_DataType.TEXT,
+        // eslint-disable-next-line no-undef
+        data: Buffer.from(JSON.stringify(message), 'utf8'),
     });
 
     return wsClient.send(request);
@@ -45,7 +39,7 @@ export async function handler() {
 
     // Отправляем сообщение всем активным соединениям
     const sendPromises = connections.map(conn =>
-      sendCompressedMessage(conn.connectionId, message).catch(error => {
+      sendMessage(conn.connectionId, message).catch(error => {
         console.error(`Failed to send message to connection ${conn.connectionId}:`, error);
         return { connectionId: conn.connectionId, error: error.message };
       })
