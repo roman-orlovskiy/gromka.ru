@@ -150,7 +150,7 @@ onUnmounted(() => {
 // Плашка с последними данными
 .admin__status-plate {
   max-width: 50rem;
-  width: 100%;
+  width: 90%;
   margin: 0 auto;
   background: $color-gray-100;
   border: 1px solid $color-gray-200;
