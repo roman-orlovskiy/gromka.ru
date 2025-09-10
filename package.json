@@ -11,7 +11,8 @@
     "format": "prettier --write src/",
     "server": "php -S localhost:8000 -t public/api",
     "apache": "sudo service apache2 start",
-    "mysql": "sudo service mysql start"
+    "mysql": "sudo service mysql start",
+    "yc:update-gateway": "yc serverless api-gateway update --id d5dfdjso9in9g25dtq1d --spec serverless/openapi.yaml"
   },
   "dependencies": {
     "axios": "^1.8.2",

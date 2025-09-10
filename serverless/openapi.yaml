@@ -80,6 +80,14 @@ paths:
         tag: ''
         type: cloud_functions
         service_account_id: aje7rv6fp17nfo1o1h15
+  /wsbroadcast:
+    post:
+      x-yc-apigateway-integration:
+        payload_format_version: '0.1'
+        function_id: d4ejhm2g0uicn7g0dtcn
+        tag: ''
+        type: cloud_functions
+        service_account_id: aje7rv6fp17nfo1o1h15
   /connections:
     x-yc-apigateway-websocket-connect:
       summary: Handle websocket connect via Cloud Function
