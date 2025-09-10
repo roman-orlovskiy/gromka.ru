@@ -43,6 +43,11 @@ const router = createRouter({
       name: 'create-event',
       component: () => import('../views/VkPostView.vue'),
     },
+    {
+      path: '/admin',
+      name: 'admin',
+      component: () => import('../views/AdminView.vue'),
+    },
   ],
 })
 

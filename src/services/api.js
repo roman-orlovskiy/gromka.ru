@@ -105,6 +105,26 @@ export const updateUser = async (user) => {
   }
 }
 
+// Вещание сообщения всем WebSocket-подключениям
+export const broadcast = async (payload) => {
+  try {
+    const url = `https://${baseURL}/wsbroadcast`
+    const response = await axios.post(url, payload, {
+      headers: { 'Content-Type': 'application/json' },
+    })
+    return response.data
+  } catch (error) {
+    console.error('Error broadcasting message:', {
+      message: error.message,
+      status: error.response?.status,
+      statusText: error.response?.statusText,
+      headers: error.response?.headers,
+      data: error.response?.data,
+    })
+    throw error
+  }
+}
+
 // Подключение к WebSocket: wss://<baseURL>/connections
 export const connectConnectionsWS = (params = {}) => {
   const protocol = 'wss'

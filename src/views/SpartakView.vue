@@ -114,6 +114,7 @@ const handleStart = () => {
   // Open WS connection
   if (!ws || ws.readyState === WebSocket.CLOSED) {
     try {
+      console.log('Connecting to WS')
       ws = connectConnectionsWS()
       ws.onopen = () => {
         console.log('WS connected')
