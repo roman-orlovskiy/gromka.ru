@@ -1,0 +1,32 @@
+service: gromka
+
+provider:
+  name: yandex-cloud
+  runtime: nodejs22
+  memorySize: 1024
+  region: ru-central1
+  stage: prod
+  serviceAccountId: aje7rv6fp17nfo1o1h15
+
+functions:
+  wsbroadcast:
+    handler: serverless/wsbroadcast/index.handler
+    labels:
+      project: gromka
+    environment: {}
+
+resources:
+  apigateway:
+    gromka-gw:
+      name: gromka-gw
+      spec: ${file(serverless/openapi.yaml)}
+
+plugins:
+  - serverless-yandex-cloud
+
+package:
+  individually: true
+  patterns:
+    - serverless/wsbroadcast/**
+    - serverless/openapi.yaml
+

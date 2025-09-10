@@ -12,7 +12,9 @@
     "server": "php -S localhost:8000 -t public/api",
     "apache": "sudo service apache2 start",
     "mysql": "sudo service mysql start",
-    "yc:update-gateway": "yc serverless api-gateway update --id d5dfdjso9in9g25dtq1d --spec serverless/openapi.yaml"
+    "yc:update-gateway": "yc serverless api-gateway update --id d5dfdjso9in9g25dtq1d --spec serverless/openapi.yaml",
+    "yc:deploy-broadcast": "yc serverless function version create --function-id d4ejhm2g0uicn7g0dtcn --runtime nodejs22 --entrypoint index.handler --memory 1g --service-account-id aje7rv6fp17nfo1o1h15 --source-path serverless/wsbroadcast",
+    "deploy": "npm run yc:deploy-broadcast && npm run yc:update-gateway"
   },
   "dependencies": {
     "axios": "^1.8.2",
@@ -29,6 +31,7 @@
     "eslint-plugin-vue": "^9.32.0",
     "prettier": "^3.4.2",
     "sass": "^1.84.0",
+    "serverless": "^4.18.2",
     "vite": "^6.0.11",
     "vite-plugin-vue-devtools": "^7.7.0"
   }

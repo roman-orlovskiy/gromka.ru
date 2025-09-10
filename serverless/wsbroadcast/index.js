@@ -19,7 +19,38 @@ const sendMessage = async (connectionId, message) => {
     return wsClient.send(request);
 };
 
-export async function handler() {
+export async function handler(event) {
+  // Парсинг и базовая валидация тела запроса
+  let message;
+  if (!event || event.body == null) {
+    return {
+      statusCode: 400,
+      headers: { 'Content-Type': 'application/json; charset=utf-8' },
+      body: JSON.stringify({ error: 'Body is required' })
+    };
+  }
+
+  if (typeof event.body === 'string') {
+    try {
+      message = JSON.parse(event.body);
+    } catch {
+      return {
+        statusCode: 400,
+        headers: { 'Content-Type': 'application/json; charset=utf-8' },
+        body: JSON.stringify({ error: 'Invalid JSON in body' })
+      };
+    }
+  } else if (typeof event.body === 'object') {
+    message = event.body;
+  }
+
+  if (!message || typeof message !== 'object' || Array.isArray(message)) {
+    return {
+      statusCode: 400,
+      headers: { 'Content-Type': 'application/json; charset=utf-8' },
+      body: JSON.stringify({ error: 'Invalid body. Expected JSON object.' })
+    };
+  }
   let credentialsProvider = new MetadataCredentialsProvider()
   const connectionString = 'grpcs://ydb.serverless.yandexcloud.net:2135/?database=/ru-central1/b1gl9td94vo809chfkpg/etn03t7e35bf32dhtqoh';
   let driver = new Driver(connectionString, {
@@ -33,9 +64,6 @@ export async function handler() {
 
     const result = await sql`SELECT * FROM wsconnections`;
     const connections = result[0] || [];
-
-    // Сообщение для отправки всем соединениям
-    const message = { type: 'event', percentage: 30 };
 
     // Отправляем сообщение всем активным соединениям
     const sendPromises = connections.map(conn =>
