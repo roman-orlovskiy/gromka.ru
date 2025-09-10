@@ -44,7 +44,7 @@ export async function handler(event) {
     message = event.body;
   }
 
-  if (message.type !== 'wake-up') {
+  if (message.type === 'wake-up') {
     return {
       statusCode: 200,
       headers: { 'Content-Type': 'application/json; charset=utf-8' },

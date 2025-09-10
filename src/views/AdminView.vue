@@ -115,7 +115,7 @@ onMounted(() => {
   sendWakeUp()
 
   // Устанавливаем интервал на каждые 2 секунды
-  wakeUpInterval = setInterval(sendWakeUp, 5000)
+  wakeUpInterval = setInterval(sendWakeUp, 7000)
 })
 
 // Очищаем интервал при размонтировании компонента

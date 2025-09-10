@@ -84,7 +84,7 @@ paths:
     post:
       x-yc-apigateway-integration:
         payload_format_version: '0.1'
-        function_id: d4ejhm2g0uicn7g0dtcn
+        function_id: d4e6gd4ft8fr9mpgepgh
         tag: ''
         type: cloud_functions
         service_account_id: aje7rv6fp17nfo1o1h15
