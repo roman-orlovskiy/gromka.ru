@@ -28,7 +28,7 @@
     </div>
 
     <transition name="fade">
-      <div class="spartak__layer" v-if="isLayerVisible">
+      <div class="spartak__layer" v-if="isLayerVisible" :class="{ 'spartak__layer--black': isBlack }">
         <div class="spartak__close-button" @click="handleCloseLayer">
           <CloseIcon />
         </div>
@@ -66,6 +66,7 @@ import { connectConnectionsWS } from '@/services/api'
 
 const isLayerVisible = ref(false)
 const isInstructionVisible = ref(true)
+const isBlack = ref(false)
 let wakeLock = null
 
 // WebSocket instance
@@ -80,6 +81,28 @@ const blobToText = async (data) => {
     reader.onload = () => resolve(reader.result)
     reader.readAsText(data)
   })
+}
+
+// Обработка сокет-сообщений с вероятностью
+const handleSocketMessage = (message) => {
+  try {
+    const data = JSON.parse(message)
+
+    if (data.type === 'light-on' && typeof data.percentage === 'number') {
+      const percentage = data.percentage
+
+      // Генерируем случайное число от 0 до 100
+      const randomProbability = Math.random() * 100
+
+      // Если случайная вероятность больше percentage, добавляем черный класс
+      console.log('randomProbability', randomProbability)
+      isBlack.value = randomProbability > percentage
+
+      console.log('isBlack', isBlack.value)
+    }
+  } catch (error) {
+    console.error('Ошибка при обработке сокет-сообщения:', error)
+  }
 }
 
 const requestWakeLock = async () => {
@@ -123,6 +146,7 @@ const handleStart = () => {
       ws.onmessage = async (event) => {
         const message = await blobToText(event.data)
         console.log('WS message:', message)
+        handleSocketMessage(message)
       }
       ws.onerror = (event) => {
         console.error('WS error:', event)
@@ -267,6 +291,11 @@ onBeforeUnmount(() => {
     align-items: center;
     justify-content: center;
     padding: 2rem;
+
+    &--black {
+      background-color: $color-black;
+      animation: none;
+    }
 
     & .spartak__instruction-text {
       color: $color-white;
