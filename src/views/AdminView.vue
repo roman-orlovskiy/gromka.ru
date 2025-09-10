@@ -1,6 +1,7 @@
 <template>
   <div class="admin">
     <div class="admin__buttons">
+      <ButtonComp @click="onBroadcastClick(0)">0%</ButtonComp>
       <ButtonComp @click="onBroadcastClick(40)">40%</ButtonComp>
       <ButtonComp @click="onBroadcastClick(70)">70%</ButtonComp>
       <ButtonComp @click="onBroadcastClick(100)">100%</ButtonComp>
