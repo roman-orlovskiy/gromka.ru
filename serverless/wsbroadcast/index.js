@@ -44,6 +44,14 @@ export async function handler(event) {
     message = event.body;
   }
 
+  if (message.type !== 'wake-up') {
+    return {
+      statusCode: 200,
+      headers: { 'Content-Type': 'application/json; charset=utf-8' },
+      body: JSON.stringify({ message: 'Wake up message received' })
+    };
+  }
+
   if (!message || typeof message !== 'object' || Array.isArray(message)) {
     return {
       statusCode: 400,

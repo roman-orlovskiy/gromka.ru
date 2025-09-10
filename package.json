@@ -13,7 +13,7 @@
     "apache": "sudo service apache2 start",
     "mysql": "sudo service mysql start",
     "yc:update-gateway": "yc serverless api-gateway update --id d5dfdjso9in9g25dtq1d --spec serverless/openapi.yaml",
-    "yc:deploy-broadcast": "yc serverless function version create --function-id d4ejhm2g0uicn7g0dtcn --runtime nodejs22 --entrypoint index.handler --memory 1g --service-account-id aje7rv6fp17nfo1o1h15 --source-path serverless/wsbroadcast",
+    "yc:deploy-broadcast": "yc serverless function version create --function-id d4ejhm2g0uicn7g0dtcn --runtime nodejs22 --entrypoint index.handler --memory 1g --execution-timeout 60s --service-account-id aje7rv6fp17nfo1o1h15 --source-path serverless/wsbroadcast",
     "deploy": "npm run yc:deploy-broadcast && npm run yc:update-gateway"
   },
   "dependencies": {
