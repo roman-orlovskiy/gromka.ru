@@ -37,17 +37,17 @@
       <div v-else class="status-plate__empty">
         <span>Нет данных</span>
       </div>
+
+      <Transition name="overlay">
+        <div v-if="isLoading || showSuccess" class="admin__overlay" :class="{ 'admin__overlay--success': showSuccess }">
+          <div class="admin__overlay-content">
+            <div v-if="isLoading" class="admin__loader"></div>
+            <div v-if="showSuccess" class="admin__success-icon">✓</div>
+          </div>
+        </div>
+      </Transition>
     </div>
 
-    <!-- Лоадер и слой успеха -->
-    <Transition name="overlay">
-      <div v-if="isLoading || showSuccess" class="admin__overlay" :class="{ 'admin__overlay--success': showSuccess }">
-        <div class="admin__overlay-content">
-          <div v-if="isLoading" class="admin__loader"></div>
-          <div v-if="showSuccess" class="admin__success-icon">✓</div>
-        </div>
-      </div>
-    </Transition>
   </div>
 </template>
 
@@ -157,6 +157,7 @@ onUnmounted(() => {
   border-radius: 0.75rem;
   padding: 1.5rem;
   margin-top: 2rem;
+  position: relative;
 }
 
 .status-plate__title {
