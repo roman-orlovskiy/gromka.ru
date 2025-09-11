@@ -47,6 +47,25 @@ const router = createRouter({
       path: '/admin',
       name: 'admin',
       component: () => import('../views/AdminView.vue'),
+      beforeEnter: (to) => {
+        const requiredHash = import.meta.env.VITE_ADMIN_HASH
+        const providedHash = to.query.hash
+
+        if (!requiredHash) {
+          // Если хэш не задан в окружении, блокируем доступ
+          return { path: '/' }
+        }
+
+        if (typeof providedHash !== 'string') {
+          return { path: '/' }
+        }
+
+        if (providedHash !== requiredHash) {
+          return { path: '/' }
+        }
+
+        return true
+      },
     },
   ],
 })
