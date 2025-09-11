@@ -48,7 +48,7 @@ const router = createRouter({
       name: 'admin',
       component: () => import('../views/AdminView.vue'),
       beforeEnter: (to) => {
-        const requiredHash = import.meta.env.VITE_ADMIN_HASH
+        const requiredHash = 'hjslk17ldsvcu5iongh'
         const providedHash = to.query.hash
 
         if (!requiredHash) {
