@@ -1,0 +1,18 @@
+config:
+  target: "wss://d5dfdjso9in9g25dtq1d.k1mxzkh0.apigw.yandexcloud.net/connections"
+  phases:
+    - duration: 60  # 60 секунд наращивания
+      arrivalRate: 17  # ≈1000 соединений / 60 секунд
+      maxVusers: 1000
+  engines:
+    ws: {}
+  timeout: 120
+
+scenarios:
+  - name: "WebSocket Load Test"
+    engine: ws
+    flow:
+      - connect:
+          url: "{{ $config.target }}"
+      - think: 120
+      - close: true
