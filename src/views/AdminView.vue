@@ -81,7 +81,7 @@ const onBroadcastClick = async (percentage) => {
     const totalConnections = connectionsData.total || 0
 
     // Вычисляем количество шагов (по 500 записей на шаг)
-    const stepSize = 500
+    const stepSize = 2500
     const totalSteps = Math.ceil(totalConnections / stepSize)
 
     // Создаем массив шагов

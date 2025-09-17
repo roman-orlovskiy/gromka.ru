@@ -83,8 +83,8 @@ export async function handler(event) {
     const sql = query(driver);
 
     // Вычисляем OFFSET и LIMIT для пагинации
-    const offset = step * 500;
-    const limit = 500;
+    const offset = step * 2500;
+    const limit = 2500;
 
     const result = await sql`SELECT * FROM wsconnections LIMIT ${limit} OFFSET ${offset}`;
     const connections = result[0] || [];
