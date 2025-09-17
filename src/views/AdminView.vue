@@ -86,8 +86,16 @@ const onBroadcastClick = async (percentage) => {
 
     // Создаем массив шагов
     const steps = Array.from({ length: totalSteps }, (_, i) => i)
-    const broadcastPromises = steps.map(step =>
-      broadcast({ type: 'light-on', percentage }, step)
+
+    // Функция для выполнения запросов с задержкой
+    const executeWithDelay = async (step, delay) => {
+      await new Promise(resolve => setTimeout(resolve, delay))
+      return broadcast({ type: 'light-on', percentage }, step)
+    }
+
+    // Выполняем запросы с задержкой 100мс между каждым
+    const broadcastPromises = steps.map((step, index) =>
+      executeWithDelay(step, index * 100)
     )
 
     // Ждем завершения всех запросов
