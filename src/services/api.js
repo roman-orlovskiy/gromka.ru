@@ -106,9 +106,9 @@ export const updateUser = async (user) => {
 }
 
 // Вещание сообщения всем WebSocket-подключениям
-export const broadcast = async (payload) => {
+export const broadcast = async (payload, step = 0) => {
   try {
-    const url = `https://${baseURL}/wsbroadcast`
+    const url = `https://${baseURL}/wsbroadcast${step > 0 ? `?step=${step}` : ''}`
     const response = await axios.post(url, payload, {
       headers: { 'Content-Type': 'application/json' },
     })

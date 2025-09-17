@@ -23,6 +23,10 @@
         </div>
         <div class="status-plate__details">
           <div class="status-detail">
+            <span class="status-detail__label">Шагов выполнено:</span>
+            <span class="status-detail__value">{{ lastResult.steps || 1 }}</span>
+          </div>
+          <div class="status-detail">
             <span class="status-detail__label">Всего подключений:</span>
             <span class="status-detail__value">{{ lastResult.totalConnections }}</span>
           </div>
@@ -33,6 +37,10 @@
           <div class="status-detail">
             <span class="status-detail__label">Ошибок:</span>
             <span class="status-detail__value status-detail__value--error">{{ lastResult.failed }}</span>
+          </div>
+          <div v-if="lastResult.errors && lastResult.errors.length > 0" class="status-detail">
+            <span class="status-detail__label">Ошибки по шагам:</span>
+            <span class="status-detail__value status-detail__value--error">{{ lastResult.errors.length }}</span>
           </div>
         </div>
       </div>
@@ -68,16 +76,43 @@ const onBroadcastClick = async (percentage) => {
   showSuccess.value = false
 
   try {
-    const response = await broadcast({ type: 'light-on', percentage })
+    // Запускаем 15 параллельных запросов с шагами 0-14
+    const steps = Array.from({ length: 15 }, (_, i) => i)
+    const broadcastPromises = steps.map(step =>
+      broadcast({ type: 'light-on', percentage }, step)
+    )
+
+    // Ждем завершения всех запросов
+    const responses = await Promise.allSettled(broadcastPromises)
+
+    // Собираем результаты
+    let totalConnections = 0
+    let totalSuccessful = 0
+    let totalFailed = 0
+    const errors = []
+
+    responses.forEach((result, index) => {
+      if (result.status === 'fulfilled') {
+        const response = result.value
+        totalConnections += response.totalConnections || 0
+        totalSuccessful += response.successful || 0
+        totalFailed += response.failed || 0
+      } else {
+        console.error(`Error in step ${index}:`, result.reason)
+        errors.push({ step: index, error: result.reason.message })
+      }
+    })
 
     // Обновляем последний результат
     lastResult.value = {
       timestamp: new Date(),
       percentage,
-      totalConnections: response.totalConnections,
-      successful: response.successful,
-      failed: response.failed,
-      messageSent: response.messageSent
+      totalConnections,
+      successful: totalSuccessful,
+      failed: totalFailed,
+      messageSent: { type: 'light-on', percentage },
+      steps: responses.length,
+      errors: errors.length > 0 ? errors : undefined
     }
 
     // Показываем состояние успеха
