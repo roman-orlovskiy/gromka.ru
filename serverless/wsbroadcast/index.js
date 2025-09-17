@@ -80,6 +80,7 @@ export async function handler(event) {
       body: JSON.stringify({ error: 'Invalid body. Expected JSON object.' })
     };
   }
+
   try {
     await ydbReadyPromise;
 
@@ -96,17 +97,26 @@ export async function handler(event) {
     const payloadBuffer = Buffer.from(JSON.stringify(message), 'utf8');
 
     // Ограничиваем конкуренцию батчами, чтобы не упираться в лимиты сервиса
-    const batchSize = 200; // можно подбирать эмпирически
+    const batchSize = 200;
     let successful = 0;
     let failed = 0;
 
     for (let i = 0; i < connections.length; i += batchSize) {
       const batch = connections.slice(i, i + batchSize);
+
       const results = await Promise.allSettled(
-        batch.map(conn => sendMessage(conn.connectionId, payloadBuffer))
+        batch.map(conn =>
+          sendMessage(conn.connectionId.toString('utf8'), payloadBuffer)
+        )
       );
+
       for (const r of results) {
-        if (r.status === 'fulfilled') successful += 1; else failed += 1;
+        if (r.status === 'fulfilled') {
+          successful += 1;
+        } else {
+          failed += 1;
+          console.error('Send failed:', r.reason);
+        }
       }
     }
 
@@ -125,6 +135,7 @@ export async function handler(event) {
       })
     };
   } catch (error) {
+    console.error('Broadcast error:', error);
     return {
       statusCode: 500,
       headers: { 'Content-Type': 'application/json; charset=utf-8' },
