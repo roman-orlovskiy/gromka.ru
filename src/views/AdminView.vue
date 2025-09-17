@@ -5,6 +5,7 @@
       <ButtonComp @click="onBroadcastClick(40)">40%</ButtonComp>
       <ButtonComp @click="onBroadcastClick(70)">70%</ButtonComp>
       <ButtonComp @click="onBroadcastClick(100)">100%</ButtonComp>
+      <ButtonComp @click="onBroadcastClick('default')">По умолчанию</ButtonComp>
     </div>
 
     <!-- Плашка с последними данными -->
@@ -15,9 +16,9 @@
           <span class="status-plate__time">{{ formatTime(lastResult.timestamp) }}</span>
 
           <div class="status-plate__percentage-wrapper">
-            <span class="status-plate__percentage">{{ lastResult.percentage }}%</span>
+            <span class="status-plate__percentage-text">статус</span>
             &nbsp;
-            <span class="status-plate__percentage-text">экранов включено</span>
+            <span class="status-plate__percentage">{{ lastResult.percentage }}</span>
           </div>
         </div>
         <div class="status-plate__details">
