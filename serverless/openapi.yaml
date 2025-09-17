@@ -80,6 +80,14 @@ paths:
         tag: ''
         type: cloud_functions
         service_account_id: aje7rv6fp17nfo1o1h15
+  /api/getws:
+    get:
+      x-yc-apigateway-integration:
+        payload_format_version: '0.1'
+        function_id: d4efofc8jb0tifgi1hc2
+        tag: ''
+        type: cloud_functions
+        service_account_id: aje7rv6fp17nfo1o1h15
   /wsbroadcast:
     post:
       x-yc-apigateway-integration:
