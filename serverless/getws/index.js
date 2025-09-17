@@ -13,15 +13,17 @@ export async function handler() {
   try {
     await driver.ready();
     const sql = query(driver);
-    const result = await sql`SELECT connectionId FROM wsconnections`;
-    const connectionIds = result[0] || [];
+    const result = await sql`SELECT COUNT(*) as count FROM wsconnections`;
+
+    // Извлекаем значение из вложенной структуры: result[0][0].count
+    const count = result[0] && result[0][0] && result[0][0].count ?
+      parseInt(result[0][0].count) : 0;
 
     return {
       statusCode: 200,
       headers: { 'Content-Type': 'application/json; charset=utf-8' },
       body: JSON.stringify({
-        connectionIds: connectionIds.map(conn => conn.connectionId),
-        total: connectionIds.length
+        total: count
       })
     };
   } catch (error) {
