@@ -28,7 +28,7 @@
     </div>
 
     <transition name="fade">
-      <div class="spartak__layer" v-if="isLayerVisible" :class="{ 'spartak__layer--black': isBlack }">
+      <div class="spartak__layer" v-if="isLayerVisible" :class="layerClasses">
         <div class="spartak__close-button" @click="handleCloseLayer">
           <CloseIcon />
         </div>
@@ -61,13 +61,20 @@
 <script setup>
 import ButtonComp from '@/components/ButtonComp.vue'
 import CloseIcon from '@/components/icons/CloseIcon.vue'
-import { ref, onBeforeUnmount } from 'vue'
+import { ref, computed, onBeforeUnmount } from 'vue'
 import { connectConnectionsWS } from '@/services/api'
 
 const isLayerVisible = ref(false)
 const isInstructionVisible = ref(true)
-const isBlack = ref(false)
+const status = ref('null')
+const isBlack = computed(() => status.value === 'black')
+const isRed = computed(() => status.value === 'red')
 let wakeLock = null
+
+const layerClasses = computed(() => ({
+  'spartak__layer--black': isBlack.value,
+  'spartak__layer--red': isRed.value,
+}))
 
 // WebSocket instance
 let ws = null
@@ -88,17 +95,23 @@ const handleSocketMessage = (message) => {
   try {
     const data = JSON.parse(message)
 
-    if (data.type === 'light-on' && typeof data.percentage === 'number') {
-      const percentage = data.percentage
+    if (data.type === 'light-on') {
+      if (typeof data.percentage === 'string') {
+        status.value = data.percentage;
+      }
 
-      // Генерируем случайное число от 0 до 100
-      const randomProbability = Math.random() * 100
+      if (typeof data.percentage === 'number') {
+        const percentage = data.percentage
 
-      // Если случайная вероятность больше percentage, добавляем черный класс
-      console.log('randomProbability', randomProbability)
-      isBlack.value = randomProbability > percentage
+        // Генерируем случайное число от 0 до 100
+        const randomProbability = Math.random() * 100
 
-      console.log('isBlack', isBlack.value)
+        // Если случайная вероятность больше percentage, устанавливаем статус black
+        console.log('randomProbability', randomProbability)
+        status.value = randomProbability > percentage ? 'black' : 'red'
+
+        console.log('status', status.value)
+      }
     }
   } catch (error) {
     console.error('Ошибка при обработке сокет-сообщения:', error)
@@ -294,6 +307,11 @@ onBeforeUnmount(() => {
 
     &--black {
       background-color: $color-black;
+      animation: none;
+    }
+
+    &--red {
+      background-color: $color-red;
       animation: none;
     }
 
