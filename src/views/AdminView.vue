@@ -64,7 +64,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
 import ButtonComp from '@/components/ButtonComp.vue'
-import { broadcast } from '@/services/api'
+import { broadcast, getConnectionsCount } from '@/services/api'
 
 const isLoading = ref(false)
 const showSuccess = ref(false)
@@ -76,8 +76,16 @@ const onBroadcastClick = async (percentage) => {
   showSuccess.value = false
 
   try {
-    // Запускаем 15 параллельных запросов с шагами 0-14
-    const steps = Array.from({ length: 15 }, (_, i) => i)
+    // Получаем количество подключений
+    const connectionsData = await getConnectionsCount()
+    const totalConnections = connectionsData.total || 0
+
+    // Вычисляем количество шагов (по 500 записей на шаг)
+    const stepSize = 500
+    const totalSteps = Math.ceil(totalConnections / stepSize)
+
+    // Создаем массив шагов
+    const steps = Array.from({ length: totalSteps }, (_, i) => i)
     const broadcastPromises = steps.map(step =>
       broadcast({ type: 'light-on', percentage }, step)
     )
@@ -86,7 +94,6 @@ const onBroadcastClick = async (percentage) => {
     const responses = await Promise.allSettled(broadcastPromises)
 
     // Собираем результаты
-    let totalConnections = 0
     let totalSuccessful = 0
     let totalFailed = 0
     const errors = []
@@ -94,7 +101,6 @@ const onBroadcastClick = async (percentage) => {
     responses.forEach((result, index) => {
       if (result.status === 'fulfilled') {
         const response = result.value
-        totalConnections += response.totalConnections || 0
         totalSuccessful += response.successful || 0
         totalFailed += response.failed || 0
       } else {

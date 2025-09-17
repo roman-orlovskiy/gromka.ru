@@ -105,6 +105,17 @@ export const updateUser = async (user) => {
   }
 }
 
+// Получение количества WebSocket-подключений
+export const getConnectionsCount = async () => {
+  try {
+    const response = await api.get('/getws')
+    return response.data
+  } catch (error) {
+    console.error('Error fetching connections count:', error)
+    throw error
+  }
+}
+
 // Вещание сообщения всем WebSocket-подключениям
 export const broadcast = async (payload, step = 0) => {
   try {
