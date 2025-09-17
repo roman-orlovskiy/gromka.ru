@@ -14,7 +14,8 @@
     "mysql": "sudo service mysql start",
     "yc:update-gateway": "yc serverless api-gateway update --id d5dfdjso9in9g25dtq1d --spec serverless/openapi.yaml",
     "yc:deploy-broadcast": "yc serverless function version create --function-id d4e6gd4ft8fr9mpgepgh --runtime nodejs22 --entrypoint index.handler --memory 1g --execution-timeout 60s --service-account-id aje7rv6fp17nfo1o1h15 --source-path serverless/wsbroadcast",
-    "deploy": "npm run yc:deploy-broadcast && npm run yc:update-gateway"
+    "yc:deploy-getws": "yc serverless function version create --function-id d4efofc8jb0tifgi1hc2 --runtime nodejs22 --entrypoint index.handler --memory 1g --execution-timeout 60s --service-account-id aje7rv6fp17nfo1o1h15 --source-path serverless/getws",
+    "deploy": "npm run yc:deploy-broadcast && npm run yc:deploy-getws && npm run yc:update-gateway"
   },
   "dependencies": {
     "axios": "^1.8.2",
