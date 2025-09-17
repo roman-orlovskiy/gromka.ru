@@ -62,14 +62,13 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref } from 'vue'
 import ButtonComp from '@/components/ButtonComp.vue'
 import { broadcast, getConnectionsCount } from '@/services/api'
 
 const isLoading = ref(false)
 const showSuccess = ref(false)
 const lastResult = ref(null)
-let wakeUpInterval = null
 
 const onBroadcastClick = async (percentage) => {
   isLoading.value = true
@@ -143,15 +142,6 @@ const onBroadcastClick = async (percentage) => {
   }
 }
 
-const sendWakeUp = async () => {
-  try {
-    const response = await broadcast({ type: 'wake-up' })
-    console.log('Wake-up response:', response)
-  } catch (e) {
-    console.error('Wake-up error:', e)
-  }
-}
-
 const formatTime = (timestamp) => {
   return timestamp.toLocaleTimeString('ru-RU', {
     hour: '2-digit',
@@ -160,21 +150,7 @@ const formatTime = (timestamp) => {
   })
 }
 
-// Запускаем wake-up интервал при монтировании компонента
-onMounted(() => {
-  // Отправляем wake-up сразу
-  sendWakeUp()
 
-  // Устанавливаем интервал на каждые 2 секунды
-  wakeUpInterval = setInterval(sendWakeUp, 7000)
-})
-
-// Очищаем интервал при размонтировании компонента
-onUnmounted(() => {
-  if (wakeUpInterval) {
-    clearInterval(wakeUpInterval)
-  }
-})
 </script>
 
 <style lang="scss" scoped>

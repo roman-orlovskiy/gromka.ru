@@ -19,6 +19,16 @@ const sendMessage = async (connectionId, message) => {
     return wsClient.send(request);
 };
 
+// Инициализация YDB на уровне модуля для повторного использования между инвокациями
+const ydbConnectionString = 'grpcs://ydb.serverless.yandexcloud.net:2135/?database=/ru-central1/b1gl9td94vo809chfkpg/etn03t7e35bf32dhtqoh';
+const ydbCredentialsProvider = new MetadataCredentialsProvider();
+const ydbDriver = new Driver(ydbConnectionString, {
+  credentialsProvider: ydbCredentialsProvider,
+  'ydb.sdk.enable_discovery': false, // Улучшает производительность холодного старта
+});
+const ydbReadyPromise = ydbDriver.ready();
+const ydbSql = query(ydbDriver);
+
 export async function handler(event) {
   // Парсинг query параметров
   const step = event.queryStringParameters?.step ? parseInt(event.queryStringParameters.step, 10) : 0;
@@ -71,22 +81,14 @@ export async function handler(event) {
       body: JSON.stringify({ error: 'Invalid body. Expected JSON object.' })
     };
   }
-  let credentialsProvider = new MetadataCredentialsProvider()
-  const connectionString = 'grpcs://ydb.serverless.yandexcloud.net:2135/?database=/ru-central1/b1gl9td94vo809chfkpg/etn03t7e35bf32dhtqoh';
-  let driver = new Driver(connectionString, {
-    credentialsProvider,
-    'ydb.sdk.enable_discovery': false, // Улучшает производительность холодного старта
-  });
-
   try {
-    await driver.ready();
-    const sql = query(driver);
+    await ydbReadyPromise;
 
     // Вычисляем OFFSET и LIMIT для пагинации
     const offset = step * 2500;
     const limit = 2500;
 
-    const result = await sql`SELECT * FROM wsconnections LIMIT ${limit} OFFSET ${offset}`;
+    const result = await ydbSql`SELECT * FROM wsconnections LIMIT ${limit} OFFSET ${offset}`;
     const connections = result[0] || [];
 
     // Отправляем сообщение всем активным соединениям
@@ -122,7 +124,5 @@ export async function handler(event) {
       headers: { 'Content-Type': 'application/json; charset=utf-8' },
       body: JSON.stringify({ error: 'failed to broadcast message', details: String(error && error.message || error) })
     };
-  } finally {
-    driver.close();
   }
 };
