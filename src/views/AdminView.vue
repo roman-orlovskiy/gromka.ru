@@ -5,7 +5,7 @@
       <ButtonComp @click="onBroadcastClick(40)">40%</ButtonComp>
       <ButtonComp @click="onBroadcastClick(70)">70%</ButtonComp>
       <ButtonComp @click="onBroadcastClick(100)">100%</ButtonComp>
-      <ButtonComp @click="onBroadcastClick('default')">По умолчанию</ButtonComp>
+      <ButtonComp @click="onBroadcastClick('flicker')">Мерцание</ButtonComp>
     </div>
 
     <!-- Плашка с последними данными -->
