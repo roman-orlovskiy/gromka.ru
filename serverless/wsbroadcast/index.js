@@ -8,12 +8,11 @@ const { serverless: { apigateway_connection_service: connectionService } } = clo
 const cloudApiSession = new Session();
 const wsClient = cloudApiSession.client(serviceClients.WebSocketConnectionServiceClient);
 
-const sendMessage = async (connectionId, message) => {
+const sendMessage = async (connectionId, dataBuffer) => {
     const request = connectionService.SendToConnectionRequest.fromPartial({
         connectionId,
         type: connectionService.SendToConnectionRequest_DataType.TEXT,
-        // eslint-disable-next-line no-undef
-        data: Buffer.from(JSON.stringify(message), 'utf8'),
+        data: dataBuffer,
     });
 
     return wsClient.send(request);
@@ -88,21 +87,28 @@ export async function handler(event) {
     const offset = step * 2500;
     const limit = 2500;
 
-    const result = await ydbSql`SELECT * FROM wsconnections LIMIT ${limit} OFFSET ${offset}`;
+    // Запрашиваем только необходимые поля для уменьшения трафика и ускорения
+    const result = await ydbSql`SELECT connectionId FROM wsconnections LIMIT ${limit} OFFSET ${offset}`;
     const connections = result[0] || [];
 
-    // Отправляем сообщение всем активным соединениям
-    const sendPromises = connections.map(conn =>
-      sendMessage(conn.connectionId, message).catch(error => {
-        console.error(`Failed to send message to connection ${conn.connectionId}:`, error);
-        return { connectionId: conn.connectionId, error: error.message };
-      })
-    );
+    // Сериализуем сообщение один раз для всех отправок
+    // eslint-disable-next-line no-undef
+    const payloadBuffer = Buffer.from(JSON.stringify(message), 'utf8');
 
-    const sendResults = await Promise.allSettled(sendPromises);
+    // Ограничиваем конкуренцию батчами, чтобы не упираться в лимиты сервиса
+    const batchSize = 200; // можно подбирать эмпирически
+    let successful = 0;
+    let failed = 0;
 
-    const successful = sendResults.filter(result => result.status === 'fulfilled').length;
-    const failed = sendResults.filter(result => result.status === 'rejected').length;
+    for (let i = 0; i < connections.length; i += batchSize) {
+      const batch = connections.slice(i, i + batchSize);
+      const results = await Promise.allSettled(
+        batch.map(conn => sendMessage(conn.connectionId, payloadBuffer))
+      );
+      for (const r of results) {
+        if (r.status === 'fulfilled') successful += 1; else failed += 1;
+      }
+    }
 
     return {
       statusCode: 200,
