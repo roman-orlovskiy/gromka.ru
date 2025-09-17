@@ -20,6 +20,18 @@ const sendMessage = async (connectionId, message) => {
 };
 
 export async function handler(event) {
+  // Парсинг query параметров
+  const step = event.queryStringParameters?.step ? parseInt(event.queryStringParameters.step, 10) : 0;
+
+  // Валидация параметра step
+  if (isNaN(step) || step < 0) {
+    return {
+      statusCode: 400,
+      headers: { 'Content-Type': 'application/json; charset=utf-8' },
+      body: JSON.stringify({ error: 'Invalid step parameter. Must be a non-negative integer.' })
+    };
+  }
+
   // Парсинг и базовая валидация тела запроса
   let message;
   if (!event || event.body == null) {
@@ -70,7 +82,11 @@ export async function handler(event) {
     await driver.ready();
     const sql = query(driver);
 
-    const result = await sql`SELECT * FROM wsconnections`;
+    // Вычисляем OFFSET и LIMIT для пагинации
+    const offset = step * 500;
+    const limit = 500;
+
+    const result = await sql`SELECT * FROM wsconnections LIMIT ${limit} OFFSET ${offset}`;
     const connections = result[0] || [];
 
     // Отправляем сообщение всем активным соединениям
@@ -91,6 +107,9 @@ export async function handler(event) {
       headers: { 'Content-Type': 'application/json; charset=utf-8' },
       body: JSON.stringify({
         message: 'Broadcast completed',
+        step,
+        offset,
+        limit,
         totalConnections: connections.length,
         successful,
         failed,
