@@ -2,6 +2,33 @@ import axios from 'axios'
 
 const baseURL = 'd5dfdjso9in9g25dtq1d.k1mxzkh0.apigw.yandexcloud.net'
 
+// Функция для retry с экспоненциальной задержкой при 429 ошибке
+const retryWithBackoff = async (fn, maxRetries = 3, baseDelay = 1000) => {
+  let lastError
+
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      return await fn()
+    } catch (error) {
+      lastError = error
+
+      // Если это не 429 ошибка или это последняя попытка, выбрасываем ошибку
+      if (error.response?.status !== 429 || attempt === maxRetries) {
+        throw error
+      }
+
+      // Вычисляем задержку с экспоненциальным ростом
+      const delay = baseDelay * Math.pow(2, attempt)
+      console.log(`429 ошибка, повторная попытка ${attempt + 1}/${maxRetries} через ${delay}мс`)
+
+      // Ждем перед следующей попыткой
+      await new Promise(resolve => setTimeout(resolve, delay))
+    }
+  }
+
+  throw lastError
+}
+
 const api = axios.create({
   baseURL: `https://${baseURL}/api`,
   headers: {
@@ -107,24 +134,24 @@ export const updateUser = async (user) => {
 
 // Получение количества WebSocket-подключений
 export const getConnectionsCount = async () => {
-  try {
+  return retryWithBackoff(async () => {
     const response = await api.get('/getws')
     return response.data
-  } catch (error) {
+  }).catch(error => {
     console.error('Error fetching connections count:', error)
     throw error
-  }
+  })
 }
 
 // Вещание сообщения всем WebSocket-подключениям
 export const broadcast = async (payload, step = 0) => {
-  try {
+  return retryWithBackoff(async () => {
     const url = `https://${baseURL}/wsbroadcast${step > 0 ? `?step=${step}` : ''}`
     const response = await axios.post(url, payload, {
       headers: { 'Content-Type': 'application/json' },
     })
     return response.data
-  } catch (error) {
+  }).catch(error => {
     console.error('Error broadcasting message:', {
       message: error.message,
       status: error.response?.status,
@@ -133,7 +160,7 @@ export const broadcast = async (payload, step = 0) => {
       data: error.response?.data,
     })
     throw error
-  }
+  })
 }
 
 // Подключение к WebSocket: wss://<baseURL>/connections
