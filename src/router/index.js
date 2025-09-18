@@ -47,7 +47,7 @@ const router = createRouter({
       name: 'admin',
       component: () => import('../views/AdminView.vue'),
       beforeEnter: (to) => {
-        const requiredHash = 'hjslk17ldsvcu5iongh'
+        const requiredHash = 'hjslk17ldsvcu255iongh'
         const providedHash = to.query.hash
 
         if (!requiredHash) {
