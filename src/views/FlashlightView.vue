@@ -3,20 +3,20 @@
     <div class="flashlight__container">
       <h1 class="flashlight__title">Фонарик камеры</h1>
 
-      <div class="flashlight__status" :class="{ 'flashlight__status--active': isFlashlightOn }">
+      <div class="flashlight__status" :class="{ 'flashlight__status--active': isFlashlightOn, 'flashlight__status--music': isPlayingMusic }">
         <div class="flashlight__status-indicator"></div>
         <span class="flashlight__status-text">
-          {{ isFlashlightOn ? 'Фонарик включен' : 'Фонарик выключен' }}
+          {{ isPlayingMusic ? '🎵 Играет ритм Баха' : isFlashlightOn ? 'Фонарик включен' : 'Фонарик выключен' }}
         </span>
       </div>
 
       <div class="flashlight__controls">
         <ButtonComp
-          :mod="isFlashlightOn ? 'gradient-2' : 'gradient-1'"
+          :mod="isPlayingMusic ? 'gradient-3' : isFlashlightOn ? 'gradient-2' : 'gradient-1'"
           @click="toggleFlashlight"
           :disabled="!hasCameraSupport"
         >
-          {{ isFlashlightOn ? 'Выключить фонарик' : 'Включить фонарик' }}
+          {{ isPlayingMusic ? '🛑 Остановить музыку' : isFlashlightOn ? 'Выключить фонарик' : '🎵 Включить ритм Баха' }}
         </ButtonComp>
 
         <ButtonComp
@@ -54,6 +54,9 @@ const isFlashlightOn = ref(false)
 const hasCameraSupport = ref(false)
 const isStreamActive = ref(false)
 const errorMessage = ref('')
+const isPlayingMusic = ref(false)
+const currentRhythm = ref(null)
+const musicInterval = ref(null)
 const deviceInfo = ref({
   isIOS: false,
   isAndroid: false,
@@ -66,6 +69,135 @@ const deviceInfo = ref({
 })
 let stream = null
 let track = null
+
+const loadRhythmData = async () => {
+  try {
+    console.log('🎵 Загрузка ритма Баха...')
+    // Импортируем JSON файл напрямую
+    const rhythmData = await import('@/assets/data/bach_rhythm.json')
+    currentRhythm.value = rhythmData.default
+    console.log('✅ Ритм Баха загружен:', rhythmData.default)
+    return rhythmData.default
+  } catch (error) {
+    console.error('❌ Ошибка загрузки ритма:', error)
+    // Создаем базовый ритм в случае ошибки
+    currentRhythm.value = {
+      name: "Ритм Баха (базовый)",
+      description: "Та та та тааа",
+      isCyclical: true,
+      pattern: [
+        { duration: 250, action: "on", description: "Та" },
+        { duration: 250, action: "off", description: "пауза" },
+        { duration: 250, action: "on", description: "та" },
+        { duration: 250, action: "off", description: "пауза" },
+        { duration: 250, action: "on", description: "та" },
+        { duration: 250, action: "off", description: "пауза" },
+        { duration: 500, action: "on", description: "тааа" },
+        { duration: 500, action: "off", description: "длинная пауза" }
+      ]
+    }
+    console.log('✅ Используем базовый ритм Баха')
+    return currentRhythm.value
+  }
+}
+
+const playMusic = async () => {
+  if (isPlayingMusic.value) {
+    stopMusic()
+    return
+  }
+
+  if (!currentRhythm.value) {
+    await loadRhythmData()
+  }
+
+  if (!track) {
+    await startCamera()
+    if (!track) {
+      alert('Не удалось запустить камеру для музыкального фонарика')
+      return
+    }
+  }
+
+  console.log('🎵 Начинаем играть ритм Баха...')
+  isPlayingMusic.value = true
+
+  let currentNote = 0
+  const pattern = currentRhythm.value.pattern
+
+  const playNote = () => {
+    if (!isPlayingMusic.value || !track) {
+      return
+    }
+
+    const note = pattern[currentNote]
+    console.log(`🎵 Играем ноту ${currentNote + 1}/${pattern.length}: ${note.description || note.action}`)
+
+    // Включаем или выключаем фонарик
+    if (note.action === 'on') {
+      setFlashlightState(true)
+    } else {
+      setFlashlightState(false)
+    }
+
+    currentNote++
+
+    // Если цикличность включена и ритм закончился, начинаем заново
+    if (currentNote >= pattern.length) {
+      if (currentRhythm.value.isCyclical) {
+        console.log('🔄 Повторяем ритм Баха...')
+        currentNote = 0
+      } else {
+        console.log('🎵 Ритм Баха завершен')
+        stopMusic()
+        return
+      }
+    }
+
+    // Планируем следующую ноту
+    musicInterval.value = setTimeout(playNote, note.duration)
+  }
+
+  // Начинаем воспроизведение
+  playNote()
+}
+
+const stopMusic = () => {
+  console.log('🛑 Останавливаем музыкальный фонарик')
+  isPlayingMusic.value = false
+
+  if (musicInterval.value) {
+    clearTimeout(musicInterval.value)
+    musicInterval.value = null
+  }
+
+  // Выключаем фонарик
+  setFlashlightState(false)
+}
+
+const setFlashlightState = async (turnOn) => {
+  if (!track) return
+
+  try {
+    const constraints = getFlashlightConstraints(turnOn)
+
+    for (const constraint of constraints) {
+      try {
+        await track.applyConstraints(constraint)
+        if (turnOn) {
+          isFlashlightOn.value = true
+        } else {
+          isFlashlightOn.value = false
+        }
+        break
+      } catch (error) {
+        console.warn('⚠️ Не удалось применить ограничение:', error.message)
+      }
+    }
+  } catch (error) {
+    console.error('❌ Ошибка управления фонариком:', error)
+  }
+}
 
 const detectDeviceAndBrowser = () => {
   const userAgent = navigator.userAgent.toLowerCase()
@@ -399,61 +531,26 @@ const toggleFlashlight = async () => {
     console.log('🔦 fillLightMode:', capabilities.fillLightMode)
     console.log('🔦 torch:', capabilities.torch)
 
-    if (isFlashlightOn.value) {
-      // Выключаем фонарик
-      console.log('🔦 Выключаем фонарик...')
-      const offConstraints = getFlashlightConstraints(false)
+    // Проверяем, поддерживает ли устройство фонарик
+    const hasSupport = capabilities.torch === true ||
+      (capabilities.fillLightMode &&
+       (capabilities.fillLightMode.includes('flash') || capabilities.fillLightMode.includes('torch')))
 
-      let turnedOff = false
-      for (let i = 0; i < offConstraints.length; i++) {
-        try {
-          console.log(`🔄 Попытка выключения способом ${i + 1}:`, offConstraints[i])
-          await track.applyConstraints(offConstraints[i])
-          console.log(`✅ Фонарик выключен способом ${i + 1}`)
-          turnedOff = true
-          break
-        } catch (error) {
-          console.warn(`❌ Способ выключения ${i + 1} не сработал:`, error.message)
-        }
-      }
+    if (!hasSupport) {
+      throw new Error('Устройство не поддерживает функцию фонарика. Проверьте:\n- Используется ли задняя камера\n- Поддерживает ли устройство фонарик\n- Не заблокирован ли фонарик системными настройками')
+    }
 
-      if (turnedOff) {
-        isFlashlightOn.value = false
-        console.log('✅ Фонарик выключен')
-      } else {
-        throw new Error('Не удалось выключить фонарик')
-      }
+    // Если фонарик уже включен или играет музыка - выключаем
+    if (isFlashlightOn.value || isPlayingMusic.value) {
+      console.log('🔦 Выключаем фонарик и останавливаем музыку...')
+      stopMusic()
+      await setFlashlightState(false)
+      console.log('✅ Фонарик выключен')
     } else {
-      // Включаем фонарик
-      console.log('🔦 Включаем фонарик...')
-      const onConstraints = getFlashlightConstraints(true)
-
-      let turnedOn = false
-      for (let i = 0; i < onConstraints.length; i++) {
-        try {
-          console.log(`🔄 Попытка включения способом ${i + 1}:`, onConstraints[i])
-          await track.applyConstraints(onConstraints[i])
-          console.log(`✅ Фонарик включен способом ${i + 1}`)
-          turnedOn = true
-          break
-        } catch (error) {
-          console.warn(`❌ Способ включения ${i + 1} не сработал:`, error.message)
-        }
-      }
-
-      if (turnedOn) {
-        isFlashlightOn.value = true
-        console.log('✅ Фонарик включен')
-      } else {
-        // Проверяем, поддерживает ли устройство фонарик вообще
-        const hasSupport = deviceInfo.value.supportsTorch || deviceInfo.value.supportsFillLightMode
-
-        if (!hasSupport) {
-          throw new Error('Устройство не поддерживает функцию фонарика. Проверьте:\n- Используется ли задняя камера\n- Поддерживает ли устройство фонарик\n- Не заблокирован ли фонарик системными настройками')
-        } else {
-          throw new Error('Фонарик не удалось включить. Возможно, он уже используется другим приложением или заблокирован системой.')
-        }
-      }
+      // Включаем фонарик и начинаем играть ритм Баха
+      console.log('🎵 Включаем фонарик и начинаем играть ритм Баха...')
+      await playMusic()
+      console.log('✅ Музыкальный фонарик запущен')
     }
   } catch (error) {
     console.error('❌ Ошибка управления фонариком:', error)
@@ -464,6 +561,9 @@ const toggleFlashlight = async () => {
 
 
 const stopCamera = () => {
+  // Останавливаем музыку
+  stopMusic()
+
   if (stream) {
     stream.getTracks().forEach(track => track.stop())
     stream = null
@@ -664,7 +764,7 @@ const runDiagnostics = async () => {
   alert(alertMessage)
 }
 
-onMounted(() => {
+onMounted(async () => {
   console.log('🚀 Инициализация страницы фонарика...')
   console.log('🌐 Протокол:', window.location.protocol)
   console.log('📱 User Agent:', navigator.userAgent)
@@ -674,6 +774,9 @@ onMounted(() => {
 
   // Определяем устройство и браузер
   detectDeviceAndBrowser()
+
+  // Загружаем ритм Баха
+  await loadRhythmData()
 
   checkCameraSupport()
 })
@@ -727,6 +830,13 @@ onUnmounted(() => {
       box-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
     }
 
+    &--music {
+      background-color: rgba(255, 0, 255, 0.2);
+      border-color: rgba(255, 0, 255, 0.4);
+      box-shadow: 0 0 20px rgba(255, 0, 255, 0.3);
+      animation: pulse-music 0.5s ease-in-out infinite alternate;
+    }
+
     &-indicator {
       width: 1.5rem;
       height: 1.5rem;
@@ -739,6 +849,12 @@ onUnmounted(() => {
     &--active &-indicator {
       background-color: #ffa502;
       box-shadow: 0 0 15px rgba(255, 165, 2, 0.7);
+    }
+
+    &--music &-indicator {
+      background-color: #ff00ff;
+      box-shadow: 0 0 15px rgba(255, 0, 255, 0.7);
+      animation: pulse-indicator 0.5s ease-in-out infinite alternate;
     }
 
     &-text {
@@ -802,6 +918,28 @@ onUnmounted(() => {
       font-size: 1.4rem;
       padding: 1rem;
     }
+  }
+}
+
+@keyframes pulse-music {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 20px rgba(255, 0, 255, 0.3);
+  }
+  100% {
+    transform: scale(1.02);
+    box-shadow: 0 0 30px rgba(255, 0, 255, 0.5);
+  }
+}
+
+@keyframes pulse-indicator {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 15px rgba(255, 0, 255, 0.7);
+  }
+  100% {
+    transform: scale(1.1);
+    box-shadow: 0 0 25px rgba(255, 0, 255, 1);
   }
 }
 </style>
