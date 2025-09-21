@@ -32,6 +32,7 @@
 <script setup>
 import MainIcon from '@/components/icons/MainIcon.vue'
 import AuthIcon from '@/components/icons/AuthIcon.vue'
+import FlashlightIcon from '@/components/icons/FlashlightIcon.vue'
 import { RouterLink, useRoute } from 'vue-router'
 import { useMainStore } from '@/stores/main'
 import { storeToRefs } from 'pinia'
@@ -52,6 +53,12 @@ const menuItems = [
     text: 'Главная',
     to: '/',
     name: 'home',
+  },
+  {
+    icon: FlashlightIcon,
+    text: 'Фонарик',
+    to: '/flashlight',
+    name: 'flashlight',
   },
 ]
 </script>

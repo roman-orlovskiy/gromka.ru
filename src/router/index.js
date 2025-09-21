@@ -66,6 +66,11 @@ const router = createRouter({
         return true
       },
     },
+    {
+      path: '/flashlight',
+      name: 'flashlight',
+      component: () => import('../views/FlashlightView.vue'),
+    },
   ],
 })
 
