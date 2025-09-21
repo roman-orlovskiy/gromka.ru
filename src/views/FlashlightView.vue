@@ -70,12 +70,30 @@ let track = null
 const detectDeviceAndBrowser = () => {
   const userAgent = navigator.userAgent.toLowerCase()
 
+  // Определяем версию iOS
+  let iosVersion = null
+  if (/iphone|ipad|ipod/.test(userAgent)) {
+    const match = userAgent.match(/os (\d+)_(\d+)/)
+    if (match) {
+      iosVersion = parseInt(match[1]) + parseInt(match[2]) / 10
+    }
+  }
+
+  // Определяем Telegram WebView
+  const isTelegramWebView = /telegram/i.test(userAgent) ||
+    (window.Telegram && window.Telegram.WebApp) ||
+    window.location.hostname.includes('t.me') ||
+    window.location.hostname.includes('telegram.org')
+
   deviceInfo.value = {
     isIOS: /iphone|ipad|ipod/.test(userAgent),
     isAndroid: /android/.test(userAgent),
     isChrome: /chrome/.test(userAgent) && !/edg/.test(userAgent),
     isSafari: /safari/.test(userAgent) && !/chrome/.test(userAgent),
     isYaBrowser: /yabrowser/.test(userAgent),
+    isTelegramWebView: isTelegramWebView,
+    iosVersion: iosVersion,
+    isOldIOS: iosVersion && iosVersion < 17, // iOS 16 и ниже считаются старыми
     supportsTorch: false,
     supportsFillLightMode: false,
     torchCapability: null
@@ -142,26 +160,41 @@ const startCamera = async () => {
     let constraintsOptions = []
 
     if (deviceInfo.value.isIOS) {
-      // iOS Safari требует особый подход
+      // iOS Safari - пробуем разные подходы для максимальной совместимости
       constraintsOptions = [
-        // Вариант 1: iOS Safari - environment с идеальными параметрами
+        // Вариант 1: Конкретная задняя камера (для старых iOS)
+        {
+          video: {
+            deviceId: { exact: selectedCamera.deviceId },
+            facingMode: 'environment',
+            width: { ideal: 720, max: 1280 },
+            height: { ideal: 1280, max: 1920 }
+          }
+        },
+        // Вариант 2: environment с идеальными параметрами
         {
           video: {
             facingMode: { ideal: 'environment' },
-            width: { ideal: 1280, max: 1920 },
-            height: { ideal: 720, max: 1080 },
+            width: { ideal: 720, max: 1280 },
+            height: { ideal: 1280, max: 1920 },
             frameRate: { ideal: 30, max: 60 }
           }
         },
-        // Вариант 2: iOS Safari - любая камера
+        // Вариант 3: Простой environment
         {
           video: {
-            width: { ideal: 1280, max: 1920 },
-            height: { ideal: 720, max: 1080 },
+            facingMode: 'environment'
+          }
+        },
+        // Вариант 4: Любая камера с ограничениями
+        {
+          video: {
+            width: { ideal: 720, max: 1280 },
+            height: { ideal: 1280, max: 1920 },
             frameRate: { ideal: 30, max: 60 }
           }
         },
-        // Вариант 3: iOS Safari - минимальные требования
+        // Вариант 5: Минимальные требования
         {
           video: true
         }
@@ -281,50 +314,69 @@ const startCamera = async () => {
 const getFlashlightConstraints = (turnOn) => {
   const constraints = []
 
-  // Определяем приоритет в зависимости от устройства и поддержки
-  if (deviceInfo.value.supportsTorch) {
-    // Устройство поддерживает torch - используем его
-    if (deviceInfo.value.isIOS) {
-      // iOS Safari
+  // Специальная логика для старых iOS
+  if (deviceInfo.value.isOldIOS) {
+    console.log('🍎 Старая версия iOS - используем альтернативные методы')
+
+    // Для старых iOS пробуем все возможные варианты
+    if (turnOn) {
       constraints.push(
-        { advanced: [{ torch: turnOn }] },
-        { torch: turnOn }
+        // Стандартные варианты
+        { advanced: [{ torch: true }] },
+        { torch: true },
+        { advanced: [{ fillLightMode: 'flash' }] },
+        { fillLightMode: 'flash' },
+        { advanced: [{ fillLightMode: 'torch' }] },
+        { fillLightMode: 'torch' },
+        // Альтернативные варианты для старых iOS
+        { advanced: [{ fillLightMode: 'on' }] },
+        { fillLightMode: 'on' },
+        { advanced: [{ flash: true }] },
+        { flash: true }
       )
     } else {
-      // Android и другие
+      constraints.push(
+        { advanced: [{ torch: false }] },
+        { torch: false },
+        { advanced: [{ fillLightMode: 'off' }] },
+        { fillLightMode: 'off' },
+        { advanced: [{ flash: false }] },
+        { flash: false }
+      )
+    }
+  } else {
+    // Обычная логика для новых устройств
+    if (deviceInfo.value.supportsTorch) {
       constraints.push(
         { advanced: [{ torch: turnOn }] },
         { torch: turnOn }
       )
     }
-  }
 
-  if (deviceInfo.value.supportsFillLightMode) {
-    // Устройство поддерживает fillLightMode
-    const mode = turnOn ? 'flash' : 'off'
-    constraints.push(
-      { advanced: [{ fillLightMode: mode }] },
-      { fillLightMode: mode }
-    )
-  }
+    if (deviceInfo.value.supportsFillLightMode) {
+      const mode = turnOn ? 'flash' : 'off'
+      constraints.push(
+        { advanced: [{ fillLightMode: mode }] },
+        { fillLightMode: mode }
+      )
+    }
 
-  // Fallback варианты для максимальной совместимости
-  if (turnOn) {
-    constraints.push(
-      { advanced: [{ torch: true }] },
-      { torch: true },
-      { advanced: [{ fillLightMode: 'flash' }] },
-      { fillLightMode: 'flash' },
-      { advanced: [{ fillLightMode: 'torch' }] },
-      { fillLightMode: 'torch' }
-    )
-  } else {
-    constraints.push(
-      { advanced: [{ torch: false }] },
-      { torch: false },
-      { advanced: [{ fillLightMode: 'off' }] },
-      { fillLightMode: 'off' }
-    )
+    // Fallback варианты
+    if (turnOn) {
+      constraints.push(
+        { advanced: [{ torch: true }] },
+        { torch: true },
+        { advanced: [{ fillLightMode: 'flash' }] },
+        { fillLightMode: 'flash' }
+      )
+    } else {
+      constraints.push(
+        { advanced: [{ torch: false }] },
+        { torch: false },
+        { advanced: [{ fillLightMode: 'off' }] },
+        { fillLightMode: 'off' }
+      )
+    }
   }
 
   return constraints
@@ -424,28 +476,84 @@ const stopCamera = () => {
 }
 
 const copyToClipboard = async (text) => {
+  console.log('📋 Попытка копирования в буфер обмена...')
+
   try {
+    // Метод 1: Современный Clipboard API (может не работать в Telegram WebView)
     if (navigator.clipboard && window.isSecureContext) {
-      // Современный способ для HTTPS
-      await navigator.clipboard.writeText(text)
-      return true
-    } else {
-      // Fallback для HTTP или старых браузеров
+      try {
+        await navigator.clipboard.writeText(text)
+        console.log('✅ Скопировано через Clipboard API')
+        return true
+      } catch (clipboardError) {
+        console.warn('⚠️ Clipboard API не работает:', clipboardError.message)
+      }
+    }
+
+    // Метод 2: document.execCommand (работает в большинстве случаев)
+    try {
       const textArea = document.createElement('textarea')
       textArea.value = text
       textArea.style.position = 'fixed'
       textArea.style.left = '-999999px'
       textArea.style.top = '-999999px'
+      textArea.style.opacity = '0'
+      textArea.style.pointerEvents = 'none'
+      textArea.setAttribute('readonly', '')
+
       document.body.appendChild(textArea)
+
+      // Выделяем текст
       textArea.focus()
       textArea.select()
+      textArea.setSelectionRange(0, 99999) // Для мобильных устройств
 
       const successful = document.execCommand('copy')
       document.body.removeChild(textArea)
-      return successful
+
+      if (successful) {
+        console.log('✅ Скопировано через document.execCommand')
+        return true
+      }
+    } catch (execError) {
+      console.warn('⚠️ document.execCommand не работает:', execError.message)
     }
+
+    // Метод 3: Создание временного элемента с выделением (для iOS Safari в Telegram)
+    try {
+      const range = document.createRange()
+      const selection = window.getSelection()
+
+      const textNode = document.createTextNode(text)
+      const tempDiv = document.createElement('div')
+      tempDiv.appendChild(textNode)
+      tempDiv.style.position = 'fixed'
+      tempDiv.style.left = '-999999px'
+      tempDiv.style.top = '-999999px'
+
+      document.body.appendChild(tempDiv)
+
+      range.selectNodeContents(tempDiv)
+      selection.removeAllRanges()
+      selection.addRange(range)
+
+      const successful = document.execCommand('copy')
+      selection.removeAllRanges()
+      document.body.removeChild(tempDiv)
+
+      if (successful) {
+        console.log('✅ Скопировано через выделение текста')
+        return true
+      }
+    } catch (rangeError) {
+      console.warn('⚠️ Метод выделения текста не работает:', rangeError.message)
+    }
+
+    console.log('❌ Все методы копирования не сработали')
+    return false
+
   } catch (error) {
-    console.error('Ошибка копирования в буфер обмена:', error)
+    console.error('❌ Общая ошибка копирования:', error)
     return false
   }
 }
@@ -465,10 +573,15 @@ const runDiagnostics = async () => {
   // Информация об устройстве
   diagnosticInfo += `📱 ИНФОРМАЦИЯ ОБ УСТРОЙСТВЕ:\n`
   diagnosticInfo += `  iOS: ${deviceInfo.value.isIOS ? '✅' : '❌'}\n`
+  if (deviceInfo.value.isIOS && deviceInfo.value.iosVersion) {
+    diagnosticInfo += `  Версия iOS: ${deviceInfo.value.iosVersion}\n`
+    diagnosticInfo += `  Старая версия iOS: ${deviceInfo.value.isOldIOS ? '✅ (может не поддерживать torch)' : '❌'}\n`
+  }
   diagnosticInfo += `  Android: ${deviceInfo.value.isAndroid ? '✅' : '❌'}\n`
   diagnosticInfo += `  Chrome: ${deviceInfo.value.isChrome ? '✅' : '❌'}\n`
   diagnosticInfo += `  Safari: ${deviceInfo.value.isSafari ? '✅' : '❌'}\n`
   diagnosticInfo += `  YaBrowser: ${deviceInfo.value.isYaBrowser ? '✅' : '❌'}\n`
+  diagnosticInfo += `  Telegram WebView: ${deviceInfo.value.isTelegramWebView ? '✅ (ограничения копирования)' : '❌'}\n`
   diagnosticInfo += `  Поддержка torch: ${deviceInfo.value.supportsTorch ? '✅' : '❌'}\n`
   diagnosticInfo += `  Поддержка fillLightMode: ${deviceInfo.value.supportsFillLightMode ? '✅' : '❌'}\n\n`
 
@@ -526,9 +639,27 @@ const runDiagnostics = async () => {
   const copied = await copyToClipboard(diagnosticInfo)
 
   // Показываем алерт с информацией о копировании
-  const alertMessage = copied
-    ? `📋 ДИАГНОСТИКА СКОПИРОВАНА В БУФЕР ОБМЕНА\n\n${diagnosticInfo}`
-    : `⚠️ НЕ УДАЛОСЬ СКОПИРОВАТЬ В БУФЕР ОБМЕНА\n\n${diagnosticInfo}`
+  let alertMessage = ''
+
+  if (copied) {
+    alertMessage = `📋 ДИАГНОСТИКА СКОПИРОВАНА В БУФЕР ОБМЕНА\n\n${diagnosticInfo}`
+  } else {
+    // Специальные инструкции для Telegram WebView
+    if (deviceInfo.value.isTelegramWebView) {
+      alertMessage = `⚠️ TELEGRAM WEBVIEW - ОГРАНИЧЕНИЯ КОПИРОВАНИЯ\n\n` +
+        `📱 Для копирования в Telegram:\n` +
+        `1. Выделите весь текст ниже\n` +
+        `2. Нажмите "Копировать" в контекстном меню\n` +
+        `3. Или используйте Ctrl+C (Cmd+C на Mac)\n\n` +
+        `📋 ДИАГНОСТИКА:\n\n${diagnosticInfo}`
+    } else {
+      alertMessage = `⚠️ НЕ УДАЛОСЬ СКОПИРОВАТЬ В БУФЕР ОБМЕНА\n\n` +
+        `📱 Попробуйте:\n` +
+        `1. Выделить текст вручную\n` +
+        `2. Нажать Ctrl+C (Cmd+C на Mac)\n\n` +
+        `📋 ДИАГНОСТИКА:\n\n${diagnosticInfo}`
+    }
+  }
 
   alert(alertMessage)
 }
