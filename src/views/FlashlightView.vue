@@ -26,6 +26,21 @@
         >
           Остановить камеру
         </ButtonComp>
+
+        <ButtonComp
+          mod="gradient-5"
+          @click="runDiagnostics"
+        >
+          Диагностика
+        </ButtonComp>
+
+        <ButtonComp
+          mod="gradient-6"
+          @click="forcePlayVideo"
+          v-if="isStreamActive && !videoLoaded"
+        >
+          Запустить видео
+        </ButtonComp>
       </div>
 
       <div class="flashlight__video-container" v-if="isStreamActive">
@@ -35,7 +50,12 @@
           muted
           playsinline
           class="flashlight__video"
+          @loadedmetadata="onVideoLoaded"
+          @error="onVideoError"
         ></video>
+        <div v-if="!videoLoaded" class="flashlight__video-loading">
+          Загрузка видео...
+        </div>
       </div>
 
       <div class="flashlight__info" v-if="!hasCameraSupport">
@@ -58,50 +78,159 @@ const hasCameraSupport = ref(false)
 const isStreamActive = ref(false)
 const errorMessage = ref('')
 const videoElement = ref(null)
+const videoLoaded = ref(false)
 let stream = null
 let track = null
 
 const checkCameraSupport = async () => {
   try {
-    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-      throw new Error('Ваш браузер не поддерживает доступ к камере')
+    console.log('🔍 Проверка поддержки камеры...')
+
+    if (!navigator.mediaDevices) {
+      throw new Error('navigator.mediaDevices не поддерживается')
+    }
+
+    if (!navigator.mediaDevices.getUserMedia) {
+      throw new Error('getUserMedia не поддерживается')
     }
 
     // Проверяем поддержку фонарика
+    console.log('📱 Проверка доступных устройств...')
     const devices = await navigator.mediaDevices.enumerateDevices()
-    hasCameraSupport.value = devices.some(device => device.kind === 'videoinput')
+    console.log('📋 Найденные устройства:', devices)
+
+    const videoDevices = devices.filter(device => device.kind === 'videoinput')
+    hasCameraSupport.value = videoDevices.length > 0
+
+    console.log('📹 Видеоустройства:', videoDevices)
 
     if (!hasCameraSupport.value) {
       throw new Error('Камера не найдена на устройстве')
     }
+
+    console.log('✅ Поддержка камеры подтверждена')
   } catch (error) {
+    console.error('❌ Ошибка проверки камеры:', error)
     errorMessage.value = error.message
     hasCameraSupport.value = false
+    alert(`Ошибка проверки камеры: ${error.message}`)
   }
 }
 
 const startCamera = async () => {
   try {
     errorMessage.value = ''
+    console.log('🎥 Запуск камеры...')
 
-    stream = await navigator.mediaDevices.getUserMedia({
-      video: {
-        facingMode: 'environment'
-      }
-    })
+    // Получаем список всех камер
+    const devices = await navigator.mediaDevices.enumerateDevices()
+    const cameras = devices.filter(device => device.kind === 'videoinput')
 
-    track = stream.getVideoTracks()[0]
-    isStreamActive.value = true
+    console.log('📹 Найденные камеры:', cameras)
 
-    if (videoElement.value) {
-      videoElement.value.srcObject = stream
+    if (cameras.length === 0) {
+      throw new Error('Камеры не найдены на устройстве')
     }
 
-    console.log('Камера запущена')
+    // Ищем заднюю камеру (обычно последняя в списке)
+    let selectedCamera = cameras[cameras.length - 1]
+    console.log('📱 Выбранная камера:', selectedCamera)
+
+    // Пробуем разные варианты ограничений для задней камеры
+    const constraintsOptions = [
+      // Вариант 1: Конкретная камера с environment
+      {
+        video: {
+          deviceId: { exact: selectedCamera.deviceId },
+          facingMode: 'environment',
+          width: { ideal: 1920 },
+          height: { ideal: 1080 }
+        }
+      },
+      // Вариант 2: Любая камера с environment
+      {
+        video: {
+          facingMode: 'environment',
+          width: { ideal: 1920 },
+          height: { ideal: 1080 }
+        }
+      },
+      // Вариант 3: Конкретная камера без facingMode
+      {
+        video: {
+          deviceId: { exact: selectedCamera.deviceId },
+          width: { ideal: 1920 },
+          height: { ideal: 1080 }
+        }
+      },
+      // Вариант 4: Любая камера
+      {
+        video: {
+          width: { ideal: 1920 },
+          height: { ideal: 1080 }
+        }
+      }
+    ]
+
+    let stream = null
+    let lastError = null
+
+    // Пробуем каждый вариант ограничений
+    for (let i = 0; i < constraintsOptions.length; i++) {
+      try {
+        console.log(`🔄 Попытка ${i + 1}/${constraintsOptions.length}:`, constraintsOptions[i])
+        stream = await navigator.mediaDevices.getUserMedia(constraintsOptions[i])
+        console.log(`✅ Успешно запущена камера с ограничениями ${i + 1}`)
+        break
+      } catch (error) {
+        console.warn(`❌ Попытка ${i + 1} неудачна:`, error.message)
+        lastError = error
+      }
+    }
+
+    if (!stream) {
+      throw new Error(`Не удалось запустить ни одну камеру. Последняя ошибка: ${lastError?.message}`)
+    }
+
+    track = stream.getVideoTracks()[0]
+    if (!track) {
+      throw new Error('Не найден видео трек в потоке')
+    }
+
+    isStreamActive.value = true
+
+    console.log('📹 Найденные треки:', stream.getVideoTracks())
+    console.log('🔧 Настройки трека:', track.getSettings())
+    console.log('⚙️ Поддерживаемые ограничения:', track.getCapabilities())
+
+    // Проверяем, есть ли поддержка фонарика
+    const capabilities = track.getCapabilities()
+    console.log('🔦 Проверка поддержки фонарика...')
+    console.log('🔦 fillLightMode:', capabilities.fillLightMode)
+    console.log('🔦 torch:', capabilities.torch)
+
+    if (videoElement.value) {
+      videoLoaded.value = false
+      videoElement.value.srcObject = stream
+      console.log('🎬 Видео элемент подключен')
+
+      // Принудительно запускаем воспроизведение
+      try {
+        await videoElement.value.play()
+        console.log('▶️ Видео запущено')
+      } catch (playError) {
+        console.warn('⚠️ Ошибка автовоспроизведения:', playError.message)
+      }
+    } else {
+      console.warn('⚠️ Видео элемент не найден')
+    }
+
+    console.log('✅ Камера успешно запущена')
   } catch (error) {
-    console.error('Ошибка запуска камеры:', error)
+    console.error('❌ Ошибка запуска камеры:', error)
     errorMessage.value = `Ошибка доступа к камере: ${error.message}`
     isStreamActive.value = false
+    alert(`Ошибка запуска камеры: ${error.message}\n\nПроверьте:\n- Разрешения на доступ к камере\n- Используется ли HTTPS\n- Поддерживает ли устройство камеру`)
   }
 }
 
@@ -112,24 +241,117 @@ const toggleFlashlight = async () => {
   }
 
   try {
+    console.log('🔦 Попытка переключения фонарика...')
+    console.log('📹 Текущий трек:', track)
+    console.log('⚙️ Возможности трека:', track.getCapabilities())
+
+    const capabilities = track.getCapabilities()
+    console.log('🔍 Проверка поддержки фонарика...')
+    console.log('🔦 fillLightMode:', capabilities.fillLightMode)
+    console.log('🔦 torch:', capabilities.torch)
+
     if (isFlashlightOn.value) {
       // Выключаем фонарик
-      await track.applyConstraints({
-        advanced: [{ fillLightMode: 'off' }]
-      })
-      isFlashlightOn.value = false
-      console.log('Фонарик выключен')
+      console.log('🔦 Выключаем фонарик...')
+
+      // Пробуем разные способы выключения (torch приоритетен)
+      const offOptions = [
+        { advanced: [{ torch: false }] },
+        { torch: false },
+        { advanced: [{ fillLightMode: 'off' }] }
+      ]
+
+      let turnedOff = false
+      for (let i = 0; i < offOptions.length; i++) {
+        try {
+          await track.applyConstraints(offOptions[i])
+          console.log(`✅ Фонарик выключен способом ${i + 1}`)
+          turnedOff = true
+          break
+        } catch (error) {
+          console.warn(`❌ Способ выключения ${i + 1} не сработал:`, error.message)
+        }
+      }
+
+      if (turnedOff) {
+        isFlashlightOn.value = false
+        console.log('✅ Фонарик выключен')
+      } else {
+        throw new Error('Не удалось выключить фонарик')
+      }
     } else {
       // Включаем фонарик
-      await track.applyConstraints({
-        advanced: [{ fillLightMode: 'flash' }]
-      })
-      isFlashlightOn.value = true
-      console.log('Фонарик включен')
+      console.log('🔦 Включаем фонарик...')
+
+      // Пробуем разные способы включения (torch приоритетен, так как fillLightMode не поддерживается)
+      const onOptions = [
+        // Вариант 1: torch (работает на вашем устройстве!)
+        { advanced: [{ torch: true }] },
+        // Вариант 2: torch без advanced
+        { torch: true },
+        // Вариант 3: fillLightMode (для совместимости)
+        { advanced: [{ fillLightMode: 'flash' }] },
+        // Вариант 4: fillLightMode без advanced
+        { fillLightMode: 'flash' }
+      ]
+
+      let turnedOn = false
+      for (let i = 0; i < onOptions.length; i++) {
+        try {
+          console.log(`🔄 Попытка включения способом ${i + 1}:`, onOptions[i])
+          await track.applyConstraints(onOptions[i])
+          console.log(`✅ Фонарик включен способом ${i + 1}`)
+          turnedOn = true
+          break
+        } catch (error) {
+          console.warn(`❌ Способ включения ${i + 1} не сработал:`, error.message)
+        }
+      }
+
+      if (turnedOn) {
+        isFlashlightOn.value = true
+        console.log('✅ Фонарик включен')
+      } else {
+        // Проверяем, поддерживает ли устройство фонарик вообще
+        const hasFillLight = capabilities.fillLightMode && capabilities.fillLightMode.includes('flash')
+        const hasTorch = capabilities.torch === true
+
+        if (!hasFillLight && !hasTorch) {
+          throw new Error('Устройство не поддерживает функцию фонарика. Проверьте:\n- Используется ли задняя камера\n- Поддерживает ли устройство фонарик\n- Не заблокирован ли фонарик системными настройками')
+        } else {
+          throw new Error('Фонарик не удалось включить. Возможно, он уже используется другим приложением или заблокирован системой.')
+        }
+      }
     }
   } catch (error) {
-    console.error('Ошибка управления фонариком:', error)
+    console.error('❌ Ошибка управления фонариком:', error)
     errorMessage.value = `Ошибка управления фонариком: ${error.message}`
+    alert(`Ошибка управления фонариком: ${error.message}`)
+  }
+}
+
+const onVideoLoaded = () => {
+  console.log('🎬 Видео загружено и готово к воспроизведению')
+  videoLoaded.value = true
+}
+
+const onVideoError = (error) => {
+  console.error('❌ Ошибка загрузки видео:', error)
+  videoLoaded.value = false
+  errorMessage.value = 'Ошибка загрузки видео с камеры'
+}
+
+const forcePlayVideo = async () => {
+  if (videoElement.value && stream) {
+    try {
+      console.log('🔄 Принудительный запуск видео...')
+      await videoElement.value.play()
+      console.log('✅ Видео принудительно запущено')
+      videoLoaded.value = true
+    } catch (error) {
+      console.error('❌ Ошибка принудительного запуска:', error)
+      alert(`Не удалось запустить видео: ${error.message}\n\nПопробуйте:\n- Разрешить автовоспроизведение в настройках браузера\n- Обновить страницу`)
+    }
   }
 }
 
@@ -140,6 +362,7 @@ const stopCamera = () => {
     track = null
     isStreamActive.value = false
     isFlashlightOn.value = false
+    videoLoaded.value = false
 
     if (videoElement.value) {
       videoElement.value.srcObject = null
@@ -149,7 +372,78 @@ const stopCamera = () => {
   }
 }
 
+const runDiagnostics = async () => {
+  console.log('🔍 Запуск полной диагностики...')
+
+  let diagnosticInfo = '🔍 ДИАГНОСТИКА СИСТЕМЫ\n\n'
+
+  // Информация о браузере
+  diagnosticInfo += `🌐 Протокол: ${window.location.protocol}\n`
+  diagnosticInfo += `📱 User Agent: ${navigator.userAgent}\n`
+  diagnosticInfo += `🔒 HTTPS: ${window.location.protocol === 'https:' ? '✅' : '❌'}\n`
+  diagnosticInfo += `📹 MediaDevices: ${navigator.mediaDevices ? '✅' : '❌'}\n`
+  diagnosticInfo += `🎥 getUserMedia: ${navigator.mediaDevices?.getUserMedia ? '✅' : '❌'}\n\n`
+
+  try {
+    // Проверяем устройства
+    const devices = await navigator.mediaDevices.enumerateDevices()
+    const videoDevices = devices.filter(d => d.kind === 'videoinput')
+
+    diagnosticInfo += `📹 Видеоустройства (${videoDevices.length}):\n`
+    videoDevices.forEach((device, index) => {
+      diagnosticInfo += `  ${index + 1}. ${device.label || 'Без названия'} (${device.deviceId})\n`
+    })
+    diagnosticInfo += '\n'
+
+    // Проверяем разрешения
+    if (navigator.permissions) {
+      try {
+        const permission = await navigator.permissions.query({ name: 'camera' })
+        diagnosticInfo += `🔐 Разрешение камеры: ${permission.state}\n`
+      } catch {
+        diagnosticInfo += `🔐 Разрешение камеры: Не удалось проверить\n`
+      }
+    }
+
+    // Если есть активный трек, проверяем его возможности
+    if (track) {
+      const settings = track.getSettings()
+      const capabilities = track.getCapabilities()
+
+      diagnosticInfo += '\n📹 АКТИВНЫЙ ТРЕК:\n'
+      diagnosticInfo += `  Разрешение: ${settings.width}x${settings.height}\n`
+      diagnosticInfo += `  Частота кадров: ${settings.frameRate || 'неизвестно'}\n`
+      diagnosticInfo += `  Камера: ${settings.facingMode || 'неизвестно'}\n`
+      diagnosticInfo += `  Device ID: ${settings.deviceId || 'неизвестно'}\n`
+      diagnosticInfo += `  fillLightMode: ${capabilities.fillLightMode ? capabilities.fillLightMode.join(', ') : 'не поддерживается'}\n`
+      diagnosticInfo += `  torch: ${capabilities.torch !== undefined ? capabilities.torch : 'не поддерживается'}\n`
+
+      // Дополнительная информация о фонарике
+      if (capabilities.fillLightMode && capabilities.fillLightMode.includes('flash')) {
+        diagnosticInfo += `  ✅ Фонарик поддерживается (fillLightMode)\n`
+      } else if (capabilities.torch === true) {
+        diagnosticInfo += `  ✅ Фонарик поддерживается (torch)\n`
+      } else {
+        diagnosticInfo += `  ❌ Фонарик НЕ поддерживается\n`
+      }
+    }
+
+  } catch (error) {
+    diagnosticInfo += `❌ Ошибка диагностики: ${error.message}\n`
+  }
+
+  console.log(diagnosticInfo)
+  alert(diagnosticInfo)
+}
+
 onMounted(() => {
+  console.log('🚀 Инициализация страницы фонарика...')
+  console.log('🌐 Протокол:', window.location.protocol)
+  console.log('📱 User Agent:', navigator.userAgent)
+  console.log('🔒 HTTPS:', window.location.protocol === 'https:')
+  console.log('📹 MediaDevices:', !!navigator.mediaDevices)
+  console.log('🎥 getUserMedia:', !!navigator.mediaDevices?.getUserMedia)
+
   checkCameraSupport()
 })
 
@@ -243,6 +537,23 @@ onUnmounted(() => {
     height: auto;
     display: block;
     background-color: #000;
+  }
+
+  &__video-loading {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+    font-size: 1.6rem;
+    background-color: rgba(0, 0, 0, 0.7);
+    padding: 1rem 2rem;
+    border-radius: 1rem;
+    z-index: 10;
+  }
+
+  &__video-container {
+    position: relative;
   }
 
   &__info,
