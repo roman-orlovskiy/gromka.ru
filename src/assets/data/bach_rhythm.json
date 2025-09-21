@@ -1,61 +1,61 @@
 {
-  "name": "Ритм Баха",
-  "description": "Классический ритм Баха: Та та та тааа",
-  "author": "И.С. Бах",
-  "tempo": 120,
-  "beatsPerMinute": 120,
+  "name": "Ритм Баха (Toccata style, faster)",
+  "description": "Чуть ускоренный драматичный ритм в духе Toccata in D minor",
+  "author": "И.С. Бах (адаптация)",
+  "tempo": 80,
+  "beatsPerMinute": 80,
   "isCyclical": true,
   "pattern": [
     {
       "note": 1,
-      "duration": 250,
+      "duration": 400,
       "action": "on",
       "description": "Та"
     },
     {
       "note": 2,
-      "duration": 250,
+      "duration": 300,
       "action": "off",
       "description": "пауза"
     },
     {
       "note": 3,
-      "duration": 250,
+      "duration": 400,
       "action": "on",
       "description": "та"
     },
     {
       "note": 4,
-      "duration": 250,
+      "duration": 300,
       "action": "off",
       "description": "пауза"
     },
     {
       "note": 5,
-      "duration": 250,
+      "duration": 400,
       "action": "on",
       "description": "та"
     },
     {
       "note": 6,
-      "duration": 250,
+      "duration": 500,
       "action": "off",
-      "description": "пауза"
+      "description": "пауза (нарастающая тишина)"
     },
     {
       "note": 7,
-      "duration": 500,
+      "duration": 1500,
       "action": "on",
-      "description": "тааа"
+      "description": "Таааа (главный акцент)"
     },
     {
       "note": 8,
-      "duration": 500,
+      "duration": 700,
       "action": "off",
-      "description": "длинная пауза"
+      "description": "драматическая пауза"
     }
   ],
-  "totalDuration": 2000,
+  "totalDuration": 5100,
   "loopCount": 0,
-  "version": "1.0.0"
+  "version": "1.2.0"
 }
