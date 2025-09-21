@@ -20,42 +20,11 @@
         </ButtonComp>
 
         <ButtonComp
-          mod="gradient-4"
-          @click="stopCamera"
-          v-if="isStreamActive"
-        >
-          Остановить камеру
-        </ButtonComp>
-
-        <ButtonComp
           mod="gradient-5"
           @click="runDiagnostics"
         >
           Диагностика
         </ButtonComp>
-
-        <ButtonComp
-          mod="gradient-6"
-          @click="forcePlayVideo"
-          v-if="isStreamActive && !videoLoaded"
-        >
-          Запустить видео
-        </ButtonComp>
-      </div>
-
-      <div class="flashlight__video-container" v-if="isStreamActive">
-        <video
-          ref="videoElement"
-          autoplay
-          muted
-          playsinline
-          class="flashlight__video"
-          @loadedmetadata="onVideoLoaded"
-          @error="onVideoError"
-        ></video>
-        <div v-if="!videoLoaded" class="flashlight__video-loading">
-          Загрузка видео...
-        </div>
       </div>
 
       <div class="flashlight__info" v-if="!hasCameraSupport">
@@ -85,8 +54,6 @@ const isFlashlightOn = ref(false)
 const hasCameraSupport = ref(false)
 const isStreamActive = ref(false)
 const errorMessage = ref('')
-const videoElement = ref(null)
-const videoLoaded = ref(false)
 const deviceInfo = ref({
   isIOS: false,
   isAndroid: false,
@@ -300,34 +267,7 @@ const startCamera = async () => {
 
     console.log('📱 Обновленная информация об устройстве:', deviceInfo.value)
 
-    if (videoElement.value) {
-      videoLoaded.value = false
-      videoElement.value.srcObject = stream
-      console.log('🎬 Видео элемент подключен')
-
-      // Специальная обработка для iOS Safari
-      if (deviceInfo.value.isIOS && deviceInfo.value.isSafari) {
-        console.log('🍎 iOS Safari - настройка видео элемента...')
-        videoElement.value.setAttribute('playsinline', 'true')
-        videoElement.value.setAttribute('webkit-playsinline', 'true')
-        videoElement.value.muted = true
-      }
-
-      // Принудительно запускаем воспроизведение
-      try {
-        await videoElement.value.play()
-        console.log('▶️ Видео запущено')
-      } catch (playError) {
-        console.warn('⚠️ Ошибка автовоспроизведения:', playError.message)
-
-        // На iOS Safari может потребоваться пользовательское взаимодействие
-        if (deviceInfo.value.isIOS && playError.name === 'NotAllowedError') {
-          console.log('🍎 iOS Safari требует пользовательское взаимодействие для воспроизведения')
-        }
-      }
-    } else {
-      console.warn('⚠️ Видео элемент не найден')
-    }
+    console.log('🎬 Камера готова к работе с фонариком')
 
     console.log('✅ Камера успешно запущена')
   } catch (error) {
@@ -470,30 +410,6 @@ const toggleFlashlight = async () => {
   }
 }
 
-const onVideoLoaded = () => {
-  console.log('🎬 Видео загружено и готово к воспроизведению')
-  videoLoaded.value = true
-}
-
-const onVideoError = (error) => {
-  console.error('❌ Ошибка загрузки видео:', error)
-  videoLoaded.value = false
-  errorMessage.value = 'Ошибка загрузки видео с камеры'
-}
-
-const forcePlayVideo = async () => {
-  if (videoElement.value && stream) {
-    try {
-      console.log('🔄 Принудительный запуск видео...')
-      await videoElement.value.play()
-      console.log('✅ Видео принудительно запущено')
-      videoLoaded.value = true
-    } catch (error) {
-      console.error('❌ Ошибка принудительного запуска:', error)
-      alert(`Не удалось запустить видео: ${error.message}\n\nПопробуйте:\n- Разрешить автовоспроизведение в настройках браузера\n- Обновить страницу`)
-    }
-  }
-}
 
 const stopCamera = () => {
   if (stream) {
@@ -502,13 +418,35 @@ const stopCamera = () => {
     track = null
     isStreamActive.value = false
     isFlashlightOn.value = false
-    videoLoaded.value = false
-
-    if (videoElement.value) {
-      videoElement.value.srcObject = null
-    }
 
     console.log('Камера остановлена')
+  }
+}
+
+const copyToClipboard = async (text) => {
+  try {
+    if (navigator.clipboard && window.isSecureContext) {
+      // Современный способ для HTTPS
+      await navigator.clipboard.writeText(text)
+      return true
+    } else {
+      // Fallback для HTTP или старых браузеров
+      const textArea = document.createElement('textarea')
+      textArea.value = text
+      textArea.style.position = 'fixed'
+      textArea.style.left = '-999999px'
+      textArea.style.top = '-999999px'
+      document.body.appendChild(textArea)
+      textArea.focus()
+      textArea.select()
+
+      const successful = document.execCommand('copy')
+      document.body.removeChild(textArea)
+      return successful
+    }
+  } catch (error) {
+    console.error('Ошибка копирования в буфер обмена:', error)
+    return false
   }
 }
 
@@ -583,7 +521,16 @@ const runDiagnostics = async () => {
   }
 
   console.log(diagnosticInfo)
-  alert(diagnosticInfo)
+
+  // Копируем в буфер обмена
+  const copied = await copyToClipboard(diagnosticInfo)
+
+  // Показываем алерт с информацией о копировании
+  const alertMessage = copied
+    ? `📋 ДИАГНОСТИКА СКОПИРОВАНА В БУФЕР ОБМЕНА\n\n${diagnosticInfo}`
+    : `⚠️ НЕ УДАЛОСЬ СКОПИРОВАТЬ В БУФЕР ОБМЕНА\n\n${diagnosticInfo}`
+
+  alert(alertMessage)
 }
 
 onMounted(() => {
@@ -677,37 +624,6 @@ onUnmounted(() => {
     max-width: 300px;
   }
 
-  &__video-container {
-    width: 100%;
-    max-width: 400px;
-    border-radius: 2rem;
-    overflow: hidden;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-  }
-
-  &__video {
-    width: 100%;
-    height: auto;
-    display: block;
-    background-color: #000;
-  }
-
-  &__video-loading {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    color: white;
-    font-size: 1.6rem;
-    background-color: rgba(0, 0, 0, 0.7);
-    padding: 1rem 2rem;
-    border-radius: 1rem;
-    z-index: 10;
-  }
-
-  &__video-container {
-    position: relative;
-  }
 
   &__info,
   &__error,
