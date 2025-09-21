@@ -62,6 +62,14 @@
         <p>Ваше устройство не поддерживает функцию фонарика камеры</p>
       </div>
 
+      <div class="flashlight__device-info" v-if="deviceInfo.isIOS || deviceInfo.isAndroid">
+        <p>
+          📱 <strong>{{ deviceInfo.isIOS ? 'iOS' : 'Android' }}</strong>
+          | 🌐 <strong>{{ deviceInfo.isSafari ? 'Safari' : deviceInfo.isYaBrowser ? 'YaBrowser' : 'Chrome' }}</strong>
+          | 🔦 <strong>{{ deviceInfo.supportsTorch ? 'torch' : deviceInfo.supportsFillLightMode ? 'fillLightMode' : 'не поддерживается' }}</strong>
+        </p>
+      </div>
+
       <div class="flashlight__error" v-if="errorMessage">
         <p>{{ errorMessage }}</p>
       </div>
@@ -79,8 +87,35 @@ const isStreamActive = ref(false)
 const errorMessage = ref('')
 const videoElement = ref(null)
 const videoLoaded = ref(false)
+const deviceInfo = ref({
+  isIOS: false,
+  isAndroid: false,
+  isChrome: false,
+  isSafari: false,
+  isYaBrowser: false,
+  supportsTorch: false,
+  supportsFillLightMode: false,
+  torchCapability: null
+})
 let stream = null
 let track = null
+
+const detectDeviceAndBrowser = () => {
+  const userAgent = navigator.userAgent.toLowerCase()
+
+  deviceInfo.value = {
+    isIOS: /iphone|ipad|ipod/.test(userAgent),
+    isAndroid: /android/.test(userAgent),
+    isChrome: /chrome/.test(userAgent) && !/edg/.test(userAgent),
+    isSafari: /safari/.test(userAgent) && !/chrome/.test(userAgent),
+    isYaBrowser: /yabrowser/.test(userAgent),
+    supportsTorch: false,
+    supportsFillLightMode: false,
+    torchCapability: null
+  }
+
+  console.log('📱 Информация об устройстве:', deviceInfo.value)
+}
 
 const checkCameraSupport = async () => {
   try {
@@ -136,41 +171,89 @@ const startCamera = async () => {
     let selectedCamera = cameras[cameras.length - 1]
     console.log('📱 Выбранная камера:', selectedCamera)
 
-    // Пробуем разные варианты ограничений для задней камеры
-    const constraintsOptions = [
-      // Вариант 1: Конкретная камера с environment
-      {
-        video: {
-          deviceId: { exact: selectedCamera.deviceId },
-          facingMode: 'environment',
-          width: { ideal: 1920 },
-          height: { ideal: 1080 }
+    // Создаем варианты ограничений в зависимости от устройства
+    let constraintsOptions = []
+
+    if (deviceInfo.value.isIOS) {
+      // iOS Safari требует особый подход
+      constraintsOptions = [
+        // Вариант 1: iOS Safari - environment с идеальными параметрами
+        {
+          video: {
+            facingMode: { ideal: 'environment' },
+            width: { ideal: 1280, max: 1920 },
+            height: { ideal: 720, max: 1080 },
+            frameRate: { ideal: 30, max: 60 }
+          }
+        },
+        // Вариант 2: iOS Safari - любая камера
+        {
+          video: {
+            width: { ideal: 1280, max: 1920 },
+            height: { ideal: 720, max: 1080 },
+            frameRate: { ideal: 30, max: 60 }
+          }
+        },
+        // Вариант 3: iOS Safari - минимальные требования
+        {
+          video: true
         }
-      },
-      // Вариант 2: Любая камера с environment
-      {
-        video: {
-          facingMode: 'environment',
-          width: { ideal: 1920 },
-          height: { ideal: 1080 }
+      ]
+    } else if (deviceInfo.value.isAndroid) {
+      // Android - пробуем разные варианты
+      constraintsOptions = [
+        // Вариант 1: Конкретная камера с environment
+        {
+          video: {
+            deviceId: { exact: selectedCamera.deviceId },
+            facingMode: 'environment',
+            width: { ideal: 1920 },
+            height: { ideal: 1080 }
+          }
+        },
+        // Вариант 2: Любая камера с environment
+        {
+          video: {
+            facingMode: 'environment',
+            width: { ideal: 1920 },
+            height: { ideal: 1080 }
+          }
+        },
+        // Вариант 3: Конкретная камера без facingMode
+        {
+          video: {
+            deviceId: { exact: selectedCamera.deviceId },
+            width: { ideal: 1920 },
+            height: { ideal: 1080 }
+          }
+        },
+        // Вариант 4: Любая камера
+        {
+          video: {
+            width: { ideal: 1920 },
+            height: { ideal: 1080 }
+          }
+        },
+        // Вариант 5: Минимальные требования
+        {
+          video: true
         }
-      },
-      // Вариант 3: Конкретная камера без facingMode
-      {
-        video: {
-          deviceId: { exact: selectedCamera.deviceId },
-          width: { ideal: 1920 },
-          height: { ideal: 1080 }
+      ]
+    } else {
+      // Другие устройства
+      constraintsOptions = [
+        {
+          video: {
+            facingMode: 'environment',
+            width: { ideal: 1920 },
+            height: { ideal: 1080 }
+          }
+        },
+        {
+          video: true
         }
-      },
-      // Вариант 4: Любая камера
-      {
-        video: {
-          width: { ideal: 1920 },
-          height: { ideal: 1080 }
-        }
-      }
-    ]
+      ]
+    }
 
     let stream = null
     let lastError = null
@@ -209,10 +292,26 @@ const startCamera = async () => {
     console.log('🔦 fillLightMode:', capabilities.fillLightMode)
     console.log('🔦 torch:', capabilities.torch)
 
+    // Обновляем информацию об устройстве
+    deviceInfo.value.supportsTorch = capabilities.torch === true
+    deviceInfo.value.supportsFillLightMode = capabilities.fillLightMode &&
+      (capabilities.fillLightMode.includes('flash') || capabilities.fillLightMode.includes('torch'))
+    deviceInfo.value.torchCapability = capabilities.torch
+
+    console.log('📱 Обновленная информация об устройстве:', deviceInfo.value)
+
     if (videoElement.value) {
       videoLoaded.value = false
       videoElement.value.srcObject = stream
       console.log('🎬 Видео элемент подключен')
+
+      // Специальная обработка для iOS Safari
+      if (deviceInfo.value.isIOS && deviceInfo.value.isSafari) {
+        console.log('🍎 iOS Safari - настройка видео элемента...')
+        videoElement.value.setAttribute('playsinline', 'true')
+        videoElement.value.setAttribute('webkit-playsinline', 'true')
+        videoElement.value.muted = true
+      }
 
       // Принудительно запускаем воспроизведение
       try {
@@ -220,6 +319,11 @@ const startCamera = async () => {
         console.log('▶️ Видео запущено')
       } catch (playError) {
         console.warn('⚠️ Ошибка автовоспроизведения:', playError.message)
+
+        // На iOS Safari может потребоваться пользовательское взаимодействие
+        if (deviceInfo.value.isIOS && playError.name === 'NotAllowedError') {
+          console.log('🍎 iOS Safari требует пользовательское взаимодействие для воспроизведения')
+        }
       }
     } else {
       console.warn('⚠️ Видео элемент не найден')
@@ -234,6 +338,58 @@ const startCamera = async () => {
   }
 }
 
+const getFlashlightConstraints = (turnOn) => {
+  const constraints = []
+
+  // Определяем приоритет в зависимости от устройства и поддержки
+  if (deviceInfo.value.supportsTorch) {
+    // Устройство поддерживает torch - используем его
+    if (deviceInfo.value.isIOS) {
+      // iOS Safari
+      constraints.push(
+        { advanced: [{ torch: turnOn }] },
+        { torch: turnOn }
+      )
+    } else {
+      // Android и другие
+      constraints.push(
+        { advanced: [{ torch: turnOn }] },
+        { torch: turnOn }
+      )
+    }
+  }
+
+  if (deviceInfo.value.supportsFillLightMode) {
+    // Устройство поддерживает fillLightMode
+    const mode = turnOn ? 'flash' : 'off'
+    constraints.push(
+      { advanced: [{ fillLightMode: mode }] },
+      { fillLightMode: mode }
+    )
+  }
+
+  // Fallback варианты для максимальной совместимости
+  if (turnOn) {
+    constraints.push(
+      { advanced: [{ torch: true }] },
+      { torch: true },
+      { advanced: [{ fillLightMode: 'flash' }] },
+      { fillLightMode: 'flash' },
+      { advanced: [{ fillLightMode: 'torch' }] },
+      { fillLightMode: 'torch' }
+    )
+  } else {
+    constraints.push(
+      { advanced: [{ torch: false }] },
+      { torch: false },
+      { advanced: [{ fillLightMode: 'off' }] },
+      { fillLightMode: 'off' }
+    )
+  }
+
+  return constraints
+}
+
 const toggleFlashlight = async () => {
   if (!isStreamActive.value) {
     await startCamera()
@@ -242,6 +398,7 @@ const toggleFlashlight = async () => {
 
   try {
     console.log('🔦 Попытка переключения фонарика...')
+    console.log('📱 Информация об устройстве:', deviceInfo.value)
     console.log('📹 Текущий трек:', track)
     console.log('⚙️ Возможности трека:', track.getCapabilities())
 
@@ -253,18 +410,13 @@ const toggleFlashlight = async () => {
     if (isFlashlightOn.value) {
       // Выключаем фонарик
       console.log('🔦 Выключаем фонарик...')
-
-      // Пробуем разные способы выключения (torch приоритетен)
-      const offOptions = [
-        { advanced: [{ torch: false }] },
-        { torch: false },
-        { advanced: [{ fillLightMode: 'off' }] }
-      ]
+      const offConstraints = getFlashlightConstraints(false)
 
       let turnedOff = false
-      for (let i = 0; i < offOptions.length; i++) {
+      for (let i = 0; i < offConstraints.length; i++) {
         try {
-          await track.applyConstraints(offOptions[i])
+          console.log(`🔄 Попытка выключения способом ${i + 1}:`, offConstraints[i])
+          await track.applyConstraints(offConstraints[i])
           console.log(`✅ Фонарик выключен способом ${i + 1}`)
           turnedOff = true
           break
@@ -282,24 +434,13 @@ const toggleFlashlight = async () => {
     } else {
       // Включаем фонарик
       console.log('🔦 Включаем фонарик...')
-
-      // Пробуем разные способы включения (torch приоритетен, так как fillLightMode не поддерживается)
-      const onOptions = [
-        // Вариант 1: torch (работает на вашем устройстве!)
-        { advanced: [{ torch: true }] },
-        // Вариант 2: torch без advanced
-        { torch: true },
-        // Вариант 3: fillLightMode (для совместимости)
-        { advanced: [{ fillLightMode: 'flash' }] },
-        // Вариант 4: fillLightMode без advanced
-        { fillLightMode: 'flash' }
-      ]
+      const onConstraints = getFlashlightConstraints(true)
 
       let turnedOn = false
-      for (let i = 0; i < onOptions.length; i++) {
+      for (let i = 0; i < onConstraints.length; i++) {
         try {
-          console.log(`🔄 Попытка включения способом ${i + 1}:`, onOptions[i])
-          await track.applyConstraints(onOptions[i])
+          console.log(`🔄 Попытка включения способом ${i + 1}:`, onConstraints[i])
+          await track.applyConstraints(onConstraints[i])
           console.log(`✅ Фонарик включен способом ${i + 1}`)
           turnedOn = true
           break
@@ -313,10 +454,9 @@ const toggleFlashlight = async () => {
         console.log('✅ Фонарик включен')
       } else {
         // Проверяем, поддерживает ли устройство фонарик вообще
-        const hasFillLight = capabilities.fillLightMode && capabilities.fillLightMode.includes('flash')
-        const hasTorch = capabilities.torch === true
+        const hasSupport = deviceInfo.value.supportsTorch || deviceInfo.value.supportsFillLightMode
 
-        if (!hasFillLight && !hasTorch) {
+        if (!hasSupport) {
           throw new Error('Устройство не поддерживает функцию фонарика. Проверьте:\n- Используется ли задняя камера\n- Поддерживает ли устройство фонарик\n- Не заблокирован ли фонарик системными настройками')
         } else {
           throw new Error('Фонарик не удалось включить. Возможно, он уже используется другим приложением или заблокирован системой.')
@@ -377,12 +517,22 @@ const runDiagnostics = async () => {
 
   let diagnosticInfo = '🔍 ДИАГНОСТИКА СИСТЕМЫ\n\n'
 
-  // Информация о браузере
+  // Информация о браузере и устройстве
   diagnosticInfo += `🌐 Протокол: ${window.location.protocol}\n`
   diagnosticInfo += `📱 User Agent: ${navigator.userAgent}\n`
   diagnosticInfo += `🔒 HTTPS: ${window.location.protocol === 'https:' ? '✅' : '❌'}\n`
   diagnosticInfo += `📹 MediaDevices: ${navigator.mediaDevices ? '✅' : '❌'}\n`
   diagnosticInfo += `🎥 getUserMedia: ${navigator.mediaDevices?.getUserMedia ? '✅' : '❌'}\n\n`
+
+  // Информация об устройстве
+  diagnosticInfo += `📱 ИНФОРМАЦИЯ ОБ УСТРОЙСТВЕ:\n`
+  diagnosticInfo += `  iOS: ${deviceInfo.value.isIOS ? '✅' : '❌'}\n`
+  diagnosticInfo += `  Android: ${deviceInfo.value.isAndroid ? '✅' : '❌'}\n`
+  diagnosticInfo += `  Chrome: ${deviceInfo.value.isChrome ? '✅' : '❌'}\n`
+  diagnosticInfo += `  Safari: ${deviceInfo.value.isSafari ? '✅' : '❌'}\n`
+  diagnosticInfo += `  YaBrowser: ${deviceInfo.value.isYaBrowser ? '✅' : '❌'}\n`
+  diagnosticInfo += `  Поддержка torch: ${deviceInfo.value.supportsTorch ? '✅' : '❌'}\n`
+  diagnosticInfo += `  Поддержка fillLightMode: ${deviceInfo.value.supportsFillLightMode ? '✅' : '❌'}\n\n`
 
   try {
     // Проверяем устройства
@@ -443,6 +593,9 @@ onMounted(() => {
   console.log('🔒 HTTPS:', window.location.protocol === 'https:')
   console.log('📹 MediaDevices:', !!navigator.mediaDevices)
   console.log('🎥 getUserMedia:', !!navigator.mediaDevices?.getUserMedia)
+
+  // Определяем устройство и браузер
+  detectDeviceAndBrowser()
 
   checkCameraSupport()
 })
@@ -557,12 +710,20 @@ onUnmounted(() => {
   }
 
   &__info,
-  &__error {
+  &__error,
+  &__device-info {
     padding: 1.5rem;
     border-radius: 1rem;
     text-align: center;
     font-size: 1.6rem;
     max-width: 400px;
+  }
+
+  &__device-info {
+    background-color: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    margin-top: 1rem;
   }
 
   &__info {
