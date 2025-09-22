@@ -6,7 +6,7 @@
       <div class="flashlight__status" :class="{ 'flashlight__status--active': isFlashlightOn, 'flashlight__status--music': isPlayingMusic }">
         <div class="flashlight__status-indicator"></div>
         <span class="flashlight__status-text">
-          {{ isPlayingMusic ? '🎵 Играет ритм Бетховена' : isFlashlightOn ? 'Фонарик включен' : 'Фонарик выключен' }}
+          {{ isPlayingMusic ? '🎵 Играет ритм' : 'Фонарик выключен' }}
         </span>
       </div>
 
@@ -16,7 +16,7 @@
           @click="toggleFlashlight"
           :disabled="!hasCameraSupport"
         >
-          {{ isPlayingMusic ? '🛑 Остановить музыку' : isFlashlightOn ? 'Выключить фонарик' : '🎵 Включить ритм Бетховена' }}
+          {{ isPlayingMusic ? 'Остановить' : 'Начать' }}
         </ButtonComp>
 
         <ButtonComp
