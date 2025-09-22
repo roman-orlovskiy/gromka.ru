@@ -2,22 +2,22 @@
   "name": "Ритм Бетховена (Та та та тааа)",
   "description": "Та та та тааа (мотив судьбы из Симфонии №5)",
   "author": "Л. ван Бетховен (адаптация)",
-  "tempo": 160,
-  "beatsPerMinute": 160,
+  "tempo": 128,
+  "beatsPerMinute": 128,
   "isCyclical": true,
   "pattern": [
-    { "note": 1, "duration": 200, "action": "on",  "description": "Та" },
-    { "note": 2, "duration": 150, "action": "off", "description": "пауза" },
-    { "note": 3, "duration": 200, "action": "on",  "description": "та" },
-    { "note": 4, "duration": 150, "action": "off", "description": "пауза" },
-    { "note": 5, "duration": 200, "action": "on",  "description": "та" },
-    { "note": 6, "duration": 250, "action": "off", "description": "пауза (нарастающая)" },
-    { "note": 7, "duration": 750, "action": "on",  "description": "тааа (акцент)" },
-    { "note": 8, "duration": 350, "action": "off", "description": "драматическая пауза" }
+    { "note": 1, "duration": 250, "action": "on",  "description": "Та" },
+    { "note": 2, "duration": 188, "action": "off", "description": "пауза" },
+    { "note": 3, "duration": 250, "action": "on",  "description": "та" },
+    { "note": 4, "duration": 188, "action": "off", "description": "пауза" },
+    { "note": 5, "duration": 250, "action": "on",  "description": "та" },
+    { "note": 6, "duration": 313, "action": "off", "description": "пауза (нарастающая)" },
+    { "note": 7, "duration": 938, "action": "on",  "description": "тааа (акцент)" },
+    { "note": 8, "duration": 438, "action": "off", "description": "драматическая пауза" }
   ],
-  "totalDuration": 2550,
+  "totalDuration": 2813,
   "loopCount": 0,
-  "version": "1.0.0"
+  "version": "1.0.1"
 }
 
 
