@@ -6,7 +6,7 @@
       <div class="flashlight__status" :class="{ 'flashlight__status--active': isFlashlightOn, 'flashlight__status--music': isPlayingMusic }">
         <div class="flashlight__status-indicator"></div>
         <span class="flashlight__status-text">
-          {{ isPlayingMusic ? '🎵 Играет ритм Баха' : isFlashlightOn ? 'Фонарик включен' : 'Фонарик выключен' }}
+          {{ isPlayingMusic ? '🎵 Играет ритм Бетховена' : isFlashlightOn ? 'Фонарик включен' : 'Фонарик выключен' }}
         </span>
       </div>
 
@@ -16,7 +16,7 @@
           @click="toggleFlashlight"
           :disabled="!hasCameraSupport"
         >
-          {{ isPlayingMusic ? '🛑 Остановить музыку' : isFlashlightOn ? 'Выключить фонарик' : '🎵 Включить ритм Баха' }}
+          {{ isPlayingMusic ? '🛑 Остановить музыку' : isFlashlightOn ? 'Выключить фонарик' : '🎵 Включить ритм Бетховена' }}
         </ButtonComp>
 
         <ButtonComp
@@ -76,17 +76,17 @@ let track = null
 
 const loadRhythmData = async () => {
   try {
-    console.log('🎵 Загрузка ритма Баха...')
+    console.log('🎵 Загрузка ритма Бетховена...')
     // Импортируем JSON файл напрямую
-    const rhythmData = await import('@/assets/data/bach_rhythm.json')
+    const rhythmData = await import('@/assets/data/beethoven_rhythm.json')
     currentRhythm.value = rhythmData.default
-    console.log('✅ Ритм Баха загружен:', rhythmData.default)
+    console.log('✅ Ритм Бетховена загружен:', rhythmData.default)
     return rhythmData.default
   } catch (error) {
     console.error('❌ Ошибка загрузки ритма:', error)
     // Создаем базовый ритм в случае ошибки
     currentRhythm.value = {
-      name: "Ритм Баха (базовый)",
+      name: "Ритм Бетховена (базовый)",
       description: "Та та та тааа",
       isCyclical: true,
       pattern: [
@@ -100,7 +100,7 @@ const loadRhythmData = async () => {
         { duration: 500, action: "off", description: "длинная пауза" }
       ]
     }
-    console.log('✅ Используем базовый ритм Баха')
+    console.log('✅ Используем базовый ритм Бетховена')
     return currentRhythm.value
   }
 }
@@ -123,7 +123,7 @@ const playMusic = async () => {
     }
   }
 
-  console.log('🎵 Начинаем играть ритм Баха...')
+  console.log('🎵 Начинаем играть ритм Бетховена...')
   isPlayingMusic.value = true
 
   let currentNote = 0
@@ -149,10 +149,10 @@ const playMusic = async () => {
     // Если цикличность включена и ритм закончился, начинаем заново
     if (currentNote >= pattern.length) {
       if (currentRhythm.value.isCyclical) {
-        console.log('🔄 Повторяем ритм Баха...')
+        console.log('🔄 Повторяем ритм Бетховена...')
         currentNote = 0
       } else {
-        console.log('🎵 Ритм Баха завершен')
+        console.log('🎵 Ритм Бетховена завершен')
         stopMusic()
         return
       }
@@ -559,8 +559,8 @@ const toggleFlashlight = async () => {
       await setFlashlightState(false)
       console.log('✅ Фонарик выключен')
     } else {
-      // Включаем фонарик и начинаем играть ритм Баха
-      console.log('🎵 Включаем фонарик и начинаем играть ритм Баха...')
+      // Включаем фонарик и начинаем играть ритм Бетховена
+      console.log('🎵 Включаем фонарик и начинаем играть ритм Бетховена...')
       await playMusic()
       console.log('✅ Музыкальный фонарик запущен')
     }
@@ -791,7 +791,7 @@ onMounted(async () => {
   // Определяем устройство и браузер
   detectDeviceAndBrowser()
 
-  // Загружаем ритм Баха
+  // Загружаем ритм Бетховена
   await loadRhythmData()
 
   checkCameraSupport()
