@@ -57,6 +57,10 @@ const errorMessage = ref('')
 const isPlayingMusic = ref(false)
 const currentRhythm = ref(null)
 const musicInterval = ref(null)
+// Кэш быстрых ограничений для мгновенного переключения фонарика
+const cachedConstraints = ref({ on: null, off: null })
+// Кэш capabilities трека, чтобы не дергать их на каждом переключении
+const cachedCapabilities = ref(null)
 const deviceInfo = ref({
   isIOS: false,
   isAndroid: false,
@@ -179,19 +183,33 @@ const setFlashlightState = async (turnOn) => {
   if (!track) return
 
   try {
-    const constraints = getFlashlightConstraints(turnOn)
+    // 1) Быстрый путь: если есть кэш рабочей конфигурации — пробуем сразу её
+    const cached = turnOn ? cachedConstraints.value.on : cachedConstraints.value.off
+    if (cached) {
+      try {
+        await track.applyConstraints(cached)
+        isFlashlightOn.value = !!turnOn
+        return
+      } catch (e) {
+        console.warn('⚠️ Кэшированное ограничение перестало работать, пробуем подбор…', e.message)
+        // очищаем кэш, чтобы переобучить ниже
+        if (turnOn) cachedConstraints.value.on = null
+        else cachedConstraints.value.off = null
+      }
+    }
 
+    // 2) Подбор рабочего ограничения и обучение кэша
+    const constraints = getFlashlightConstraints(turnOn)
     for (const constraint of constraints) {
       try {
         await track.applyConstraints(constraint)
-        if (turnOn) {
-          isFlashlightOn.value = true
-        } else {
-          isFlashlightOn.value = false
-        }
-        break
+        isFlashlightOn.value = !!turnOn
+        // сохраняем удачное ограничение для будущих мгновенных переключений
+        if (turnOn) cachedConstraints.value.on = constraint
+        else cachedConstraints.value.off = constraint
+        return
       } catch (error) {
-        console.warn('⚠️ Не удалось применить ограничение:', error.message)
+        // пробуем следующий вариант
       }
     }
   } catch (error) {
@@ -420,6 +438,7 @@ const startCamera = async () => {
 
     // Проверяем, есть ли поддержка фонарика
     const capabilities = track.getCapabilities()
+    cachedCapabilities.value = capabilities
     console.log('🔦 Проверка поддержки фонарика...')
     console.log('🔦 fillLightMode:', capabilities.fillLightMode)
     console.log('🔦 torch:', capabilities.torch)
@@ -521,20 +540,13 @@ const toggleFlashlight = async () => {
   }
 
   try {
-    console.log('🔦 Попытка переключения фонарика...')
-    console.log('📱 Информация об устройстве:', deviceInfo.value)
-    console.log('📹 Текущий трек:', track)
-    console.log('⚙️ Возможности трека:', track.getCapabilities())
+    console.log('🔦 Переключение фонарика...')
+    // Используем кэшированные capabilities (быстрее), при отсутствии — достаем один раз
+    const capabilities = cachedCapabilities.value || track.getCapabilities()
+    if (!cachedCapabilities.value) cachedCapabilities.value = capabilities
 
-    const capabilities = track.getCapabilities()
-    console.log('🔍 Проверка поддержки фонарика...')
-    console.log('🔦 fillLightMode:', capabilities.fillLightMode)
-    console.log('🔦 torch:', capabilities.torch)
-
-    // Проверяем, поддерживает ли устройство фонарик
     const hasSupport = capabilities.torch === true ||
-      (capabilities.fillLightMode &&
-       (capabilities.fillLightMode.includes('flash') || capabilities.fillLightMode.includes('torch')))
+      (capabilities.fillLightMode && (capabilities.fillLightMode.includes('flash') || capabilities.fillLightMode.includes('torch')))
 
     if (!hasSupport) {
       throw new Error('Устройство не поддерживает функцию фонарика. Проверьте:\n- Используется ли задняя камера\n- Поддерживает ли устройство фонарик\n- Не заблокирован ли фонарик системными настройками')
@@ -570,6 +582,10 @@ const stopCamera = () => {
     track = null
     isStreamActive.value = false
     isFlashlightOn.value = false
+    // Сбрасываем кэш, так как трек потерян
+    cachedConstraints.value.on = null
+    cachedConstraints.value.off = null
+    cachedCapabilities.value = null
 
     console.log('Камера остановлена')
   }
