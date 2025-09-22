@@ -42,6 +42,15 @@
       <div class="flashlight__error" v-if="errorMessage">
         <p>{{ errorMessage }}</p>
       </div>
+
+      <!-- Скрытый видео-элемент: привязка потока необходима для корректной инициализации трека/капаабилити на первом запуске на ряде устройств -->
+      <video
+        ref="videoEl"
+        playsinline
+        muted
+        autoplay
+        style="display: none; width: 0; height: 0"
+      ></video>
     </div>
   </div>
 </template>
@@ -73,6 +82,7 @@ const deviceInfo = ref({
 })
 let stream = null
 let track = null
+const videoEl = ref(null)
 
 const loadRhythmData = async () => {
   try {
@@ -208,7 +218,7 @@ const setFlashlightState = async (turnOn) => {
         if (turnOn) cachedConstraints.value.on = constraint
         else cachedConstraints.value.off = constraint
         return
-      } catch (error) {
+      } catch {
         // пробуем следующий вариант
       }
     }
@@ -405,7 +415,8 @@ const startCamera = async () => {
       ]
     }
 
-    let stream = null
+    // ВАЖНО: не затенять внешнюю переменную stream — иначе stopCamera не сможет корректно остановить треки
+    stream = null
     let lastError = null
 
     // Пробуем каждый вариант ограничений
@@ -432,12 +443,51 @@ const startCamera = async () => {
 
     isStreamActive.value = true
 
+    // Привязываем поток к скрытому видео и запускаем воспроизведение — это помогает на Android/iOS корректно инициализировать трек
+    try {
+      if (videoEl.value) {
+        if (videoEl.value.srcObject !== stream) {
+          videoEl.value.srcObject = stream
+        }
+        const playPromise = videoEl.value.play()
+        if (playPromise && typeof playPromise.then === 'function') {
+          await playPromise.catch(() => {})
+        }
+      }
+    } catch (e) {
+      console.warn('⚠️ Не удалось авто-воспроизвести скрытое видео:', e?.message)
+    }
+
+    // Небольшая задержка, чтобы трек перешёл в состояние live и появились корректные capabilities
+    await new Promise(resolve => setTimeout(resolve, 150))
+
     console.log('📹 Найденные треки:', stream.getVideoTracks())
     console.log('🔧 Настройки трека:', track.getSettings())
-    console.log('⚙️ Поддерживаемые ограничения:', track.getCapabilities())
+    console.log('⚙️ Поддерживаемые ограничения (первичный снимок):', track.getCapabilities())
 
-    // Проверяем, есть ли поддержка фонарика
-    const capabilities = track.getCapabilities()
+    // Проверяем, есть ли поддержка фонарика. На некоторых устройствах флаги появляются не мгновенно — делаем несколько попыток.
+    const waitForTorchSupport = async (mediaTrack, attempts = 8, delayMs = 120) => {
+      let caps = null
+      for (let attempt = 0; attempt < attempts; attempt++) {
+        try {
+          caps = mediaTrack.getCapabilities()
+        } catch {
+          caps = null
+        }
+        if (
+          caps && (
+            caps.torch === true ||
+            (Array.isArray(caps.fillLightMode) && (caps.fillLightMode.includes('flash') || caps.fillLightMode.includes('torch')))
+          )
+        ) {
+          return caps
+        }
+        await new Promise(r => setTimeout(r, delayMs))
+      }
+      return caps || mediaTrack.getCapabilities()
+    }
+
+    const capabilities = await waitForTorchSupport(track)
     cachedCapabilities.value = capabilities
     console.log('🔦 Проверка поддержки фонарика...')
     console.log('🔦 fillLightMode:', capabilities.fillLightMode)
