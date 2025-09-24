@@ -381,68 +381,84 @@ const startCamera = async () => {
         for (const cam of candidates) {
           try {
             console.log('🔍 Пробуем заднюю камеру для torch:', cam)
-            const localStream = await navigator.mediaDevices.getUserMedia({
-              video: {
-                deviceId: { exact: cam.deviceId },
-                facingMode: 'environment',
-                width: { ideal: 1920 },
-                height: { ideal: 1080 }
-              }
-            })
+            const variants = [
+              { width: { ideal: 1920 }, height: { ideal: 1080 }, frameRate: { ideal: 30 } },
+              { width: { ideal: 1920 }, height: { ideal: 1080 } },
+              { width: { ideal: 1280 }, height: { ideal: 720 }, frameRate: { ideal: 30 } },
+              { width: { ideal: 1280 }, height: { ideal: 720 } },
+              { width: { ideal: 640 }, height: { ideal: 480 }, frameRate: { ideal: 30 } },
+              { width: { ideal: 640 }, height: { ideal: 480 } }
+            ]
 
-            const localTrack = localStream.getVideoTracks()[0]
-            // Небольшой «прайминг» трека, чтобы capabilities стабилизировались
-            try {
-              if (videoEl.value) {
-                if (videoEl.value.srcObject !== localStream) videoEl.value.srcObject = localStream
-                const p = videoEl.value.play()
-                if (p && typeof p.then === 'function') await p.catch(() => {})
-              }
-            } catch { /* игнорируем ошибки автозапуска видео на некоторых вебвью */ }
-            await new Promise(r => setTimeout(r, 150))
-
-            // Снимаем capabilities через track и через ImageCapture (если доступен)
-            let caps = null
-            try {
-              caps = localTrack.getCapabilities?.()
-            } catch { caps = null }
-
-            let photoCaps = null
-            if ('ImageCapture' in window) {
+            for (const v of variants) {
+              let localStream = null
               try {
-                const ic = new window.ImageCapture(localTrack)
-                photoCaps = await ic.getPhotoCapabilities()
+                localStream = await navigator.mediaDevices.getUserMedia({
+                  video: {
+                    deviceId: { exact: cam.deviceId },
+                    facingMode: 'environment',
+                    ...v
+                  }
+                })
               } catch (e) {
-                console.warn('⚠️ ImageCapture недоступен или вернул ошибку:', e?.message)
+                lastErr = e
+                continue
               }
-            }
 
-            const hasTorchSupport = (
-              (caps && (caps.torch === true || (Array.isArray(caps.fillLightMode) && (caps.fillLightMode.includes('flash') || caps.fillLightMode.includes('torch'))))) ||
-              (photoCaps && (
-                photoCaps.torch === true ||
-                (Array.isArray(photoCaps.fillLightMode) && (photoCaps.fillLightMode.includes('flash') || photoCaps.fillLightMode.includes('torch')))
-              ))
-            )
+              const localTrack = localStream.getVideoTracks()[0]
+              // Небольшой «прайминг» трека, чтобы capabilities стабилизировались
+              try {
+                if (videoEl.value) {
+                  if (videoEl.value.srcObject !== localStream) videoEl.value.srcObject = localStream
+                  const p = videoEl.value.play()
+                  if (p && typeof p.then === 'function') await p.catch(() => {})
+                }
+              } catch { /* игнорируем ошибки автозапуска видео на некоторых вебвью */ }
+              await new Promise(r => setTimeout(r, 180))
 
-            if (hasTorchSupport) {
-              // Назначаем основной поток и трек
-              stream = localStream
-              track = localTrack
-              isStreamActive.value = true
-              cachedCapabilities.value = caps || photoCaps || null
-              deviceInfo.value.supportsTorch = !!(caps?.torch === true || photoCaps?.torch === true)
-              deviceInfo.value.supportsFillLightMode = !!(
-                (caps?.fillLightMode && (caps.fillLightMode.includes('flash') || caps.fillLightMode.includes('torch'))) ||
-                (photoCaps?.fillLightMode && (photoCaps.fillLightMode.includes('flash') || photoCaps.fillLightMode.includes('torch')))
+              // Снимаем capabilities через track и через ImageCapture (если доступен)
+              let caps = null
+              try {
+                caps = localTrack.getCapabilities?.()
+              } catch { caps = null }
+
+              let photoCaps = null
+              if ('ImageCapture' in window) {
+                try {
+                  const ic = new window.ImageCapture(localTrack)
+                  photoCaps = await ic.getPhotoCapabilities()
+                } catch (e) {
+                  console.warn('⚠️ ImageCapture недоступен или вернул ошибку:', e?.message)
+                }
+              }
+
+              const hasTorchSupport = (
+                (caps && (caps.torch === true || (Array.isArray(caps.fillLightMode) && (caps.fillLightMode.includes('flash') || caps.fillLightMode.includes('torch'))))) ||
+                (photoCaps && (
+                  photoCaps.torch === true ||
+                  (Array.isArray(photoCaps.fillLightMode) && (photoCaps.fillLightMode.includes('flash') || photoCaps.fillLightMode.includes('torch')))
+                ))
               )
-              deviceInfo.value.torchCapability = caps?.torch ?? photoCaps?.torch ?? null
-              console.log('✅ Найдена камера с поддержкой фонарика:', cam)
-              return true
-            }
 
-            // Камера не поддерживает фонарик — останавливаем локальный поток и пробуем следующую
-            localStream.getTracks().forEach(t => t.stop())
+              if (hasTorchSupport) {
+                // Назначаем основной поток и трек
+                stream = localStream
+                track = localTrack
+                isStreamActive.value = true
+                cachedCapabilities.value = caps || photoCaps || null
+                deviceInfo.value.supportsTorch = !!(caps?.torch === true || photoCaps?.torch === true)
+                deviceInfo.value.supportsFillLightMode = !!(
+                  (caps?.fillLightMode && (caps.fillLightMode.includes('flash') || caps.fillLightMode.includes('torch'))) ||
+                  (photoCaps?.fillLightMode && (photoCaps.fillLightMode.includes('flash') || photoCaps.fillLightMode.includes('torch')))
+                )
+                deviceInfo.value.torchCapability = caps?.torch ?? photoCaps?.torch ?? null
+                console.log('✅ Найдена камера/профиль с поддержкой фонарика:', cam, v)
+                return true
+              }
+
+              // Камера/профиль не поддерживает фонарик — останавливаем локальный поток и пробуем следующий профиль
+              localStream.getTracks().forEach(t => t.stop())
+            }
           } catch (e) {
             console.warn('❌ Не удалось запустить кандидата камеры:', e?.message)
             lastErr = e
@@ -843,6 +859,18 @@ const runDiagnostics = async () => {
 
   let diagnosticInfo = '🔍 ДИАГНОСТИКА СИСТЕМЫ\n\n'
 
+  // Если камера ещё не активна, временно запускаем для корректного получения capabilities
+  let startedForDiagnostics = false
+  try {
+    if (!isStreamActive.value || !track) {
+      startedForDiagnostics = true
+      console.log('🟡 Временный запуск камеры для диагностики...')
+      await startCamera()
+    }
+  } catch (e) {
+    console.warn('⚠️ Не удалось временно запустить камеру для диагностики:', e?.message)
+  }
+
   // Информация о браузере и устройстве
   diagnosticInfo += `🌐 Протокол: ${window.location.protocol}\n`
   diagnosticInfo += `📱 User Agent: ${navigator.userAgent}\n`
@@ -912,6 +940,14 @@ const runDiagnostics = async () => {
   } catch (error) {
     diagnosticInfo += `❌ Ошибка диагностики: ${error.message}\n`
   }
+
+  // Если камера была запущена только для диагностики, останавливаем её, если не идёт воспроизведение ритма
+  try {
+    if (startedForDiagnostics && !isPlayingMusic.value) {
+      console.log('🟢 Останавливаем временно запущенную камеру после диагностики')
+      stopCamera()
+    }
+  } catch { /* игнорируем ошибки остановки временного трека */ }
 
   console.log(diagnosticInfo)
 
