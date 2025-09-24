@@ -362,6 +362,25 @@ const startCamera = async () => {
     errorMessage.value = ''
     console.log('🎥 Запуск камеры...')
 
+    // Incognito/первый запуск: «preflight» для прогрева разрешений/драйвера
+    try {
+      if (navigator.permissions) {
+        const st = await navigator.permissions.query({ name: 'camera' })
+        if (st.state !== 'granted') {
+          console.log('🟨 Preflight: стейт разрешения:', st.state)
+          try {
+            const s = await navigator.mediaDevices.getUserMedia({ video: true })
+            s.getTracks().forEach(t => t.stop())
+            console.log('✅ Preflight getUserMedia выполнен')
+            // Небольшая пауза, чтобы система применяла разрешение
+            await new Promise(r => setTimeout(r, 120))
+          } catch (e) {
+            console.warn('⚠️ Preflight getUserMedia не удался:', e?.message)
+          }
+        }
+      }
+    } catch { /* игнорируем сбои preflight в инкогнито */ }
+
     // Получаем список всех камер
     const devices = await navigator.mediaDevices.enumerateDevices()
     const cameras = devices.filter(device => device.kind === 'videoinput')
@@ -701,6 +720,25 @@ const startCamera = async () => {
       } catch (e) {
         console.warn('⚠️ Не удалось выполнить повторный запуск камеры:', e?.message)
       }
+    }
+
+    // Incognito/первый запуск: усиленный повтор, если стейт стал granted, но torch отсутствует
+    if (navigator.permissions) {
+      try {
+        const st = await navigator.permissions.query({ name: 'camera' })
+        if (
+          st.state === 'granted' &&
+          !deviceInfo.value.supportsTorch &&
+          !deviceInfo.value.supportsFillLightMode &&
+          !hasRetriedAfterPermission.value
+        ) {
+          hasRetriedAfterPermission.value = true
+          console.log('🔁 Incognito: повторный запуск после granted без torch')
+          stopCamera()
+          await new Promise(r => setTimeout(r, 160))
+          return await startCamera()
+        }
+      } catch { /* игнорируем ошибки проверки permission */ }
     }
   } catch (error) {
     console.error('❌ Ошибка запуска камеры:', error)
