@@ -34,7 +34,7 @@
       </div>
 
       <div class="flashlight-simple__logs">
-        <div class="flashlight-simple__logs-title">Логи (последние {{ logs.length }})</div>
+        <div class="flashlight-simple__logs-title">Логи (последние {{ Math.min(logs.length, 200) }})</div>
         <pre class="flashlight-simple__logs-body">{{ formattedLogs }}</pre>
       </div>
 
@@ -512,6 +512,37 @@ onUnmounted(() => {
     color: #ffebee;
     text-align: center;
     font-size: 1.4rem;
+  }
+
+  &__logs {
+    width: 100%;
+    max-width: 560px;
+    background: rgba(0, 0, 0, 0.25);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 0.8rem;
+    overflow: hidden;
+  }
+
+  &__logs-title {
+    padding: 0.8rem 1rem;
+    font-size: 1.4rem;
+    font-weight: 600;
+    background: rgba(255, 255, 255, 0.12);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.18);
+  }
+
+  &__logs-body {
+    margin: 0;
+    padding: 1rem;
+    max-height: 220px;
+    overflow: auto;
+    white-space: pre-wrap;
+    word-break: break-word;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+    font-size: 1.2rem;
+    line-height: 1.5;
+    color: #f0f0f0;
+    background: transparent;
   }
 
   @media (max-width: 768px) {
