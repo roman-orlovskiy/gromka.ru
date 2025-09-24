@@ -115,6 +115,11 @@ const isStartingCamera = ref(false)
 // если torch/fillLightMode не появились на первом запуске
 const hasRetriedAfterPermission = ref(false)
 const hasRetriedInTelegram = ref(false)
+// Анти-зацикливание: кулдаун и лимиты для Telegram WebView
+const tgStartAttempts = ref(0)
+const lastStartAt = ref(0)
+const START_COOLDOWN_MS = 1500
+const MAX_TG_ATTEMPTS = 2
 
 // Эвристика для определения задней камеры по лейблу
 const isBackCameraDevice = (device) => {
@@ -382,6 +387,23 @@ const checkCameraSupport = async () => {
 const startCamera = async () => {
   try {
     if (isStartingCamera.value) { addLog('startCamera: skip (already starting)'); return }
+
+    // В Telegram WebView: ограничиваем частоту и количество стартов
+    if (deviceInfo.value.isTelegramWebView) {
+      const now = Date.now()
+      const since = now - lastStartAt.value
+      if (since < START_COOLDOWN_MS) {
+        addLog('startCamera: cooldown (webview)', { msLeft: START_COOLDOWN_MS - since })
+        return
+      }
+      if (tgStartAttempts.value >= MAX_TG_ATTEMPTS) {
+        addLog('startCamera: attempts limit reached (webview)', { attempts: tgStartAttempts.value })
+        errorMessage.value = 'Слишком много попыток запуска камеры в приложении. Попробуйте ещё раз через несколько секунд.'
+        return
+      }
+      tgStartAttempts.value += 1
+      lastStartAt.value = now
+    }
     isStartingCamera.value = true
     errorMessage.value = ''
     console.log('🎥 Запуск камеры...')
@@ -725,6 +747,11 @@ const startCamera = async () => {
     console.log('🎬 Камера готова к работе с фонариком')
 
     console.log('✅ Камера успешно запущена')
+    // Сбросим счётчик попыток в WebView после успешного запуска
+    if (deviceInfo.value.isTelegramWebView) {
+      tgStartAttempts.value = 0
+      lastStartAt.value = Date.now()
+    }
 
     // Одноразовый «реинициализатор» для Android: некоторые устройства (Samsung Fold)
     // только после первой сессии корректно экспонируют torch/fillLightMode
