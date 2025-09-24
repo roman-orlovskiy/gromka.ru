@@ -30,13 +30,26 @@ export function useCameraSupport() {
       }
 
       console.log('✅ Поддержка камеры подтверждена')
-    } catch (error) {
-      console.error('❌ Ошибка проверки камеры:', error)
-      errorMessage.value = error.message
-      hasCameraSupport.value = false
-    } finally {
-      isLoading.value = false
+  } catch (error) {
+    console.error('❌ Ошибка проверки камеры:', error)
+
+    let userMessage = 'Ошибка проверки камеры'
+
+    if (error.message.includes('mediaDevices не поддерживается')) {
+      userMessage = 'Ваш браузер не поддерживает доступ к камере. Обновите браузер или используйте современный браузер.'
+    } else if (error.message.includes('getUserMedia не поддерживается')) {
+      userMessage = 'Функция getUserMedia не поддерживается. Обновите браузер.'
+    } else if (error.message.includes('Камера не найдена')) {
+      userMessage = 'Камера не найдена на устройстве. Проверьте подключение камеры.'
+    } else {
+      userMessage = error.message
     }
+
+    errorMessage.value = userMessage
+    hasCameraSupport.value = false
+  } finally {
+    isLoading.value = false
+  }
   }
 
   return {

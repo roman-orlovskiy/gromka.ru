@@ -46,6 +46,11 @@ export function useMusicMode() {
       await loadRhythmData()
     }
 
+    if (!currentRhythm.value) {
+      console.error('❌ Не удалось загрузить ритм')
+      return
+    }
+
     console.log('🎵 Начинаем играть ритм Бетховена...')
     isPlayingMusic.value = true
 

@@ -38,6 +38,13 @@
 
       <div class="flashlight__error" v-if="errorMessage">
         <p>{{ errorMessage }}</p>
+        <ButtonComp
+          mod="gradient-5"
+          @click="retryOperation"
+          style="margin-top: 1rem;"
+        >
+          Попробовать снова
+        </ButtonComp>
       </div>
 
       <!-- Скрытый видео-элемент: привязка потока необходима для корректной инициализации трека/капаабилити на первом запуске на ряде устройств -->
@@ -98,12 +105,23 @@ const cleanup = () => {
   stopCamera()
 }
 
+const retryOperation = async () => {
+  console.log('🔄 Повторная попытка...')
+  // Очищаем ошибки и пробуем снова
+  errorMessage.value = ''
+  await checkCameraSupport()
+}
+
 onMounted(async () => {
   console.log('🚀 Инициализация страницы фонарика...')
+  console.log('🌐 Протокол:', window.location.protocol)
+  console.log('📱 User Agent:', navigator.userAgent)
+  console.log('🔒 HTTPS:', window.location.protocol === 'https:')
 
   // Загружаем ритм Бетховена при инициализации
   await loadRhythmData()
 
+  // Проверяем поддержку камеры
   checkCameraSupport()
 })
 

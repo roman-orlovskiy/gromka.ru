@@ -63,7 +63,26 @@ export function useCamera(videoEl = null) {
 
     } catch (error) {
       console.error('❌ Ошибка запуска камеры:', error)
-      errorMessage.value = `Ошибка запуска камеры: ${error.message}`
+
+      let userMessage = 'Ошибка запуска камеры'
+
+      if (error.name === 'NotAllowedError') {
+        userMessage = 'Доступ к камере заблокирован. Разрешите доступ к камере в настройках браузера.'
+      } else if (error.name === 'NotFoundError') {
+        userMessage = 'Камера не найдена. Проверьте, что камера подключена и не используется другим приложением.'
+      } else if (error.name === 'NotReadableError') {
+        userMessage = 'Камера занята другим приложением. Закройте другие приложения, использующие камеру.'
+      } else if (error.name === 'OverconstrainedError') {
+        userMessage = 'Камера не поддерживает требуемые параметры. Попробуйте другое устройство.'
+      } else if (error.message.includes('Permission denied')) {
+        userMessage = 'Разрешение на использование камеры отклонено. Обновите страницу и разрешите доступ.'
+      } else if (error.message.includes('HTTPS')) {
+        userMessage = 'Требуется HTTPS соединение для доступа к камере. Откройте сайт через HTTPS.'
+      } else {
+        userMessage = `Ошибка запуска камеры: ${error.message}`
+      }
+
+      errorMessage.value = userMessage
       isStreamActive.value = false
       supportsFlashlight.value = false
     } finally {
@@ -96,7 +115,9 @@ export function useCamera(videoEl = null) {
 
   const setFlashlightState = async (turnOn) => {
     if (!track) {
-      console.warn('⚠️ Нет активного трека для управления фонариком')
+      const error = 'Нет активного трека для управления фонариком. Попробуйте перезапустить камеру.'
+      console.warn('⚠️', error)
+      errorMessage.value = error
       return
     }
 
@@ -122,8 +143,14 @@ export function useCamera(videoEl = null) {
         constraints.push({ fillLightMode: turnOn ? 'torch' : 'off' })
       }
 
+      if (constraints.length === 0) {
+        throw new Error('Устройство не поддерживает управление фонариком. Проверьте, что используется задняя камера.')
+      }
+
       // Пробуем применить ограничения
       let success = false
+      let lastError = null
+
       for (const constraint of constraints) {
         try {
           await track.applyConstraints(constraint)
@@ -131,20 +158,27 @@ export function useCamera(videoEl = null) {
           console.log('✅ Фонарик успешно переключен:', constraint)
           break
         } catch (e) {
+          lastError = e
           console.warn('⚠️ Не удалось применить ограничение:', constraint, e.message)
         }
       }
 
       if (!success) {
-        throw new Error('Устройство не поддерживает управление фонариком')
+        const errorMsg = lastError?.message?.includes('NotAllowedError')
+          ? 'Доступ к фонарику заблокирован. Проверьте разрешения браузера.'
+          : lastError?.message?.includes('NotSupportedError')
+          ? 'Фонарик не поддерживается на этом устройстве.'
+          : `Не удалось управлять фонариком: ${lastError?.message || 'Неизвестная ошибка'}`
+        throw new Error(errorMsg)
       }
 
       isFlashlightOn.value = turnOn
+      errorMessage.value = '' // Очищаем ошибки при успехе
       console.log('Фонарик:', turnOn ? 'включен' : 'выключен')
 
     } catch (error) {
       console.error('❌ Ошибка управления фонариком:', error)
-      errorMessage.value = `Ошибка управления фонариком: ${error.message}`
+      errorMessage.value = error.message
     }
   }
 
