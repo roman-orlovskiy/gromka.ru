@@ -21,10 +21,21 @@
         >
           {{ isFlashlightOn ? 'Выключить' : 'Включить' }}
         </ButtonComp>
+        <ButtonComp
+          mod="gradient-4"
+          @click="exportLogs"
+        >
+          Скопировать логи
+        </ButtonComp>
       </div>
 
       <div class="flashlight-simple__error" v-if="errorMessage">
         <p>{{ errorMessage }}</p>
+      </div>
+
+      <div class="flashlight-simple__logs">
+        <div class="flashlight-simple__logs-title">Логи (последние {{ logs.length }})</div>
+        <pre class="flashlight-simple__logs-body">{{ formattedLogs }}</pre>
       </div>
 
       <!-- Скрытое видео для инициализации трека/capabilities -->
@@ -41,7 +52,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import ButtonComp from '@/components/ButtonComp.vue'
 
 // Состояния
@@ -79,6 +90,72 @@ const addLog = (event, payload = null) => {
 }
 
 const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms))
+
+const formattedLogs = computed(() => {
+  const tail = logs.value.slice(-200)
+  const safeStringify = (obj) => {
+    try {
+      const str = JSON.stringify(obj, null, 2)
+      return str.length > 800 ? str.slice(0, 800) + '…' : str
+    } catch {
+      return String(obj)
+    }
+  }
+  return tail
+    .map(l => `${l.time} | ${l.event}${l.payload !== null ? `\n${safeStringify(l.payload)}` : ''}`)
+    .join('\n\n')
+})
+
+const copyToClipboard = async (text) => {
+  addLog('clipboard:copy:attempt')
+  try {
+    if (navigator.clipboard && window.isSecureContext) {
+      try {
+        await navigator.clipboard.writeText(text)
+        addLog('clipboard:copy:ok', { method: 'ClipboardAPI' })
+        return true
+      } catch (e) {
+        addLog('clipboard:copy:api:error', { message: e?.message })
+      }
+    }
+
+    // Fallback через скрытую textarea
+    try {
+      const textArea = document.createElement('textarea')
+      textArea.value = text
+      textArea.style.position = 'fixed'
+      textArea.style.left = '-9999px'
+      textArea.style.top = '-9999px'
+      textArea.setAttribute('readonly', '')
+      document.body.appendChild(textArea)
+      textArea.focus()
+      textArea.select()
+      textArea.setSelectionRange(0, textArea.value.length)
+      const ok = document.execCommand('copy')
+      document.body.removeChild(textArea)
+      if (ok) {
+        addLog('clipboard:copy:ok', { method: 'execCommand' })
+        return true
+      }
+    } catch (e) {
+      addLog('clipboard:copy:exec:error', { message: e?.message })
+    }
+  } catch (e) {
+    addLog('clipboard:copy:error', { message: e?.message })
+  }
+  addLog('clipboard:copy:fail')
+  return false
+}
+
+const exportLogs = async () => {
+  try {
+    const text = formattedLogs.value || 'Логи пусты'
+    const ok = await copyToClipboard(text)
+    alert(ok ? 'Логи скопированы в буфер обмена' : 'Не удалось скопировать логи')
+  } catch (e) {
+    alert(`Ошибка экспорта логов: ${e?.message || e}`)
+  }
+}
 
 const checkCameraBasics = async () => {
   try {
@@ -422,7 +499,9 @@ onUnmounted(() => {
     max-width: 300px;
     margin: 0 auto;
     display: flex;
-    justify-content: center;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
   }
 
   &__error {
