@@ -83,6 +83,8 @@ const deviceInfo = ref({
 let stream = null
 let track = null
 const videoEl = ref(null)
+// Флаг, предотвращающий параллельные/зацикленные старты камеры
+const isStartingCamera = ref(false)
 // Одноразовый перезапуск после выдачи разрешений на Android,
 // если torch/fillLightMode не появились на первом запуске
 const hasRetriedAfterPermission = ref(false)
@@ -352,6 +354,11 @@ const checkCameraSupport = async () => {
 
 const startCamera = async () => {
   try {
+    if (isStartingCamera.value) {
+      console.log('⏳ Камера уже запускается — пропускаем повторный вызов')
+      return
+    }
+    isStartingCamera.value = true
     errorMessage.value = ''
     console.log('🎥 Запуск камеры...')
 
@@ -682,7 +689,8 @@ const startCamera = async () => {
       deviceInfo.value.isAndroid &&
       !deviceInfo.value.supportsTorch &&
       !deviceInfo.value.supportsFillLightMode &&
-      !hasRetriedAfterPermission.value
+      !hasRetriedAfterPermission.value &&
+      !deviceInfo.value.isTelegramWebView
     ) {
       try {
         hasRetriedAfterPermission.value = true
@@ -699,6 +707,8 @@ const startCamera = async () => {
     errorMessage.value = `Ошибка доступа к камере: ${error.message}`
     isStreamActive.value = false
     alert(`Ошибка запуска камеры: ${error.message}\n\nПроверьте:\n- Разрешения на доступ к камере\n- Используется ли HTTPS\n- Поддерживает ли устройство камеру`)
+  } finally {
+    isStartingCamera.value = false
   }
 }
 
@@ -923,9 +933,28 @@ const runDiagnostics = async () => {
   let startedForDiagnostics = false
   try {
     if (!isStreamActive.value || !track) {
-      startedForDiagnostics = true
-      console.log('🟡 Временный запуск камеры для диагностики...')
-      await startCamera()
+      // В Telegram WebView избегаем принудительного старта, если нет явного разрешения
+      if (deviceInfo.value.isTelegramWebView && navigator.permissions) {
+        try {
+          const st = await navigator.permissions.query({ name: 'camera' })
+          if (st.state !== 'granted') {
+            console.log('🛑 WebView: диагностика без старта камеры — статус разрешения:', st.state)
+          } else {
+            startedForDiagnostics = true
+            console.log('🟡 Временный запуск камеры для диагностики...')
+            await startCamera()
+          }
+        } catch {
+          // Если не можем проверить — ведём себя как раньше
+          startedForDiagnostics = true
+          console.log('🟡 Временный запуск камеры для диагностики (без проверки permission)...')
+          await startCamera()
+        }
+      } else {
+        startedForDiagnostics = true
+        console.log('🟡 Временный запуск камеры для диагностики...')
+        await startCamera()
+      }
     }
   } catch (e) {
     console.warn('⚠️ Не удалось временно запустить камеру для диагностики:', e?.message)
