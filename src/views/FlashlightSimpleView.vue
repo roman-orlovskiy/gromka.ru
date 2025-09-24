@@ -48,7 +48,6 @@
       ></video>
     </div>
   </div>
-
 </template>
 
 <script setup>
@@ -175,33 +174,54 @@ const checkCameraBasics = async () => {
   }
 }
 
+// НОВАЯ ФУНКЦИЯ: Ожидание полной остановки камеры
+const waitForCameraStop = () => {
+  return new Promise((resolve) => {
+    if (!stream) {
+      resolve()
+      return
+    }
+
+    const checkInterval = setInterval(() => {
+      const tracks = stream.getTracks()
+      const allStopped = tracks.every(track => track.readyState === 'ended')
+
+      if (allStopped || !stream.active) {
+        clearInterval(checkInterval)
+        addLog('camera:stop:confirmed')
+        resolve()
+      }
+    }, 50)
+
+    // Таймаут на всякий случай
+    setTimeout(() => {
+      clearInterval(checkInterval)
+      addLog('camera:stop:timeout')
+      resolve()
+    }, 1000)
+  })
+}
+
+// УПРОЩЕННАЯ ФУНКЦИЯ ПРЕФЛАЙТА - только проверка разрешений
 const preflightPermissions = async () => {
   addLog('preflight:start')
   try {
+    // Только проверяем состояние разрешений, не запускаем камеру
     if (navigator.permissions && navigator.permissions.query) {
       const st = await navigator.permissions.query({ name: 'camera' })
       addLog('preflight:permissionState', { state: st.state })
-      if (st.state !== 'granted') {
-        try {
-          const s = await navigator.mediaDevices.getUserMedia({ video: true })
-          s.getTracks().forEach(t => t.stop())
-          addLog('preflight:gUM:ok')
-          await new Promise(r => setTimeout(r, 600))
-        } catch (e) {
-          addLog('preflight:gUM:error', { message: e?.message })
-        }
-      }
-    } else {
-      // Консервативный прогрев, если нет Permissions API
-      try {
-        const s = await navigator.mediaDevices.getUserMedia({ video: true })
-        s.getTracks().forEach(t => t.stop())
-        addLog('preflight:gUM(no-permissions-api):ok')
-        await new Promise(r => setTimeout(r, 600))
-      } catch (e) {
-        addLog('preflight:gUM(no-permissions-api):error', { message: e?.message })
+      // Если разрешение уже дано, не нужно делать лишних вызовов
+      if (st.state === 'granted') {
+        addLog('preflight:permissionAlreadyGranted')
+        return
       }
     }
+
+    // Если нет Permissions API или разрешение не дано,
+    // просто ждем немного для стабильности
+    await wait(100)
+    addLog('preflight:completed')
+
   } catch (e) {
     addLog('preflight:error', { message: e?.message })
   }
@@ -220,6 +240,12 @@ const startCamera = async () => {
     isStartingCamera.value = true
     errorMessage.value = ''
     addLog('camera:start')
+
+    // Сначала убедимся, что предыдущая камера полностью остановилась
+    if (stream) {
+      addLog('camera:waitingForPreviousStop')
+      await waitForCameraStop()
+    }
 
     // Подбор простых ограничений: предпочитаем заднюю камеру
     const constraintsList = [
@@ -246,6 +272,21 @@ const startCamera = async () => {
     if (!track) throw new Error('Видеотрек не найден в потоке')
     isStreamActive.value = true
 
+    // Обработка событий трека для отслеживания состояния
+    track.addEventListener('ended', () => {
+      addLog('track:ended')
+      isStreamActive.value = false
+      isFlashlightOn.value = false
+    })
+
+    track.addEventListener('mute', () => {
+      addLog('track:muted')
+    })
+
+    track.addEventListener('unmute', () => {
+      addLog('track:unmuted')
+    })
+
     // Привязка к скрытому видео и автозапуск
     try {
       if (videoEl.value) {
@@ -257,13 +298,26 @@ const startCamera = async () => {
       addLog('video:play:error', { message: e?.message })
     }
 
-    // Небольшая задержка, чтобы стабилизировать capabilities
-    await new Promise(r => setTimeout(r, 150))
+    // Ждем стабилизации трека перед получением capabilities
+    await new Promise((resolve) => {
+      const checkReady = () => {
+        if (track.readyState === 'live') {
+          resolve()
+        } else {
+          setTimeout(checkReady, 50)
+        }
+      }
+      checkReady()
+    })
 
     let caps = null
-    try { caps = track.getCapabilities?.() } catch { /* no capabilities available yet */ }
+    try {
+      caps = track.getCapabilities?.()
+      addLog('track:capabilities', caps)
+    } catch (e) {
+      addLog('track:capabilities:error', { message: e?.message })
+    }
     cachedCapabilities.value = caps
-    addLog('track:capabilities', caps)
   } catch (e) {
     errorMessage.value = `Ошибка запуска камеры: ${e?.message || e}`
     isStreamActive.value = false
@@ -361,13 +415,13 @@ const toggleFlashlight = async () => {
     if (!didInitChecks.value) {
       addLog('init:onClick:start')
       await checkCameraBasics()
-      await preflightPermissions()
+      await preflightPermissions() // Теперь здесь только проверка разрешений
       didInitChecks.value = true
       addLog('init:onClick:done', { hasCameraSupport: hasCameraSupport.value })
     }
 
     if (!isStreamActive.value || !track) {
-      await startCamera()
+      await startCamera() // Только ОДИН вызов getUserMedia
       if (!isStreamActive.value || !track) return
     }
 
@@ -377,12 +431,12 @@ const toggleFlashlight = async () => {
     const hasSupport = caps?.torch === true || (Array.isArray(caps?.fillLightMode) && (caps.fillLightMode.includes('flash') || caps.fillLightMode.includes('torch')))
     if (!hasSupport) addLog('toggle:capabilities:no-torch', caps)
 
-    // Одноразовый перезапуск при отсутствии поддержки (некоторые Samsung/Fold раскрывают torch со 2-го раза)
+    // Одноразовый перезапуск при отсутствии поддержки
     if (!hasSupport && !hasRetriedOnce.value) {
       hasRetriedOnce.value = true
       addLog('retry:once:start')
       stopCamera()
-      await wait(220)
+      await waitForCameraStop() // Ждем полной остановки
       await startCamera()
       const caps2 = cachedCapabilities.value || (track && track.getCapabilities?.()) || {}
       cachedCapabilities.value = caps2
@@ -409,7 +463,9 @@ const stopCamera = () => {
       stream = null
       track = null
     }
-  } catch { /* ignore stop errors */ }
+  } catch (e) {
+    addLog('camera:stop:error', { message: e?.message })
+  }
   isStreamActive.value = false
   isFlashlightOn.value = false
   cachedConstraints.value.on = null
@@ -425,7 +481,6 @@ onMounted(async () => {
     mediaDevices: !!navigator.mediaDevices,
     gUM: !!navigator.mediaDevices?.getUserMedia
   })
-  // Все проверки и префлайт выполняются строго по клику
 })
 
 onUnmounted(() => {
@@ -552,5 +607,3 @@ onUnmounted(() => {
   }
 }
 </style>
-
-
