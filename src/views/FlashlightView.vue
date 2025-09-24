@@ -5,10 +5,10 @@
 
       <div class="flashlight__controls">
         <ButtonComp
-          mod="gradient-1"
+          :mod="isFlashlightOn ? 'gradient-2' : 'gradient-1'"
           @click="toggleFlashlight"
         >
-          Начать
+          {{ isFlashlightOn ? 'Остановить' : 'Начать' }}
         </ButtonComp>
       </div>
     </div>
