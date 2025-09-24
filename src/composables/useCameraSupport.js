@@ -1,35 +1,85 @@
 import { ref } from 'vue'
 
+// Функция определения инкогнито режима
+const detectIncognito = async () => {
+  try {
+    // Проверяем различные признаки инкогнито режима
+    if (window.chrome && window.chrome.runtime && window.chrome.runtime.onConnect) {
+      return false // Обычный Chrome
+    }
+
+    // Проверяем доступность IndexedDB (в инкогнито может быть ограничен)
+    if ('indexedDB' in window) {
+      try {
+        await new Promise((resolve, reject) => {
+          const request = indexedDB.open('test')
+          request.onerror = () => reject(new Error('IndexedDB blocked'))
+          request.onsuccess = () => {
+            request.result.close()
+            resolve()
+          }
+        })
+      } catch {
+        return true // IndexedDB заблокирован - вероятно инкогнито
+      }
+    }
+
+    // Проверяем доступность localStorage (в некоторых браузерах ограничен в инкогнито)
+    try {
+      localStorage.setItem('test', 'test')
+      localStorage.removeItem('test')
+    } catch {
+      return true // localStorage заблокирован - вероятно инкогнито
+    }
+
+    // Проверяем User Agent на признаки приватного режима
+    const userAgent = navigator.userAgent.toLowerCase()
+    if (userAgent.includes('incognito') || userAgent.includes('private')) {
+      return true
+    }
+
+    return false
+  } catch {
+    return false
+  }
+}
+
 export function useCameraSupport() {
   const hasCameraSupport = ref(false)
   const errorMessage = ref('')
   const isLoading = ref(false)
 
-  const checkCameraSupport = async () => {
-    try {
-      isLoading.value = true
-      errorMessage.value = ''
-      console.log('🔍 Проверка поддержки камеры...')
+const checkCameraSupport = async () => {
+  try {
+    isLoading.value = true
+    errorMessage.value = ''
+    console.log('🔍 Проверка поддержки камеры...')
 
-      if (!navigator.mediaDevices) {
-        throw new Error('navigator.mediaDevices не поддерживается')
-      }
+    // Проверяем инкогнито режим
+    const isIncognito = await detectIncognito()
+    if (isIncognito) {
+      console.warn('⚠️ Обнаружен инкогнито режим - фонарик может не работать')
+    }
 
-      if (!navigator.mediaDevices.getUserMedia) {
-        throw new Error('getUserMedia не поддерживается')
-      }
+    if (!navigator.mediaDevices) {
+      throw new Error('navigator.mediaDevices не поддерживается')
+    }
 
-      // Проверяем доступные устройства
-      const devices = await navigator.mediaDevices.enumerateDevices()
-      const videoDevices = devices.filter(device => device.kind === 'videoinput')
+    if (!navigator.mediaDevices.getUserMedia) {
+      throw new Error('getUserMedia не поддерживается')
+    }
 
-      hasCameraSupport.value = videoDevices.length > 0
+    // Проверяем доступные устройства
+    const devices = await navigator.mediaDevices.enumerateDevices()
+    const videoDevices = devices.filter(device => device.kind === 'videoinput')
 
-      if (!hasCameraSupport.value) {
-        throw new Error('Камера не найдена на устройстве')
-      }
+    hasCameraSupport.value = videoDevices.length > 0
 
-      console.log('✅ Поддержка камеры подтверждена')
+    if (!hasCameraSupport.value) {
+      throw new Error('Камера не найдена на устройстве')
+    }
+
+    console.log('✅ Поддержка камеры подтверждена')
   } catch (error) {
     console.error('❌ Ошибка проверки камеры:', error)
 

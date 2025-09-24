@@ -164,11 +164,18 @@ export function useCamera(videoEl = null) {
       }
 
       if (!success) {
-        const errorMsg = lastError?.message?.includes('NotAllowedError')
-          ? 'Доступ к фонарику заблокирован. Проверьте разрешения браузера.'
-          : lastError?.message?.includes('NotSupportedError')
-          ? 'Фонарик не поддерживается на этом устройстве.'
-          : `Не удалось управлять фонариком: ${lastError?.message || 'Неизвестная ошибка'}`
+        let errorMsg = 'Не удалось управлять фонариком'
+
+        if (lastError?.message?.includes('NotAllowedError')) {
+          errorMsg = 'Доступ к фонарику заблокирован. Проверьте разрешения браузера.'
+        } else if (lastError?.message?.includes('NotSupportedError')) {
+          errorMsg = 'Фонарик не поддерживается на этом устройстве.'
+        } else if (lastError?.message?.includes('NotReadableError')) {
+          errorMsg = 'Фонарик недоступен. Если вы в инкогнито режиме, попробуйте обычный режим браузера.'
+        } else {
+          errorMsg = `Не удалось управлять фонариком: ${lastError?.message || 'Неизвестная ошибка'}`
+        }
+
         throw new Error(errorMsg)
       }
 

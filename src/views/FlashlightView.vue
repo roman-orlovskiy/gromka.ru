@@ -26,6 +26,9 @@
 
       <div class="flashlight__info" v-if="hasCameraSupport && isStreamActive && !supportsFlashlight">
         <p>Камера найдена, но фонарик не поддерживается</p>
+        <p style="font-size: 1.2rem; margin-top: 0.5rem; opacity: 0.8;">
+          💡 Если вы в инкогнито режиме, попробуйте обычный режим браузера
+        </p>
       </div>
 
       <div class="flashlight__loading" v-if="isLoadingCameraSupport">
