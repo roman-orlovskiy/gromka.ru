@@ -61,6 +61,7 @@ const videoEl = ref(null)
 // Кэш для быстрых переключений
 const cachedConstraints = ref({ on: null, off: null })
 const cachedCapabilities = ref(null)
+const hasRetriedOnce = ref(false)
 
 // Анти-дребезг запуска и переключений
 const lastStartAt = ref(0)
@@ -76,6 +77,8 @@ const addLog = (event, payload = null) => {
   if (logs.value.length > 500) logs.value.shift()
   try { console.log(`📝 [${time}] ${event}`, payload ?? '') } catch { /* ignore console errors in restricted environments */ }
 }
+
+const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms))
 
 const checkCameraBasics = async () => {
   try {
@@ -296,6 +299,19 @@ const toggleFlashlight = async () => {
     cachedCapabilities.value = caps
     const hasSupport = caps?.torch === true || (Array.isArray(caps?.fillLightMode) && (caps.fillLightMode.includes('flash') || caps.fillLightMode.includes('torch')))
     if (!hasSupport) addLog('toggle:capabilities:no-torch', caps)
+
+    // Одноразовый перезапуск при отсутствии поддержки (некоторые Samsung/Fold раскрывают torch со 2-го раза)
+    if (!hasSupport && !hasRetriedOnce.value) {
+      hasRetriedOnce.value = true
+      addLog('retry:once:start')
+      stopCamera()
+      await wait(220)
+      await startCamera()
+      const caps2 = cachedCapabilities.value || (track && track.getCapabilities?.()) || {}
+      cachedCapabilities.value = caps2
+      const hasSupport2 = caps2?.torch === true || (Array.isArray(caps2?.fillLightMode) && (caps2.fillLightMode.includes('flash') || caps2.fillLightMode.includes('torch')))
+      addLog('retry:once:done', { supported: hasSupport2 })
+    }
 
     const target = !isFlashlightOn.value
     addLog('toggle:attempt', { target })
