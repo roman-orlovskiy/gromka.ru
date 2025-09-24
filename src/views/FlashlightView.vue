@@ -228,6 +228,25 @@ onUnmounted(() => {
     border: 1px solid rgba($color-primary, 0.4);
     color: $color-primary-light;
   }
+
+  @media (max-width: $breakpoint-mobile) {
+    padding: 1rem;
+
+    &__title {
+      font-size: 2.5rem;
+    }
+
+    &__status-text {
+      font-size: 1.5rem;
+    }
+
+    &__info,
+    &__error,
+    &__loading {
+      font-size: 1.4rem;
+      padding: 1rem;
+    }
+  }
 }
 
 @keyframes pulse-music {
