@@ -28,6 +28,10 @@
         <p>Проверка поддержки камеры...</p>
       </div>
 
+      <div class="flashlight__loading" v-if="isLoadingCamera">
+        <p>Запуск камеры...</p>
+      </div>
+
       <div class="flashlight__error" v-if="errorMessage">
         <p>{{ errorMessage }}</p>
       </div>
@@ -36,31 +40,33 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { onMounted, computed } from 'vue'
 import ButtonComp from '@/components/ButtonComp.vue'
 import { useCameraSupport } from '@/composables/useCameraSupport.js'
-
-// Состояние фонарика
-const isFlashlightOn = ref(false)
+import { useCamera } from '@/composables/useCamera.js'
 
 // Используем хук для проверки камеры
-const { hasCameraSupport, errorMessage, isLoading: isLoadingCameraSupport, checkCameraSupport } = useCameraSupport()
+const { hasCameraSupport, errorMessage: cameraSupportError, isLoading: isLoadingCameraSupport, checkCameraSupport } = useCameraSupport()
+
+// Используем хук для работы с камерой
+const {
+  isFlashlightOn,
+  errorMessage: cameraError,
+  isLoading: isLoadingCamera,
+  toggleFlashlight
+} = useCamera()
 
 // Computed свойства для динамических значений
 const buttonMod = computed(() => isFlashlightOn.value ? 'gradient-2' : 'gradient-4')
 const buttonText = computed(() => isFlashlightOn.value ? 'Остановить' : 'Начать')
 const statusText = computed(() => isFlashlightOn.value ? 'Фонарик включен' : 'Фонарик выключен')
-const isButtonDisabled = computed(() => !hasCameraSupport.value || isLoadingCameraSupport.value)
+const isButtonDisabled = computed(() => !hasCameraSupport.value || isLoadingCameraSupport.value || isLoadingCamera.value)
 const statusClasses = computed(() => ({
   'flashlight__status--active': isFlashlightOn.value
 }))
 
-const toggleFlashlight = () => {
-  console.log('Кнопка фонарика нажата')
-  // Пока просто переключаем состояние
-  isFlashlightOn.value = !isFlashlightOn.value
-  console.log('Фонарик:', isFlashlightOn.value ? 'включен' : 'выключен')
-}
+// Объединяем ошибки от разных источников
+const errorMessage = computed(() => cameraSupportError.value || cameraError.value)
 
 onMounted(() => {
   console.log('🚀 Инициализация страницы фонарика...')
