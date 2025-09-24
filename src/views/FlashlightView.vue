@@ -59,16 +59,18 @@ const {
   errorMessage: cameraError,
   isLoading: isLoadingCamera,
   supportsFlashlight,
+  isPlayingMusic,
   toggleFlashlight
 } = useCamera()
 
 // Computed свойства для динамических значений
-const buttonMod = computed(() => isFlashlightOn.value ? 'gradient-2' : 'gradient-4')
-const buttonText = computed(() => isFlashlightOn.value ? 'Остановить' : 'Начать')
-const statusText = computed(() => isFlashlightOn.value ? 'Фонарик включен' : 'Фонарик выключен')
+const buttonMod = computed(() => isPlayingMusic.value ? 'gradient-3' : isFlashlightOn.value ? 'gradient-2' : 'gradient-4')
+const buttonText = computed(() => isPlayingMusic.value ? 'Остановить' : 'Начать')
+const statusText = computed(() => isPlayingMusic.value ? '🎵 Играет ритм' : isFlashlightOn.value ? 'Фонарик включен' : 'Фонарик выключен')
 const isButtonDisabled = computed(() => !hasCameraSupport.value || isLoadingCameraSupport.value || isLoadingCamera.value)
 const statusClasses = computed(() => ({
-  'flashlight__status--active': isFlashlightOn.value
+  'flashlight__status--active': isFlashlightOn.value,
+  'flashlight__status--music': isPlayingMusic.value
 }))
 
 // Объединяем ошибки от разных источников
@@ -126,6 +128,13 @@ onMounted(() => {
       box-shadow: 0 0 20px rgba($color-vibrant-orange, 0.3);
     }
 
+    &--music {
+      background-color: rgba($color-vibrant-pink, 0.2);
+      border-color: rgba($color-vibrant-pink, 0.4);
+      box-shadow: 0 0 20px rgba($color-vibrant-pink, 0.3);
+      animation: pulse-music 0.5s ease-in-out infinite alternate;
+    }
+
     &-indicator {
       width: 1.5rem;
       height: 1.5rem;
@@ -138,6 +147,12 @@ onMounted(() => {
     &--active &-indicator {
       background-color: $color-vibrant-orange;
       box-shadow: 0 0 15px rgba($color-vibrant-orange, 0.7);
+    }
+
+    &--music &-indicator {
+      background-color: $color-vibrant-pink;
+      box-shadow: 0 0 15px rgba($color-vibrant-pink, 0.7);
+      animation: pulse-indicator 0.5s ease-in-out infinite alternate;
     }
 
     &-text {
@@ -182,6 +197,28 @@ onMounted(() => {
     backdrop-filter: blur(10px);
     border: 1px solid rgba($color-primary, 0.4);
     color: $color-primary-light;
+  }
+}
+
+@keyframes pulse-music {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 20px rgba($color-vibrant-pink, 0.3);
+  }
+  100% {
+    transform: scale(1.02);
+    box-shadow: 0 0 30px rgba($color-vibrant-pink, 0.5);
+  }
+}
+
+@keyframes pulse-indicator {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 15px rgba($color-vibrant-pink, 0.7);
+  }
+  100% {
+    transform: scale(1.1);
+    box-shadow: 0 0 25px rgba($color-vibrant-pink, 1);
   }
 }
 </style>

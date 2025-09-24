@@ -1,4 +1,5 @@
 import { ref } from 'vue'
+import { useMusicMode } from './useMusicMode.js'
 
 export function useCamera() {
   const isStreamActive = ref(false)
@@ -6,6 +7,9 @@ export function useCamera() {
   const errorMessage = ref('')
   const isLoading = ref(false)
   const supportsFlashlight = ref(false)
+
+  // Интегрируем музыкальный режим
+  const { isPlayingMusic, playMusic, stopMusic } = useMusicMode()
 
   let stream = null
   let track = null
@@ -125,7 +129,19 @@ export function useCamera() {
 
     try {
       console.log('🔦 Переключение фонарика...')
-      await setFlashlightState(!isFlashlightOn.value)
+
+      // Если фонарик уже включен или играет музыка - выключаем
+      if (isFlashlightOn.value || isPlayingMusic.value) {
+        console.log('🔦 Выключаем фонарик и останавливаем музыку...')
+        stopMusic()
+        await setFlashlightState(false)
+        console.log('✅ Фонарик выключен')
+      } else {
+        // Включаем фонарик и начинаем играть ритм Бетховена
+        console.log('🎵 Включаем фонарик и начинаем играть ритм Бетховена...')
+        await playMusic(setFlashlightState)
+        console.log('✅ Музыкальный фонарик запущен')
+      }
     } catch (error) {
       console.error('❌ Ошибка переключения фонарика:', error)
       errorMessage.value = `Ошибка переключения фонарика: ${error.message}`
@@ -155,6 +171,7 @@ export function useCamera() {
     errorMessage,
     isLoading,
     supportsFlashlight,
+    isPlayingMusic,
     startCamera,
     stopCamera,
     toggleFlashlight,
