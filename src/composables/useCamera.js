@@ -5,6 +5,7 @@ export function useCamera() {
   const isFlashlightOn = ref(false)
   const errorMessage = ref('')
   const isLoading = ref(false)
+  const supportsFlashlight = ref(false)
 
   let stream = null
   let track = null
@@ -32,12 +33,17 @@ export function useCamera() {
       }
 
       isStreamActive.value = true
+
+      // Проверяем поддержку фонарика после запуска камеры
+      supportsFlashlight.value = checkFlashlightSupport()
       console.log('✅ Камера успешно запущена')
+      console.log('🔦 Поддержка фонарика:', supportsFlashlight.value)
 
     } catch (error) {
       console.error('❌ Ошибка запуска камеры:', error)
       errorMessage.value = `Ошибка запуска камеры: ${error.message}`
       isStreamActive.value = false
+      supportsFlashlight.value = false
     } finally {
       isLoading.value = false
     }
@@ -52,6 +58,7 @@ export function useCamera() {
       track = null
       isStreamActive.value = false
       isFlashlightOn.value = false
+      supportsFlashlight.value = false
       console.log('✅ Камера остановлена')
     }
   }
@@ -147,6 +154,7 @@ export function useCamera() {
     isFlashlightOn,
     errorMessage,
     isLoading,
+    supportsFlashlight,
     startCamera,
     stopCamera,
     toggleFlashlight,

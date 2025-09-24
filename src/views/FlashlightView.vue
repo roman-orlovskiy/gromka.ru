@@ -24,7 +24,7 @@
         <p>Ваше устройство не поддерживает функцию фонарика камеры</p>
       </div>
 
-      <div class="flashlight__info" v-if="hasCameraSupport && !checkFlashlightSupport()">
+      <div class="flashlight__info" v-if="hasCameraSupport && isStreamActive && !supportsFlashlight">
         <p>Камера найдена, но фонарик не поддерживается</p>
       </div>
 
@@ -54,11 +54,12 @@ const { hasCameraSupport, errorMessage: cameraSupportError, isLoading: isLoading
 
 // Используем хук для работы с камерой
 const {
+  isStreamActive,
   isFlashlightOn,
   errorMessage: cameraError,
   isLoading: isLoadingCamera,
-  toggleFlashlight,
-  checkFlashlightSupport
+  supportsFlashlight,
+  toggleFlashlight
 } = useCamera()
 
 // Computed свойства для динамических значений
