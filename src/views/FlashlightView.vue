@@ -96,6 +96,26 @@ const isBackCameraDevice = (device) => {
   )
 }
 
+// Приоритизация задних камер: чаще всего основная задняя камера имеет deviceId, оканчивающийся на '0'
+const sortBackCameras = (list) => {
+  return [...list].sort((a, b) => {
+    const aId = a.deviceId || ''
+    const bId = b.deviceId || ''
+    const aIsZero = aId.endsWith('0') ? 1 : 0
+    const bIsZero = bId.endsWith('0') ? 1 : 0
+    if (aIsZero !== bIsZero) return bIsZero - aIsZero
+    const score = (d) => {
+      const l = (d.label || '').toLowerCase()
+      return (
+        (l.includes('back') ? 2 : 0) +
+        (l.includes('rear') ? 2 : 0) +
+        (l.includes('environment') ? 2 : 0)
+      )
+    }
+    return score(b) - score(a)
+  })
+}
+
 const loadRhythmData = async () => {
   try {
     console.log('🎵 Загрузка ритма Бетховена...')
@@ -234,6 +254,24 @@ const setFlashlightState = async (turnOn) => {
         // пробуем следующий вариант
       }
     }
+
+    // 3) Fallback через ImageCapture.setOptions — на части Samsung показывает фонарик
+    if ('ImageCapture' in window) {
+      try {
+        const ic = new window.ImageCapture(track)
+        try {
+          const pc = await ic.getPhotoCapabilities()
+          console.log('📷 (fallback) PhotoCapabilities:', pc)
+        } catch {}
+        await ic.setOptions({ torch: !!turnOn })
+        isFlashlightOn.value = !!turnOn
+        if (turnOn) cachedConstraints.value.on = { advanced: [{ torch: true }] }
+        else cachedConstraints.value.off = { advanced: [{ torch: false }] }
+        return
+      } catch (e) {
+        console.warn('⚠️ Fallback через ImageCapture.setOptions не сработал:', e?.message)
+      }
+    }
   } catch (error) {
     console.error('❌ Ошибка управления фонариком:', error)
   }
@@ -325,7 +363,7 @@ const startCamera = async () => {
     }
 
     // Ищем задние камеры
-    const backCameras = cameras.filter(d => isBackCameraDevice(d))
+    const backCameras = sortBackCameras(cameras.filter(d => isBackCameraDevice(d)))
     // Если определить по лейблу не удалось, сохраняем прежнюю эвристику (последняя камера)
     let selectedCamera = backCameras[0] || cameras[cameras.length - 1]
     console.log('📱 Начальный выбор камеры:', selectedCamera)
