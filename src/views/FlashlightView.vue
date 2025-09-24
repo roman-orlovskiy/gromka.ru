@@ -53,7 +53,7 @@
 </template>
 
 <script setup>
-import { onMounted, computed, ref } from 'vue'
+import { onMounted, onUnmounted, computed, ref } from 'vue'
 import ButtonComp from '@/components/ButtonComp.vue'
 import { useCameraSupport } from '@/composables/useCameraSupport.js'
 import { useCamera } from '@/composables/useCamera.js'
@@ -72,7 +72,8 @@ const {
   isLoading: isLoadingCamera,
   supportsFlashlight,
   isPlayingMusic,
-  toggleFlashlight
+  toggleFlashlight,
+  stopCamera
 } = useCamera(videoEl)
 
 // Импортируем функцию загрузки ритма
@@ -92,6 +93,11 @@ const statusClasses = computed(() => ({
 // Объединяем ошибки от разных источников
 const errorMessage = computed(() => cameraSupportError.value || cameraError.value)
 
+const cleanup = () => {
+  console.log('🧹 Очистка ресурсов...')
+  stopCamera()
+}
+
 onMounted(async () => {
   console.log('🚀 Инициализация страницы фонарика...')
 
@@ -99,6 +105,10 @@ onMounted(async () => {
   await loadRhythmData()
 
   checkCameraSupport()
+})
+
+onUnmounted(() => {
+  cleanup()
 })
 </script>
 

@@ -99,11 +99,17 @@ export function useMusicMode() {
     }
   }
 
+  const cleanup = () => {
+    console.log('🧹 Очистка музыкального режима...')
+    stopMusic()
+  }
+
   return {
     isPlayingMusic,
     currentRhythm,
     loadRhythmData,
     playMusic,
-    stopMusic
+    stopMusic,
+    cleanup
   }
 }

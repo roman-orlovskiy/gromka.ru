@@ -9,7 +9,7 @@ export function useCamera(videoEl = null) {
   const supportsFlashlight = ref(false)
 
   // Интегрируем музыкальный режим
-  const { isPlayingMusic, playMusic, stopMusic } = useMusicMode()
+  const { isPlayingMusic, playMusic, stopMusic, cleanup: cleanupMusic } = useMusicMode()
 
   let stream = null
   let track = null
@@ -74,6 +74,9 @@ export function useCamera(videoEl = null) {
   const stopCamera = () => {
     console.log('🛑 Остановка камеры...')
 
+    // Останавливаем музыку
+    stopMusic()
+
     if (stream) {
       stream.getTracks().forEach(track => track.stop())
       stream = null
@@ -83,6 +86,12 @@ export function useCamera(videoEl = null) {
       supportsFlashlight.value = false
       console.log('✅ Камера остановлена')
     }
+  }
+
+  const cleanup = () => {
+    console.log('🧹 Очистка камеры...')
+    cleanupMusic()
+    stopCamera()
   }
 
   const setFlashlightState = async (turnOn) => {
@@ -194,6 +203,7 @@ export function useCamera(videoEl = null) {
     stopCamera,
     toggleFlashlight,
     setFlashlightState,
-    checkFlashlightSupport
+    checkFlashlightSupport,
+    cleanup
   }
 }
