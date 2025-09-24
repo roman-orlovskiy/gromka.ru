@@ -83,6 +83,9 @@ const deviceInfo = ref({
 let stream = null
 let track = null
 const videoEl = ref(null)
+// Одноразовый перезапуск после выдачи разрешений на Android,
+// если torch/fillLightMode не появились на первом запуске
+const hasRetriedAfterPermission = ref(false)
 
 // Эвристика для определения задней камеры по лейблу
 const isBackCameraDevice = (device) => {
@@ -262,7 +265,7 @@ const setFlashlightState = async (turnOn) => {
         try {
           const pc = await ic.getPhotoCapabilities()
           console.log('📷 (fallback) PhotoCapabilities:', pc)
-        } catch {}
+        } catch { /* игнорируем ошибку получения PhotoCapabilities в fallback */ }
         await ic.setOptions({ torch: !!turnOn })
         isFlashlightOn.value = !!turnOn
         if (turnOn) cachedConstraints.value.on = { advanced: [{ torch: true }] }
@@ -672,6 +675,25 @@ const startCamera = async () => {
     console.log('🎬 Камера готова к работе с фонариком')
 
     console.log('✅ Камера успешно запущена')
+
+    // Одноразовый «реинициализатор» для Android: некоторые устройства (Samsung Fold)
+    // только после первой сессии корректно экспонируют torch/fillLightMode
+    if (
+      deviceInfo.value.isAndroid &&
+      !deviceInfo.value.supportsTorch &&
+      !deviceInfo.value.supportsFillLightMode &&
+      !hasRetriedAfterPermission.value
+    ) {
+      try {
+        hasRetriedAfterPermission.value = true
+        console.log('🔁 Android: повторный запуск камеры для обновления возможностей фонарика')
+        stopCamera()
+        await new Promise(r => setTimeout(r, 200))
+        return await startCamera()
+      } catch (e) {
+        console.warn('⚠️ Не удалось выполнить повторный запуск камеры:', e?.message)
+      }
+    }
   } catch (error) {
     console.error('❌ Ошибка запуска камеры:', error)
     errorMessage.value = `Ошибка доступа к камере: ${error.message}`
