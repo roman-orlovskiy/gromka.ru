@@ -186,7 +186,7 @@ const preflightPermissions = async () => {
           const s = await navigator.mediaDevices.getUserMedia({ video: true })
           s.getTracks().forEach(t => t.stop())
           addLog('preflight:gUM:ok')
-          await new Promise(r => setTimeout(r, 120))
+          await new Promise(r => setTimeout(r, 600))
         } catch (e) {
           addLog('preflight:gUM:error', { message: e?.message })
         }
@@ -197,7 +197,7 @@ const preflightPermissions = async () => {
         const s = await navigator.mediaDevices.getUserMedia({ video: true })
         s.getTracks().forEach(t => t.stop())
         addLog('preflight:gUM(no-permissions-api):ok')
-        await new Promise(r => setTimeout(r, 120))
+        await new Promise(r => setTimeout(r, 600))
       } catch (e) {
         addLog('preflight:gUM(no-permissions-api):error', { message: e?.message })
       }
