@@ -3,31 +3,57 @@
     <div class="flashlight__container">
       <h1 class="flashlight__title">Фонарик камеры</h1>
 
-      <div class="flashlight__status" :class="{ 'flashlight__status--active': isFlashlightOn }">
+      <div class="flashlight__status" :class="statusClasses">
         <div class="flashlight__status-indicator"></div>
         <span class="flashlight__status-text">
-          {{ isFlashlightOn ? 'Фонарик включен' : 'Фонарик выключен' }}
+          {{ statusText }}
         </span>
       </div>
 
       <div class="flashlight__controls">
         <ButtonComp
-          :mod="isFlashlightOn ? 'gradient-2' : 'gradient-4'"
+          :mod="buttonMod"
           @click="toggleFlashlight"
+          :disabled="isButtonDisabled"
         >
-          {{ isFlashlightOn ? 'Остановить' : 'Начать' }}
+          {{ buttonText }}
         </ButtonComp>
+      </div>
+
+      <div class="flashlight__info" v-if="!hasCameraSupport">
+        <p>Ваше устройство не поддерживает функцию фонарика камеры</p>
+      </div>
+
+      <div class="flashlight__loading" v-if="isLoadingCameraSupport">
+        <p>Проверка поддержки камеры...</p>
+      </div>
+
+      <div class="flashlight__error" v-if="errorMessage">
+        <p>{{ errorMessage }}</p>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import ButtonComp from '@/components/ButtonComp.vue'
+import { useCameraSupport } from '@/composables/useCameraSupport.js'
 
 // Состояние фонарика
 const isFlashlightOn = ref(false)
+
+// Используем хук для проверки камеры
+const { hasCameraSupport, errorMessage, isLoading: isLoadingCameraSupport, checkCameraSupport } = useCameraSupport()
+
+// Computed свойства для динамических значений
+const buttonMod = computed(() => isFlashlightOn.value ? 'gradient-2' : 'gradient-4')
+const buttonText = computed(() => isFlashlightOn.value ? 'Остановить' : 'Начать')
+const statusText = computed(() => isFlashlightOn.value ? 'Фонарик включен' : 'Фонарик выключен')
+const isButtonDisabled = computed(() => !hasCameraSupport.value || isLoadingCameraSupport.value)
+const statusClasses = computed(() => ({
+  'flashlight__status--active': isFlashlightOn.value
+}))
 
 const toggleFlashlight = () => {
   console.log('Кнопка фонарика нажата')
@@ -35,6 +61,11 @@ const toggleFlashlight = () => {
   isFlashlightOn.value = !isFlashlightOn.value
   console.log('Фонарик:', isFlashlightOn.value ? 'включен' : 'выключен')
 }
+
+onMounted(() => {
+  console.log('🚀 Инициализация страницы фонарика...')
+  checkCameraSupport()
+})
 </script>
 
 <style lang="scss">
@@ -109,6 +140,36 @@ const toggleFlashlight = () => {
     gap: 1rem;
     width: 100%;
     max-width: 300px;
+  }
+
+  &__info,
+  &__error,
+  &__loading {
+    padding: 1.5rem;
+    border-radius: 1rem;
+    text-align: center;
+    font-size: 1.6rem;
+    max-width: 400px;
+  }
+
+  &__info {
+    background-color: rgba($color-white, 0.1);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba($color-white, 0.2);
+  }
+
+  &__error {
+    background-color: rgba($color-error, 0.2);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba($color-error, 0.4);
+    color: #ffebee;
+  }
+
+  &__loading {
+    background-color: rgba($color-primary, 0.2);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba($color-primary, 0.4);
+    color: $color-primary-light;
   }
 }
 </style>
