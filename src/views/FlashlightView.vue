@@ -114,6 +114,7 @@ const isStartingCamera = ref(false)
 // Одноразовый перезапуск после выдачи разрешений на Android,
 // если torch/fillLightMode не появились на первом запуске
 const hasRetriedAfterPermission = ref(false)
+const hasRetriedInTelegram = ref(false)
 
 // Эвристика для определения задней камеры по лейблу
 const isBackCameraDevice = (device) => {
@@ -753,10 +754,15 @@ const startCamera = async () => {
           st.state === 'granted' &&
           !deviceInfo.value.supportsTorch &&
           !deviceInfo.value.supportsFillLightMode &&
-          !hasRetriedAfterPermission.value
+          (!hasRetriedAfterPermission.value || (deviceInfo.value.isTelegramWebView && !hasRetriedInTelegram.value))
         ) {
-          hasRetriedAfterPermission.value = true
-          console.log('🔁 Incognito: повторный запуск после granted без torch')
+          if (deviceInfo.value.isTelegramWebView) {
+            hasRetriedInTelegram.value = true
+            console.log('🔁 WebView: одноразовый повторный запуск после granted без torch')
+          } else {
+            hasRetriedAfterPermission.value = true
+            console.log('🔁 Incognito: повторный запуск после granted без torch')
+          }
           stopCamera()
           await new Promise(r => setTimeout(r, 160))
           return await startCamera()
