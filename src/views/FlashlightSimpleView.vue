@@ -63,6 +63,11 @@ const didInitChecks = ref(false)
 const errorMessage = ref('')
 const logs = ref([])
 
+// Информация об устройстве (упрощенная)
+const deviceInfo = ref({
+  isAndroid: false
+})
+
 // Реальные объекты
 let stream = null
 let track = null
@@ -156,6 +161,14 @@ const exportLogs = async () => {
   }
 }
 
+const detectDevice = () => {
+  const userAgent = navigator.userAgent.toLowerCase()
+  deviceInfo.value = {
+    isAndroid: /android/.test(userAgent)
+  }
+  addLog('device:detected', deviceInfo.value)
+}
+
 const checkCameraBasics = async () => {
   try {
     addLog('checkCameraBasics:start')
@@ -227,6 +240,38 @@ const preflightPermissions = async () => {
   }
 }
 
+// Эвристика для определения задней камеры по лейблу
+const isBackCameraDevice = (device) => {
+  const label = (device?.label || '').toLowerCase()
+  return (
+    label.includes('back') ||
+    label.includes('rear') ||
+    label.includes('environment') ||
+    label.includes('зад') ||
+    label.includes('тыл')
+  )
+}
+
+// Приоритизация задних камер
+const sortBackCameras = (list) => {
+  return [...list].sort((a, b) => {
+    const aId = a.deviceId || ''
+    const bId = b.deviceId || ''
+    const aIsZero = aId.endsWith('0') ? 1 : 0
+    const bIsZero = bId.endsWith('0') ? 1 : 0
+    if (aIsZero !== bIsZero) return bIsZero - aIsZero
+    const score = (d) => {
+      const l = (d.label || '').toLowerCase()
+      return (
+        (l.includes('back') ? 2 : 0) +
+        (l.includes('rear') ? 2 : 0) +
+        (l.includes('environment') ? 2 : 0)
+      )
+    }
+    return score(b) - score(a)
+  })
+}
+
 const startCamera = async () => {
   if (isStartingCamera.value) { addLog('startCamera:skip(already-starting)'); return }
   const now = Date.now()
@@ -247,26 +292,83 @@ const startCamera = async () => {
       await waitForCameraStop()
     }
 
-    // Подбор простых ограничений: предпочитаем заднюю камеру
-    const constraintsList = [
-      { video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } } },
-      { video: { facingMode: 'environment' } },
+    // Получаем список всех камер
+    const devices = await navigator.mediaDevices.enumerateDevices()
+    const cameras = devices.filter(device => device.kind === 'videoinput')
+    addLog('enumerateDevices', { count: cameras.length })
+
+    if (cameras.length === 0) {
+      throw new Error('Камеры не найдены на устройстве')
+    }
+
+    // Ищем задние камеры
+    const backCameras = sortBackCameras(cameras.filter(d => isBackCameraDevice(d)))
+    let selectedCamera = backCameras[0] || cameras[cameras.length - 1]
+    addLog('camera:selected', { device: selectedCamera?.label || 'unknown' })
+
+    // Универсальные варианты ограничений
+    const constraintsOptions = [
+      // Приоритет: конкретная задняя камера с высоким разрешением
+      {
+        video: {
+          deviceId: { exact: selectedCamera.deviceId },
+          facingMode: 'environment',
+          width: { ideal: 1920, max: 1920 },
+          height: { ideal: 1080, max: 1080 },
+          frameRate: { ideal: 30, max: 60 }
+        }
+      },
+      // Задняя камера с environment
+      {
+        video: {
+          deviceId: { exact: selectedCamera.deviceId },
+          facingMode: 'environment',
+          width: { ideal: 1280 },
+          height: { ideal: 720 }
+        }
+      },
+      // Environment без конкретного deviceId
+      {
+        video: {
+          facingMode: 'environment',
+          width: { ideal: 1920 },
+          height: { ideal: 1080 }
+        }
+      },
+      // Простой environment
+      {
+        video: {
+          facingMode: 'environment'
+        }
+      },
+      // Любая камера с ограничениями
+      {
+        video: {
+          deviceId: { exact: selectedCamera.deviceId },
+          width: { ideal: 1280 },
+          height: { ideal: 720 }
+        }
+      },
+      // Минимальные требования
       { video: true }
     ]
 
-    let lastErr = null
-    for (const c of constraintsList) {
+    let lastError = null
+    for (let i = 0; i < constraintsOptions.length; i++) {
       try {
-        stream = await navigator.mediaDevices.getUserMedia(c)
-        addLog('camera:getUserMedia:ok', c)
+        addLog(`camera:attempt:${i + 1}`, constraintsOptions[i])
+        stream = await navigator.mediaDevices.getUserMedia(constraintsOptions[i])
+        addLog('camera:getUserMedia:ok', constraintsOptions[i])
         break
-      } catch (e) {
-        lastErr = e
-        addLog('camera:getUserMedia:error', { constraints: c, message: e?.message })
+      } catch (error) {
+        lastError = error
+        addLog('camera:getUserMedia:error', { constraints: constraintsOptions[i], message: error?.message })
       }
     }
 
-    if (!stream) throw new Error(`Не удалось получить видеопоток: ${lastErr?.message || 'unknown'}`)
+    if (!stream) {
+      throw new Error(`Не удалось запустить ни одну камеру. Последняя ошибка: ${lastError?.message}`)
+    }
 
     track = stream.getVideoTracks()[0]
     if (!track) throw new Error('Видеотрек не найден в потоке')
@@ -310,13 +412,32 @@ const startCamera = async () => {
       checkReady()
     })
 
+    // Получаем capabilities с несколькими попытками
     let caps = null
-    try {
-      caps = track.getCapabilities?.()
-      addLog('track:capabilities', caps)
-    } catch (e) {
-      addLog('track:capabilities:error', { message: e?.message })
+    for (let attempt = 0; attempt < 5; attempt++) {
+      try {
+        caps = track.getCapabilities?.()
+        if (caps && (caps.torch === true || caps.fillLightMode)) {
+          addLog('track:capabilities:found', caps)
+          break
+        }
+        if (attempt < 4) {
+          await new Promise(r => setTimeout(r, 100))
+        }
+      } catch (e) {
+        addLog('track:capabilities:error', { message: e?.message, attempt })
+      }
     }
+
+    if (!caps) {
+      try {
+        caps = track.getCapabilities?.()
+        addLog('track:capabilities:final', caps)
+      } catch (e) {
+        addLog('track:capabilities:error', { message: e?.message })
+      }
+    }
+
     cachedCapabilities.value = caps
   } catch (e) {
     errorMessage.value = `Ошибка запуска камеры: ${e?.message || e}`
@@ -379,18 +500,33 @@ const setFlashlightState = async (turnOn) => {
       try {
         const ic = new window.ImageCapture(track)
         try {
-          await ic.getPhotoCapabilities().catch((e) => {
-            addLog('imageCapture:getPhotoCapabilities:error', { message: e?.message })
-          })
-        } catch { /* ignore imageCapture capability errors */ }
-        await ic.setOptions({ torch: !!turnOn })
-        isFlashlightOn.value = !!turnOn
-        if (turnOn) cachedConstraints.value.on = { advanced: [{ torch: true }] }
-        else cachedConstraints.value.off = { advanced: [{ torch: false }] }
-        addLog('torch:imageCapture:setOptions:ok', { on: !!turnOn })
-        return true
+          const photoCaps = await ic.getPhotoCapabilities()
+          addLog('imageCapture:getPhotoCapabilities:ok', photoCaps)
+        } catch (e) {
+          addLog('imageCapture:getPhotoCapabilities:error', { message: e?.message })
+        }
+
+        // Универсальные варианты для всех устройств
+        const universalOptions = [
+          { torch: !!turnOn },
+          { fillLightMode: turnOn ? 'flash' : 'off' },
+          { flash: !!turnOn }
+        ]
+
+        for (const option of universalOptions) {
+          try {
+            await ic.setOptions(option)
+            isFlashlightOn.value = !!turnOn
+            if (turnOn) cachedConstraints.value.on = { advanced: [{ torch: true }] }
+            else cachedConstraints.value.off = { advanced: [{ torch: false }] }
+            addLog('torch:imageCapture:ok', { on: !!turnOn, option })
+            return true
+          } catch (e) {
+            addLog('torch:imageCapture:fail', { option, message: e?.message })
+          }
+        }
       } catch (e) {
-        addLog('torch:imageCapture:setOptions:error', { message: e?.message })
+        addLog('torch:imageCapture:error', { message: e?.message })
       }
     }
 
@@ -481,6 +617,9 @@ onMounted(async () => {
     mediaDevices: !!navigator.mediaDevices,
     gUM: !!navigator.mediaDevices?.getUserMedia
   })
+
+  // Детекция устройства
+  detectDevice()
 })
 
 onUnmounted(() => {
