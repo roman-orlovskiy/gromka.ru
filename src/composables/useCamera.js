@@ -1,7 +1,7 @@
 import { ref } from 'vue'
 import { useMusicMode } from './useMusicMode.js'
 
-export function useCamera() {
+export function useCamera(videoEl = null) {
   const isStreamActive = ref(false)
   const isFlashlightOn = ref(false)
   const errorMessage = ref('')
@@ -37,6 +37,24 @@ export function useCamera() {
       }
 
       isStreamActive.value = true
+
+      // Привязываем поток к скрытому видео и запускаем воспроизведение — это помогает на Android/iOS корректно инициализировать трек
+      try {
+        if (videoEl && videoEl.value) {
+          if (videoEl.value.srcObject !== stream) {
+            videoEl.value.srcObject = stream
+          }
+          const playPromise = videoEl.value.play()
+          if (playPromise && typeof playPromise.then === 'function') {
+            await playPromise.catch(() => {})
+          }
+        }
+      } catch (e) {
+        console.warn('⚠️ Не удалось авто-воспроизвести скрытое видео:', e?.message)
+      }
+
+      // Небольшая задержка, чтобы трек перешёл в состояние live и появились корректные capabilities
+      await new Promise(resolve => setTimeout(resolve, 150))
 
       // Проверяем поддержку фонарика после запуска камеры
       supportsFlashlight.value = checkFlashlightSupport()
