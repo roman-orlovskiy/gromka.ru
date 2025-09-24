@@ -56,6 +56,60 @@ export function useCamera() {
     }
   }
 
+  const setFlashlightState = async (turnOn) => {
+    if (!track) {
+      console.warn('⚠️ Нет активного трека для управления фонариком')
+      return
+    }
+
+    try {
+      console.log(`🔦 ${turnOn ? 'Включение' : 'Выключение'} фонарика...`)
+
+      // Проверяем возможности трека
+      const capabilities = track.getCapabilities()
+      console.log('📷 Возможности трека:', capabilities)
+
+      // Пробуем разные варианты управления фонариком
+      const constraints = []
+
+      if (capabilities.torch === true) {
+        constraints.push({ torch: turnOn })
+      }
+
+      if (capabilities.fillLightMode && capabilities.fillLightMode.includes('flash')) {
+        constraints.push({ fillLightMode: turnOn ? 'flash' : 'off' })
+      }
+
+      if (capabilities.fillLightMode && capabilities.fillLightMode.includes('torch')) {
+        constraints.push({ fillLightMode: turnOn ? 'torch' : 'off' })
+      }
+
+      // Пробуем применить ограничения
+      let success = false
+      for (const constraint of constraints) {
+        try {
+          await track.applyConstraints(constraint)
+          success = true
+          console.log('✅ Фонарик успешно переключен:', constraint)
+          break
+        } catch (e) {
+          console.warn('⚠️ Не удалось применить ограничение:', constraint, e.message)
+        }
+      }
+
+      if (!success) {
+        throw new Error('Устройство не поддерживает управление фонариком')
+      }
+
+      isFlashlightOn.value = turnOn
+      console.log('Фонарик:', turnOn ? 'включен' : 'выключен')
+
+    } catch (error) {
+      console.error('❌ Ошибка управления фонариком:', error)
+      errorMessage.value = `Ошибка управления фонариком: ${error.message}`
+    }
+  }
+
   const toggleFlashlight = async () => {
     if (!isStreamActive.value) {
       await startCamera()
@@ -64,15 +118,27 @@ export function useCamera() {
 
     try {
       console.log('🔦 Переключение фонарика...')
-
-      // Пока просто переключаем состояние
-      // В следующих шагах добавим реальную работу с фонариком
-      isFlashlightOn.value = !isFlashlightOn.value
-      console.log('Фонарик:', isFlashlightOn.value ? 'включен' : 'выключен')
-
+      await setFlashlightState(!isFlashlightOn.value)
     } catch (error) {
-      console.error('❌ Ошибка управления фонариком:', error)
-      errorMessage.value = `Ошибка управления фонариком: ${error.message}`
+      console.error('❌ Ошибка переключения фонарика:', error)
+      errorMessage.value = `Ошибка переключения фонарика: ${error.message}`
+    }
+  }
+
+  const checkFlashlightSupport = () => {
+    if (!track) return false
+
+    try {
+      const capabilities = track.getCapabilities()
+      return (
+        capabilities.torch === true ||
+        (capabilities.fillLightMode && (
+          capabilities.fillLightMode.includes('flash') ||
+          capabilities.fillLightMode.includes('torch')
+        ))
+      )
+    } catch {
+      return false
     }
   }
 
@@ -83,6 +149,8 @@ export function useCamera() {
     isLoading,
     startCamera,
     stopCamera,
-    toggleFlashlight
+    toggleFlashlight,
+    setFlashlightState,
+    checkFlashlightSupport
   }
 }
