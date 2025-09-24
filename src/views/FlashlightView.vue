@@ -84,6 +84,18 @@ let stream = null
 let track = null
 const videoEl = ref(null)
 
+// Эвристика для определения задней камеры по лейблу
+const isBackCameraDevice = (device) => {
+  const label = (device?.label || '').toLowerCase()
+  return (
+    label.includes('back') ||
+    label.includes('rear') ||
+    label.includes('environment') ||
+    label.includes('зад') ||
+    label.includes('тыл')
+  )
+}
+
 const loadRhythmData = async () => {
   try {
     console.log('🎵 Загрузка ритма Бетховена...')
@@ -312,9 +324,11 @@ const startCamera = async () => {
       throw new Error('Камеры не найдены на устройстве')
     }
 
-    // Ищем заднюю камеру (обычно последняя в списке)
-    let selectedCamera = cameras[cameras.length - 1]
-    console.log('📱 Выбранная камера:', selectedCamera)
+    // Ищем задние камеры
+    const backCameras = cameras.filter(d => isBackCameraDevice(d))
+    // Если определить по лейблу не удалось, сохраняем прежнюю эвристику (последняя камера)
+    let selectedCamera = backCameras[0] || cameras[cameras.length - 1]
+    console.log('📱 Начальный выбор камеры:', selectedCamera)
 
     // Создаем варианты ограничений в зависимости от устройства
     let constraintsOptions = []
@@ -360,45 +374,126 @@ const startCamera = async () => {
         }
       ]
     } else if (deviceInfo.value.isAndroid) {
-      // Android - пробуем разные варианты
-      constraintsOptions = [
-        // Вариант 1: Конкретная камера с environment
-        {
-          video: {
-            deviceId: { exact: selectedCamera.deviceId },
-            facingMode: 'environment',
-            width: { ideal: 1920 },
-            height: { ideal: 1080 }
+      // Android — сначала активно перебираем задние камеры и проверяем поддержку фонарика
+      const tryAndroidBackCamerasForTorch = async () => {
+        const candidates = backCameras.length ? backCameras : cameras
+        let lastErr = null
+        for (const cam of candidates) {
+          try {
+            console.log('🔍 Пробуем заднюю камеру для torch:', cam)
+            const localStream = await navigator.mediaDevices.getUserMedia({
+              video: {
+                deviceId: { exact: cam.deviceId },
+                facingMode: 'environment',
+                width: { ideal: 1920 },
+                height: { ideal: 1080 }
+              }
+            })
+
+            const localTrack = localStream.getVideoTracks()[0]
+            // Небольшой «прайминг» трека, чтобы capabilities стабилизировались
+            try {
+              if (videoEl.value) {
+                if (videoEl.value.srcObject !== localStream) videoEl.value.srcObject = localStream
+                const p = videoEl.value.play()
+                if (p && typeof p.then === 'function') await p.catch(() => {})
+              }
+            } catch { /* игнорируем ошибки автозапуска видео на некоторых вебвью */ }
+            await new Promise(r => setTimeout(r, 150))
+
+            // Снимаем capabilities через track и через ImageCapture (если доступен)
+            let caps = null
+            try {
+              caps = localTrack.getCapabilities?.()
+            } catch { caps = null }
+
+            let photoCaps = null
+            if ('ImageCapture' in window) {
+              try {
+                const ic = new window.ImageCapture(localTrack)
+                photoCaps = await ic.getPhotoCapabilities()
+              } catch (e) {
+                console.warn('⚠️ ImageCapture недоступен или вернул ошибку:', e?.message)
+              }
+            }
+
+            const hasTorchSupport = (
+              (caps && (caps.torch === true || (Array.isArray(caps.fillLightMode) && (caps.fillLightMode.includes('flash') || caps.fillLightMode.includes('torch'))))) ||
+              (photoCaps && (
+                photoCaps.torch === true ||
+                (Array.isArray(photoCaps.fillLightMode) && (photoCaps.fillLightMode.includes('flash') || photoCaps.fillLightMode.includes('torch')))
+              ))
+            )
+
+            if (hasTorchSupport) {
+              // Назначаем основной поток и трек
+              stream = localStream
+              track = localTrack
+              isStreamActive.value = true
+              cachedCapabilities.value = caps || photoCaps || null
+              deviceInfo.value.supportsTorch = !!(caps?.torch === true || photoCaps?.torch === true)
+              deviceInfo.value.supportsFillLightMode = !!(
+                (caps?.fillLightMode && (caps.fillLightMode.includes('flash') || caps.fillLightMode.includes('torch'))) ||
+                (photoCaps?.fillLightMode && (photoCaps.fillLightMode.includes('flash') || photoCaps.fillLightMode.includes('torch')))
+              )
+              deviceInfo.value.torchCapability = caps?.torch ?? photoCaps?.torch ?? null
+              console.log('✅ Найдена камера с поддержкой фонарика:', cam)
+              return true
+            }
+
+            // Камера не поддерживает фонарик — останавливаем локальный поток и пробуем следующую
+            localStream.getTracks().forEach(t => t.stop())
+          } catch (e) {
+            console.warn('❌ Не удалось запустить кандидата камеры:', e?.message)
+            lastErr = e
           }
-        },
-        // Вариант 2: Любая камера с environment
-        {
-          video: {
-            facingMode: 'environment',
-            width: { ideal: 1920 },
-            height: { ideal: 1080 }
-          }
-        },
-        // Вариант 3: Конкретная камера без facingMode
-        {
-          video: {
-            deviceId: { exact: selectedCamera.deviceId },
-            width: { ideal: 1920 },
-            height: { ideal: 1080 }
-          }
-        },
-        // Вариант 4: Любая камера
-        {
-          video: {
-            width: { ideal: 1920 },
-            height: { ideal: 1080 }
-          }
-        },
-        // Вариант 5: Минимальные требования
-        {
-          video: true
         }
-      ]
+        if (lastErr) console.warn('ℹ️ Не найдено камер с torch, последняя ошибка:', lastErr?.message)
+        return false
+      }
+
+      const picked = await tryAndroidBackCamerasForTorch()
+
+      if (!picked) {
+        console.log('↩️ Переходим к стандартным вариантам ограничений для Android')
+        // Стандартные варианты для случаев без torch
+        constraintsOptions = [
+          {
+            video: {
+              deviceId: { exact: selectedCamera.deviceId },
+              facingMode: 'environment',
+              width: { ideal: 1920 },
+              height: { ideal: 1080 }
+            }
+          },
+          {
+            video: {
+              facingMode: 'environment',
+              width: { ideal: 1920 },
+              height: { ideal: 1080 }
+            }
+          },
+          {
+            video: {
+              deviceId: { exact: selectedCamera.deviceId },
+              width: { ideal: 1920 },
+              height: { ideal: 1080 }
+            }
+          },
+          {
+            video: {
+              width: { ideal: 1920 },
+              height: { ideal: 1080 }
+            }
+          },
+          { video: true }
+        ]
+      } else {
+        // Мы уже всё настроили и определили возможности — завершаем ранний выход
+        console.log('🎬 Камера готова к работе с фонариком (Android)')
+        console.log('✅ Камера успешно запущена')
+        return
+      }
     } else {
       // Другие устройства
       constraintsOptions = [
@@ -492,6 +587,25 @@ const startCamera = async () => {
     console.log('🔦 Проверка поддержки фонарика...')
     console.log('🔦 fillLightMode:', capabilities.fillLightMode)
     console.log('🔦 torch:', capabilities.torch)
+
+    // Дополнительно пробуем получить возможности через ImageCapture — на части Android это надёжнее
+    if (!deviceInfo.value.isIOS && 'ImageCapture' in window) {
+      try {
+        const ic = new window.ImageCapture(track)
+        const photoCaps = await ic.getPhotoCapabilities()
+        console.log('📷 PhotoCapabilities:', photoCaps)
+        if (photoCaps) {
+          // Объединяем сведения
+          deviceInfo.value.supportsTorch = deviceInfo.value.supportsTorch || photoCaps.torch === true
+          deviceInfo.value.supportsFillLightMode = deviceInfo.value.supportsFillLightMode || (
+            Array.isArray(photoCaps.fillLightMode) && (photoCaps.fillLightMode.includes('flash') || photoCaps.fillLightMode.includes('torch'))
+          )
+          if (!cachedCapabilities.value) cachedCapabilities.value = capabilities || photoCaps
+        }
+      } catch (e) {
+        console.warn('⚠️ Не удалось получить PhotoCapabilities:', e?.message)
+      }
+    }
 
     // Обновляем информацию об устройстве
     deviceInfo.value.supportsTorch = capabilities.torch === true
