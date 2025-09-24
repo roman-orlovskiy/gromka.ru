@@ -25,6 +25,13 @@
         >
           Диагностика
         </ButtonComp>
+
+        <ButtonComp
+          mod="gradient-4"
+          @click="exportLogs"
+        >
+          Экспорт логов
+        </ButtonComp>
       </div>
 
       <div class="flashlight__info" v-if="!hasCameraSupport">
@@ -83,6 +90,25 @@ const deviceInfo = ref({
 let stream = null
 let track = null
 const videoEl = ref(null)
+const logs = ref([])
+
+const addLog = (event, payload = null) => {
+  const time = new Date().toISOString()
+  const entry = { time, event, payload }
+  logs.value.push(entry)
+  if (logs.value.length > 1000) logs.value.shift()
+  try { console.log(`📝 [${time}] ${event}`, payload ?? '') } catch { /* игнорируем ошибки консоли */ }
+}
+
+const exportLogs = async () => {
+  try {
+    const text = logs.value.map(l => `${l.time} | ${l.event}${l.payload !== null ? ` | ${JSON.stringify(l.payload)}` : ''}`).join('\n')
+    const ok = await copyToClipboard(text || 'Логи пусты')
+    alert(ok ? 'Логи скопированы в буфер обмена' : 'Не удалось скопировать логи')
+  } catch (e) {
+    alert(`Ошибка экспорта логов: ${e?.message || e}`)
+  }
+}
 // Флаг, предотвращающий параллельные/зацикленные старты камеры
 const isStartingCamera = ref(false)
 // Одноразовый перезапуск после выдачи разрешений на Android,
@@ -354,10 +380,7 @@ const checkCameraSupport = async () => {
 
 const startCamera = async () => {
   try {
-    if (isStartingCamera.value) {
-      console.log('⏳ Камера уже запускается — пропускаем повторный вызов')
-      return
-    }
+    if (isStartingCamera.value) { addLog('startCamera: skip (already starting)'); return }
     isStartingCamera.value = true
     errorMessage.value = ''
     console.log('🎥 Запуск камеры...')
@@ -385,7 +408,7 @@ const startCamera = async () => {
     const devices = await navigator.mediaDevices.enumerateDevices()
     const cameras = devices.filter(device => device.kind === 'videoinput')
 
-    console.log('📹 Найденные камеры:', cameras)
+    addLog('enumerateDevices', { count: cameras.length })
 
     if (cameras.length === 0) {
       throw new Error('Камеры не найдены на устройстве')
