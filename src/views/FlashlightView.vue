@@ -385,6 +385,20 @@ const startCamera = async () => {
       return
     }
 
+    // КРИТИЧНО: глобальная защита от зацикливания
+    const startTime = Date.now()
+    const MAX_START_TIME = 30000 // 30 секунд максимум
+    const startKey = `camera_start_${startTime}`
+
+    // Проверяем, не было ли недавних попыток запуска
+    const lastStart = localStorage.getItem('last_camera_start')
+    if (lastStart && (startTime - parseInt(lastStart)) < 5000) {
+      addLog('startCamera: блокировка (слишком частые попытки)')
+      throw new Error('Слишком частые попытки запуска камеры. Подождите 5 секунд.')
+    }
+
+    localStorage.setItem('last_camera_start', startTime.toString())
+
     // В Telegram WebView: ограничиваем частоту и количество стартов
     if (deviceInfo.value.isTelegramWebView) {
       const now = Date.now()
@@ -412,10 +426,18 @@ const startCamera = async () => {
       if (navigator.permissions) {
         const st = await navigator.permissions.query({ name: 'camera' })
         if (st.state !== 'granted') {
+          // КРИТИЧНО: проверяем флаг перед preflight getUserMedia
+          if (isStartingCamera.value === false) {
+            addLog('preflight: прервано (флаг сброшен)')
+            return
+          }
+
           try {
+            addLog('preflight: попытка getUserMedia')
             const s = await navigator.mediaDevices.getUserMedia({ video: true })
             s.getTracks().forEach(t => t.stop())
             await new Promise(r => setTimeout(r, 120))
+            addLog('preflight: успех')
           } catch (e) {
             addLog('preflight: ошибка', e?.message)
           }
@@ -487,7 +509,16 @@ const startCamera = async () => {
       const tryAndroidBackCamerasForTorch = async () => {
         const candidates = backCameras.length ? backCameras : cameras
         let lastErr = null
+        let attemptsCount = 0
+        const MAX_ATTEMPTS = 3 // КРИТИЧНО: ограничиваем попытки
+
         for (const cam of candidates) {
+          // КРИТИЧНО: проверяем, не превышено ли количество попыток
+          if (attemptsCount >= MAX_ATTEMPTS) {
+            addLog('tryAndroidBackCamerasForTorch: превышен лимит попыток', { attempts: attemptsCount })
+            break
+          }
+
           try {
             console.log('🔍 Пробуем заднюю камеру для torch:', cam)
             const variants = [
@@ -500,8 +531,17 @@ const startCamera = async () => {
             ]
 
             for (const v of variants) {
+              // КРИТИЧНО: проверяем флаг запуска перед каждым getUserMedia
+              if (isStartingCamera.value === false) {
+                addLog('tryAndroidBackCamerasForTorch: прервано (флаг сброшен)')
+                return false
+              }
+
               let localStream = null
               try {
+                attemptsCount++
+                addLog('tryAndroidBackCamerasForTorch: попытка getUserMedia', { attempt: attemptsCount, camera: cam.deviceId })
+
                 localStream = await navigator.mediaDevices.getUserMedia({
                   video: {
                     deviceId: { exact: cam.deviceId },
@@ -511,6 +551,7 @@ const startCamera = async () => {
                 })
               } catch (e) {
                 lastErr = e
+                addLog('tryAndroidBackCamerasForTorch: ошибка getUserMedia', { error: e?.message, attempt: attemptsCount })
                 continue
               }
 
@@ -641,13 +682,23 @@ const startCamera = async () => {
 
     // Пробуем каждый вариант ограничений
     for (let i = 0; i < constraintsOptions.length; i++) {
+      // КРИТИЧНО: проверяем флаг запуска перед каждым getUserMedia
+      if (isStartingCamera.value === false) {
+        addLog('constraintsOptions: прервано (флаг сброшен)')
+        break
+      }
+
       try {
         console.log(`🔄 Попытка ${i + 1}/${constraintsOptions.length}:`, constraintsOptions[i])
+        addLog('constraintsOptions: попытка getUserMedia', { attempt: i + 1, constraints: constraintsOptions[i] })
+
         stream = await navigator.mediaDevices.getUserMedia(constraintsOptions[i])
         console.log(`✅ Успешно запущена камера с ограничениями ${i + 1}`)
+        addLog('constraintsOptions: успех', { attempt: i + 1 })
         break
       } catch (error) {
         console.warn(`❌ Попытка ${i + 1} неудачна:`, error.message)
+        addLog('constraintsOptions: ошибка', { attempt: i + 1, error: error.message })
         lastError = error
       }
     }
@@ -775,6 +826,8 @@ const startCamera = async () => {
     alert(`Ошибка запуска камеры: ${error.message}\n\nПроверьте:\n- Разрешения на доступ к камере\n- Используется ли HTTPS\n- Поддерживает ли устройство камеру`)
   } finally {
     isStartingCamera.value = false
+    // КРИТИЧНО: очищаем блокировку при завершении
+    localStorage.removeItem('last_camera_start')
   }
 }
 
