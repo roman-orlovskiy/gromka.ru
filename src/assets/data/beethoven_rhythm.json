@@ -6,18 +6,18 @@
   "beatsPerMinute": 128,
   "isCyclical": true,
   "pattern": [
-    { "note": 1, "duration": 250, "action": "on",  "description": "Та" },
-    { "note": 2, "duration": 188, "action": "off", "description": "пауза" },
-    { "note": 3, "duration": 250, "action": "on",  "description": "та" },
-    { "note": 4, "duration": 188, "action": "off", "description": "пауза" },
-    { "note": 5, "duration": 250, "action": "on",  "description": "та" },
-    { "note": 6, "duration": 313, "action": "off", "description": "пауза (нарастающая)" },
-    { "note": 7, "duration": 938, "action": "on",  "description": "тааа (акцент)" },
-    { "note": 8, "duration": 438, "action": "off", "description": "драматическая пауза" }
+    { "note": 1, "duration": 50, "action": "on",  "description": "Та" },
+    { "note": 2, "duration": 50, "action": "off", "description": "пауза" },
+    { "note": 3, "duration": 500, "action": "on",  "description": "та" },
+    { "note": 4, "duration": 50, "action": "off", "description": "пауза" },
+    { "note": 5, "duration": 50, "action": "on",  "description": "та" },
+    { "note": 6, "duration": 100, "action": "off", "description": "пауза (нарастающая)" },
+    { "note": 7, "duration": 50, "action": "on",  "description": "тааа (акцент)" },
+    { "note": 8, "duration": 50, "action": "off", "description": "драматическая пауза" }
   ],
-  "totalDuration": 2813,
+  "totalDuration": 900,
   "loopCount": 0,
-  "version": "1.0.1"
+  "version": "1.0.2"
 }
 
 

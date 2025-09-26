@@ -956,6 +956,31 @@ const getFlashlightConstraints = (turnOn) => {
   return constraints
 }
 
+// Простая функция для запроса прав на камеру
+const requestCameraPermission = async () => {
+  try {
+    addLog('requestCameraPermission: начало')
+
+    // Простой запрос прав на камеру
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: {
+        facingMode: 'environment',
+        width: { ideal: 1920 },
+        height: { ideal: 1080 }
+      }
+    })
+
+    // Сразу останавливаем поток - нам нужны только права
+    stream.getTracks().forEach(track => track.stop())
+
+    addLog('requestCameraPermission: успех')
+    return true
+  } catch (error) {
+    addLog('requestCameraPermission: ошибка', { error: error.message })
+    throw error
+  }
+}
+
 const toggleFlashlight = async () => {
   // Защита от зацикливания - если камера уже запускается, ждем
   if (isStartingCamera.value) {
@@ -963,9 +988,29 @@ const toggleFlashlight = async () => {
     return
   }
 
+  // Если фонарик уже включен или играет музыка - выключаем
+  if (isFlashlightOn.value || isPlayingMusic.value) {
+    console.log('🔦 Выключаем фонарик и останавливаем музыку...')
+    stopMusic()
+    await setFlashlightState(false)
+    console.log('✅ Фонарик выключен')
+    return
+  }
+
   if (!isStreamActive.value) {
-    await startCamera()
-    if (!isStreamActive.value) return
+    try {
+      // Сначала запрашиваем права на камеру
+      await requestCameraPermission()
+
+      // Только после получения прав запускаем камеру
+      await startCamera()
+      if (!isStreamActive.value) return
+    } catch (error) {
+      console.error('❌ Ошибка получения прав на камеру:', error)
+      errorMessage.value = `Ошибка доступа к камере: ${error.message}`
+      alert(`Ошибка доступа к камере: ${error.message}\n\nРазрешите доступ к камере в настройках браузера.`)
+      return
+    }
   }
 
   try {
@@ -981,18 +1026,10 @@ const toggleFlashlight = async () => {
       throw new Error('Устройство не поддерживает функцию фонарика. Проверьте:\n- Используется ли задняя камера\n- Поддерживает ли устройство фонарик\n- Не заблокирован ли фонарик системными настройками')
     }
 
-    // Если фонарик уже включен или играет музыка - выключаем
-    if (isFlashlightOn.value || isPlayingMusic.value) {
-      console.log('🔦 Выключаем фонарик и останавливаем музыку...')
-      stopMusic()
-      await setFlashlightState(false)
-      console.log('✅ Фонарик выключен')
-    } else {
-      // Включаем фонарик и начинаем играть ритм Бетховена
-      console.log('🎵 Включаем фонарик и начинаем играть ритм Бетховена...')
-      await playMusic()
-      console.log('✅ Музыкальный фонарик запущен')
-    }
+    // Включаем фонарик и начинаем играть ритм Бетховена
+    console.log('🎵 Включаем фонарик и начинаем играть ритм Бетховена...')
+    await playMusic()
+    console.log('✅ Музыкальный фонарик запущен')
   } catch (error) {
     console.error('❌ Ошибка управления фонариком:', error)
     errorMessage.value = `Ошибка управления фонариком: ${error.message}`
