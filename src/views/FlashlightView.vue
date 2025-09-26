@@ -179,6 +179,12 @@ const playMusic = async () => {
     return
   }
 
+  // Защита от зацикливания
+  if (isStartingCamera.value) {
+    addLog('playMusic: пропуск (камера запускается)')
+    return
+  }
+
   if (!currentRhythm.value) {
     await loadRhythmData()
   }
@@ -844,6 +850,12 @@ const getFlashlightConstraints = (turnOn) => {
 }
 
 const toggleFlashlight = async () => {
+  // Защита от зацикливания - если камера уже запускается, ждем
+  if (isStartingCamera.value) {
+    addLog('toggleFlashlight: пропуск (камера запускается)')
+    return
+  }
+
   if (!isStreamActive.value) {
     await startCamera()
     if (!isStreamActive.value) return
