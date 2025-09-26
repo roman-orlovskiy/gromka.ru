@@ -20,13 +20,6 @@
         </ButtonComp>
 
         <ButtonComp
-          mod="gradient-5"
-          @click="runDiagnostics"
-        >
-          Диагностика
-        </ButtonComp>
-
-        <ButtonComp
           mod="gradient-4"
           @click="exportLogs"
         >
@@ -93,28 +86,26 @@ const videoEl = ref(null)
 const logs = ref([])
 
 const addLog = (event, payload = null) => {
-  const time = new Date().toISOString()
+  const time = new Date().toLocaleTimeString()
   const entry = { time, event, payload }
   logs.value.push(entry)
-  if (logs.value.length > 1000) logs.value.shift()
-  try { console.log(`📝 [${time}] ${event}`, payload ?? '') } catch { /* игнорируем ошибки консоли */ }
+  if (logs.value.length > 500) logs.value.shift()
+  // Убираем console.log для компактности
 }
 
 const exportLogs = async () => {
   try {
-    const text = logs.value.map(l => `${l.time} | ${l.event}${l.payload !== null ? ` | ${JSON.stringify(l.payload)}` : ''}`).join('\n')
+    const text = logs.value.map(l => `${l.time} ${l.event}${l.payload ? ` ${JSON.stringify(l.payload)}` : ''}`).join('\n')
     const ok = await copyToClipboard(text || 'Логи пусты')
-    alert(ok ? 'Логи скопированы в буфер обмена' : 'Не удалось скопировать логи')
+    alert(ok ? 'Логи скопированы' : 'Ошибка копирования')
   } catch (e) {
-    alert(`Ошибка экспорта логов: ${e?.message || e}`)
+    alert(`Ошибка: ${e?.message || e}`)
   }
 }
 // Флаг, предотвращающий параллельные/зацикленные старты камеры
 const isStartingCamera = ref(false)
-// Одноразовый перезапуск после выдачи разрешений на Android,
-// если torch/fillLightMode не появились на первом запуске
-const hasRetriedAfterPermission = ref(false)
-const hasRetriedInTelegram = ref(false)
+// КРИТИЧНО: флаг для отслеживания отказа в разрешениях
+const permissionDenied = ref(false)
 // Анти-зацикливание: кулдаун и лимиты для Telegram WebView
 const tgStartAttempts = ref(0)
 const lastStartAt = ref(0)
@@ -187,6 +178,12 @@ const loadRhythmData = async () => {
 const playMusic = async () => {
   if (isPlayingMusic.value) {
     stopMusic()
+    return
+  }
+
+  // Защита от зацикливания
+  if (isStartingCamera.value) {
+    addLog('playMusic: пропуск (камера запускается)')
     return
   }
 
@@ -269,8 +266,7 @@ const setFlashlightState = async (turnOn) => {
         await track.applyConstraints(cached)
         isFlashlightOn.value = !!turnOn
         return
-      } catch (e) {
-        console.warn('⚠️ Кэшированное ограничение перестало работать, пробуем подбор…', e.message)
+      } catch {
         // очищаем кэш, чтобы переобучить ниже
         if (turnOn) cachedConstraints.value.on = null
         else cachedConstraints.value.off = null
@@ -386,7 +382,28 @@ const checkCameraSupport = async () => {
 
 const startCamera = async () => {
   try {
-    if (isStartingCamera.value) { addLog('startCamera: skip (already starting)'); return }
+    if (isStartingCamera.value) {
+      addLog('startCamera: skip (already starting)');
+      return
+    }
+
+    // КРИТИЧНО: проверяем, не было ли отказа в разрешениях
+    if (permissionDenied.value) {
+      addLog('startCamera: skip (permission denied)');
+      throw new Error('Доступ к камере запрещен. Разрешите доступ к камере в настройках браузера.')
+    }
+
+    // КРИТИЧНО: глобальная защита от зацикливания
+    const startTime = Date.now()
+
+    // Проверяем, не было ли недавних попыток запуска
+    const lastStart = localStorage.getItem('last_camera_start')
+    if (lastStart && (startTime - parseInt(lastStart)) < 5000) {
+      addLog('startCamera: блокировка (слишком частые попытки)')
+      throw new Error('Слишком частые попытки запуска камеры. Подождите 5 секунд.')
+    }
+
+    localStorage.setItem('last_camera_start', startTime.toString())
 
     // В Telegram WebView: ограничиваем частоту и количество стартов
     if (deviceInfo.value.isTelegramWebView) {
@@ -404,28 +421,42 @@ const startCamera = async () => {
       tgStartAttempts.value += 1
       lastStartAt.value = now
     }
+
     isStartingCamera.value = true
     errorMessage.value = ''
     console.log('🎥 Запуск камеры...')
+    addLog('startCamera: начало')
 
-    // Incognito/первый запуск: «preflight» для прогрева разрешений/драйвера
+    // Preflight для прогрева разрешений
     try {
       if (navigator.permissions) {
         const st = await navigator.permissions.query({ name: 'camera' })
         if (st.state !== 'granted') {
-          console.log('🟨 Preflight: стейт разрешения:', st.state)
+          // КРИТИЧНО: проверяем флаг перед preflight getUserMedia
+          if (isStartingCamera.value === false) {
+            addLog('preflight: прервано (флаг сброшен)')
+            return
+          }
+
           try {
+            addLog('preflight: попытка getUserMedia')
             const s = await navigator.mediaDevices.getUserMedia({ video: true })
             s.getTracks().forEach(t => t.stop())
-            console.log('✅ Preflight getUserMedia выполнен')
-            // Небольшая пауза, чтобы система применяла разрешение
             await new Promise(r => setTimeout(r, 120))
+            addLog('preflight: успех')
           } catch (e) {
-            console.warn('⚠️ Preflight getUserMedia не удался:', e?.message)
+            addLog('preflight: ошибка', e?.message)
+
+            // КРИТИЧНО: если Permission denied - немедленно прекращаем
+            if (e?.message?.includes('Permission denied') || e?.name === 'NotAllowedError') {
+              addLog('preflight: PERMISSION DENIED - прекращаем')
+              permissionDenied.value = true
+              throw new Error('Доступ к камере запрещен. Разрешите доступ к камере в настройках браузера.')
+            }
           }
         }
       }
-    } catch { /* игнорируем сбои preflight в инкогнито */ }
+    } catch { /* игнорируем сбои preflight */ }
 
     // Получаем список всех камер
     const devices = await navigator.mediaDevices.enumerateDevices()
@@ -491,7 +522,16 @@ const startCamera = async () => {
       const tryAndroidBackCamerasForTorch = async () => {
         const candidates = backCameras.length ? backCameras : cameras
         let lastErr = null
+        let attemptsCount = 0
+        const MAX_ATTEMPTS = 3 // КРИТИЧНО: ограничиваем попытки
+
         for (const cam of candidates) {
+          // КРИТИЧНО: проверяем, не превышено ли количество попыток
+          if (attemptsCount >= MAX_ATTEMPTS) {
+            addLog('tryAndroidBackCamerasForTorch: превышен лимит попыток', { attempts: attemptsCount })
+            break
+          }
+
           try {
             console.log('🔍 Пробуем заднюю камеру для torch:', cam)
             const variants = [
@@ -504,8 +544,17 @@ const startCamera = async () => {
             ]
 
             for (const v of variants) {
+              // КРИТИЧНО: проверяем флаг запуска перед каждым getUserMedia
+              if (isStartingCamera.value === false) {
+                addLog('tryAndroidBackCamerasForTorch: прервано (флаг сброшен)')
+                return false
+              }
+
               let localStream = null
               try {
+                attemptsCount++
+                addLog('tryAndroidBackCamerasForTorch: попытка getUserMedia', { attempt: attemptsCount, camera: cam.deviceId })
+
                 localStream = await navigator.mediaDevices.getUserMedia({
                   video: {
                     deviceId: { exact: cam.deviceId },
@@ -515,10 +564,22 @@ const startCamera = async () => {
                 })
               } catch (e) {
                 lastErr = e
+                addLog('tryAndroidBackCamerasForTorch: ошибка getUserMedia', { error: e?.message, attempt: attemptsCount })
+
+                // КРИТИЧНО: если Permission denied - немедленно прекращаем попытки
+                if (e?.message?.includes('Permission denied') || e?.name === 'NotAllowedError') {
+                  addLog('tryAndroidBackCamerasForTorch: PERMISSION DENIED - прекращаем попытки')
+                  permissionDenied.value = true
+                  break
+                }
                 continue
               }
 
               const localTrack = localStream.getVideoTracks()[0]
+
+              // КРИТИЧНО: НЕМЕДЛЕННО выходим из всех циклов после первого успешного getUserMedia
+              addLog('tryAndroidBackCamerasForTorch: УСПЕХ - прекращаем все попытки')
+
               // Небольшой «прайминг» трека, чтобы capabilities стабилизировались
               try {
                 if (videoEl.value) {
@@ -566,6 +627,10 @@ const startCamera = async () => {
                 )
                 deviceInfo.value.torchCapability = caps?.torch ?? photoCaps?.torch ?? null
                 console.log('✅ Найдена камера/профиль с поддержкой фонарика:', cam, v)
+
+                // КРИТИЧНО: НЕМЕДЛЕННО сбрасываем флаг запуска, чтобы остановить все остальные попытки
+                isStartingCamera.value = false
+                addLog('tryAndroidBackCamerasForTorch: КАМЕРА НАЙДЕНА - сбрасываем флаг')
                 return true
               }
 
@@ -584,6 +649,12 @@ const startCamera = async () => {
       const picked = await tryAndroidBackCamerasForTorch()
 
       if (!picked) {
+        // КРИТИЧНО: проверяем, не был ли сброшен флаг запуска
+        if (isStartingCamera.value === false) {
+          addLog('Android: прервано (флаг сброшен после tryAndroidBackCamerasForTorch)')
+          return
+        }
+
         console.log('↩️ Переходим к стандартным вариантам ограничений для Android')
         // Стандартные варианты для случаев без torch
         constraintsOptions = [
@@ -643,16 +714,43 @@ const startCamera = async () => {
     stream = null
     let lastError = null
 
+    // КРИТИЧНО: проверяем флаг запуска перед началом цикла
+    if (isStartingCamera.value === false) {
+      addLog('constraintsOptions: прервано (флаг сброшен перед циклом)')
+      return
+    }
+
     // Пробуем каждый вариант ограничений
     for (let i = 0; i < constraintsOptions.length; i++) {
+      // КРИТИЧНО: проверяем флаг запуска перед каждым getUserMedia
+      if (isStartingCamera.value === false) {
+        addLog('constraintsOptions: прервано (флаг сброшен)')
+        break
+      }
+
       try {
         console.log(`🔄 Попытка ${i + 1}/${constraintsOptions.length}:`, constraintsOptions[i])
+        addLog('constraintsOptions: попытка getUserMedia', { attempt: i + 1, constraints: constraintsOptions[i] })
+
         stream = await navigator.mediaDevices.getUserMedia(constraintsOptions[i])
         console.log(`✅ Успешно запущена камера с ограничениями ${i + 1}`)
+        addLog('constraintsOptions: успех', { attempt: i + 1 })
+
+        // КРИТИЧНО: НЕМЕДЛЕННО сбрасываем флаг запуска после успешного getUserMedia
+        isStartingCamera.value = false
+        addLog('constraintsOptions: УСПЕХ - сбрасываем флаг')
         break
       } catch (error) {
         console.warn(`❌ Попытка ${i + 1} неудачна:`, error.message)
+        addLog('constraintsOptions: ошибка', { attempt: i + 1, error: error.message })
         lastError = error
+
+        // КРИТИЧНО: если Permission denied - немедленно прекращаем попытки
+        if (error?.message?.includes('Permission denied') || error?.name === 'NotAllowedError') {
+          addLog('constraintsOptions: PERMISSION DENIED - прекращаем попытки')
+          permissionDenied.value = true
+          break
+        }
       }
     }
 
@@ -689,26 +787,35 @@ const startCamera = async () => {
     console.log('🔧 Настройки трека:', track.getSettings())
     console.log('⚙️ Поддерживаемые ограничения (первичный снимок):', track.getCapabilities())
 
-    // Проверяем, есть ли поддержка фонарика. На некоторых устройствах флаги появляются не мгновенно — делаем несколько попыток.
-    const waitForTorchSupport = async (mediaTrack, attempts = 8, delayMs = 120) => {
+    // Проверяем поддержку фонарика
+    const waitForTorchSupport = async (mediaTrack, attempts = 12, delayMs = 150) => {
       let caps = null
+      let lastCaps = null
+
       for (let attempt = 0; attempt < attempts; attempt++) {
         try {
           caps = mediaTrack.getCapabilities()
+          lastCaps = caps
         } catch {
           caps = null
         }
+
         if (
           caps && (
             caps.torch === true ||
             (Array.isArray(caps.fillLightMode) && (caps.fillLightMode.includes('flash') || caps.fillLightMode.includes('torch')))
           )
         ) {
+          addLog('torch: найдена поддержка', { torch: caps.torch, fillLightMode: caps.fillLightMode })
           return caps
         }
-        await new Promise(r => setTimeout(r, delayMs))
+
+        const currentDelay = deviceInfo.value.isAndroid ? delayMs * 1.5 : delayMs
+        await new Promise(r => setTimeout(r, currentDelay))
       }
-      return caps || mediaTrack.getCapabilities()
+
+      addLog('torch: поддержка не найдена')
+      return lastCaps || mediaTrack.getCapabilities()
     }
 
     const capabilities = await waitForTorchSupport(track)
@@ -742,6 +849,11 @@ const startCamera = async () => {
       (capabilities.fillLightMode.includes('flash') || capabilities.fillLightMode.includes('torch'))
     deviceInfo.value.torchCapability = capabilities.torch
 
+    addLog('deviceInfo: обновлено', {
+      torch: deviceInfo.value.supportsTorch,
+      fillLight: deviceInfo.value.supportsFillLightMode
+    })
+
     console.log('📱 Обновленная информация об устройстве:', deviceInfo.value)
 
     console.log('🎬 Камера готова к работе с фонариком')
@@ -753,48 +865,13 @@ const startCamera = async () => {
       lastStartAt.value = Date.now()
     }
 
-    // Одноразовый «реинициализатор» для Android: некоторые устройства (Samsung Fold)
-    // только после первой сессии корректно экспонируют torch/fillLightMode
-    if (
-      deviceInfo.value.isAndroid &&
-      !deviceInfo.value.supportsTorch &&
-      !deviceInfo.value.supportsFillLightMode &&
-      !hasRetriedAfterPermission.value &&
-      !deviceInfo.value.isTelegramWebView
-    ) {
-      try {
-        hasRetriedAfterPermission.value = true
-        console.log('🔁 Android: повторный запуск камеры для обновления возможностей фонарика')
-        stopCamera()
-        await new Promise(r => setTimeout(r, 200))
-        return await startCamera()
-      } catch (e) {
-        console.warn('⚠️ Не удалось выполнить повторный запуск камеры:', e?.message)
-      }
-    }
+    // КРИТИЧНО: сбрасываем флаг отказа в разрешениях при успешном запуске
+    permissionDenied.value = false
 
-    // Incognito/первый запуск: усиленный повтор, если стейт стал granted, но torch отсутствует
-    if (navigator.permissions) {
-      try {
-        const st = await navigator.permissions.query({ name: 'camera' })
-        if (
-          st.state === 'granted' &&
-          !deviceInfo.value.supportsTorch &&
-          !deviceInfo.value.supportsFillLightMode &&
-          (!hasRetriedAfterPermission.value || (deviceInfo.value.isTelegramWebView && !hasRetriedInTelegram.value))
-        ) {
-          if (deviceInfo.value.isTelegramWebView) {
-            hasRetriedInTelegram.value = true
-            console.log('🔁 WebView: одноразовый повторный запуск после granted без torch')
-          } else {
-            hasRetriedAfterPermission.value = true
-            console.log('🔁 Incognito: повторный запуск после granted без torch')
-          }
-          stopCamera()
-          await new Promise(r => setTimeout(r, 160))
-          return await startCamera()
-        }
-      } catch { /* игнорируем ошибки проверки permission */ }
+    // Убираем автоматические повторные запуски камеры, которые вызывают зацикливание
+    // Вместо этого просто логируем информацию о возможностях фонарика
+    if (deviceInfo.value.isAndroid && !deviceInfo.value.supportsTorch && !deviceInfo.value.supportsFillLightMode) {
+      console.log('⚠️ Android: фонарик не обнаружен при первом запуске. Возможно, потребуется ручной перезапуск.')
     }
   } catch (error) {
     console.error('❌ Ошибка запуска камеры:', error)
@@ -803,6 +880,8 @@ const startCamera = async () => {
     alert(`Ошибка запуска камеры: ${error.message}\n\nПроверьте:\n- Разрешения на доступ к камере\n- Используется ли HTTPS\n- Поддерживает ли устройство камеру`)
   } finally {
     isStartingCamera.value = false
+    // КРИТИЧНО: очищаем блокировку при завершении
+    localStorage.removeItem('last_camera_start')
   }
 }
 
@@ -877,10 +956,61 @@ const getFlashlightConstraints = (turnOn) => {
   return constraints
 }
 
+// Простая функция для запроса прав на камеру
+const requestCameraPermission = async () => {
+  try {
+    addLog('requestCameraPermission: начало')
+
+    // Простой запрос прав на камеру
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: {
+        facingMode: 'environment',
+        width: { ideal: 1920 },
+        height: { ideal: 1080 }
+      }
+    })
+
+    // Сразу останавливаем поток - нам нужны только права
+    stream.getTracks().forEach(track => track.stop())
+
+    addLog('requestCameraPermission: успех')
+    return true
+  } catch (error) {
+    addLog('requestCameraPermission: ошибка', { error: error.message })
+    throw error
+  }
+}
+
 const toggleFlashlight = async () => {
+  // Защита от зацикливания - если камера уже запускается, ждем
+  if (isStartingCamera.value) {
+    addLog('toggleFlashlight: пропуск (камера запускается)')
+    return
+  }
+
+  // Если фонарик уже включен или играет музыка - выключаем
+  if (isFlashlightOn.value || isPlayingMusic.value) {
+    console.log('🔦 Выключаем фонарик и останавливаем музыку...')
+    stopMusic()
+    await setFlashlightState(false)
+    console.log('✅ Фонарик выключен')
+    return
+  }
+
   if (!isStreamActive.value) {
-    await startCamera()
-    if (!isStreamActive.value) return
+    try {
+      // Сначала запрашиваем права на камеру
+      await requestCameraPermission()
+
+      // Только после получения прав запускаем камеру
+      await startCamera()
+      if (!isStreamActive.value) return
+    } catch (error) {
+      console.error('❌ Ошибка получения прав на камеру:', error)
+      errorMessage.value = `Ошибка доступа к камере: ${error.message}`
+      alert(`Ошибка доступа к камере: ${error.message}\n\nРазрешите доступ к камере в настройках браузера.`)
+      return
+    }
   }
 
   try {
@@ -896,18 +1026,10 @@ const toggleFlashlight = async () => {
       throw new Error('Устройство не поддерживает функцию фонарика. Проверьте:\n- Используется ли задняя камера\n- Поддерживает ли устройство фонарик\n- Не заблокирован ли фонарик системными настройками')
     }
 
-    // Если фонарик уже включен или играет музыка - выключаем
-    if (isFlashlightOn.value || isPlayingMusic.value) {
-      console.log('🔦 Выключаем фонарик и останавливаем музыку...')
-      stopMusic()
-      await setFlashlightState(false)
-      console.log('✅ Фонарик выключен')
-    } else {
-      // Включаем фонарик и начинаем играть ритм Бетховена
-      console.log('🎵 Включаем фонарик и начинаем играть ритм Бетховена...')
-      await playMusic()
-      console.log('✅ Музыкальный фонарик запущен')
-    }
+    // Включаем фонарик и начинаем играть ритм Бетховена
+    console.log('🎵 Включаем фонарик и начинаем играть ритм Бетховена...')
+    await playMusic()
+    console.log('✅ Музыкальный фонарик запущен')
   } catch (error) {
     console.error('❌ Ошибка управления фонариком:', error)
     errorMessage.value = `Ошибка управления фонариком: ${error.message}`
@@ -931,26 +1053,24 @@ const stopCamera = () => {
     cachedConstraints.value.off = null
     cachedCapabilities.value = null
 
-    console.log('Камера остановлена')
+    addLog('stopCamera: остановлена')
   }
 }
 
-const copyToClipboard = async (text) => {
-  console.log('📋 Попытка копирования в буфер обмена...')
 
+const copyToClipboard = async (text) => {
   try {
-    // Метод 1: Современный Clipboard API (может не работать в Telegram WebView)
+    // Метод 1: Clipboard API
     if (navigator.clipboard && window.isSecureContext) {
       try {
         await navigator.clipboard.writeText(text)
-        console.log('✅ Скопировано через Clipboard API')
         return true
-      } catch (clipboardError) {
-        console.warn('⚠️ Clipboard API не работает:', clipboardError.message)
+      } catch {
+        // пробуем следующий метод
       }
     }
 
-    // Метод 2: document.execCommand (работает в большинстве случаев)
+    // Метод 2: document.execCommand
     try {
       const textArea = document.createElement('textarea')
       textArea.value = text
@@ -962,28 +1082,22 @@ const copyToClipboard = async (text) => {
       textArea.setAttribute('readonly', '')
 
       document.body.appendChild(textArea)
-
-      // Выделяем текст
       textArea.focus()
       textArea.select()
-      textArea.setSelectionRange(0, 99999) // Для мобильных устройств
+      textArea.setSelectionRange(0, 99999)
 
       const successful = document.execCommand('copy')
       document.body.removeChild(textArea)
 
-      if (successful) {
-        console.log('✅ Скопировано через document.execCommand')
-        return true
-      }
-    } catch (execError) {
-      console.warn('⚠️ document.execCommand не работает:', execError.message)
+      if (successful) return true
+    } catch {
+      // пробуем следующий метод
     }
 
-    // Метод 3: Создание временного элемента с выделением (для iOS Safari в Telegram)
+    // Метод 3: Выделение текста
     try {
       const range = document.createRange()
       const selection = window.getSelection()
-
       const textNode = document.createTextNode(text)
       const tempDiv = document.createElement('div')
       tempDiv.appendChild(textNode)
@@ -992,7 +1106,6 @@ const copyToClipboard = async (text) => {
       tempDiv.style.top = '-999999px'
 
       document.body.appendChild(tempDiv)
-
       range.selectNodeContents(tempDiv)
       selection.removeAllRanges()
       selection.addRange(range)
@@ -1001,175 +1114,20 @@ const copyToClipboard = async (text) => {
       selection.removeAllRanges()
       document.body.removeChild(tempDiv)
 
-      if (successful) {
-        console.log('✅ Скопировано через выделение текста')
-        return true
-      }
-    } catch (rangeError) {
-      console.warn('⚠️ Метод выделения текста не работает:', rangeError.message)
+      if (successful) return true
+    } catch {
+      // все методы не сработали
     }
 
-    console.log('❌ Все методы копирования не сработали')
     return false
-
-  } catch (error) {
-    console.error('❌ Общая ошибка копирования:', error)
+  } catch {
     return false
   }
 }
 
-const runDiagnostics = async () => {
-  console.log('🔍 Запуск полной диагностики...')
-
-  let diagnosticInfo = '🔍 ДИАГНОСТИКА СИСТЕМЫ\n\n'
-
-  // Если камера ещё не активна, временно запускаем для корректного получения capabilities
-  let startedForDiagnostics = false
-  try {
-    if (!isStreamActive.value || !track) {
-      // В Telegram WebView избегаем принудительного старта, если нет явного разрешения
-      if (deviceInfo.value.isTelegramWebView && navigator.permissions) {
-        try {
-          const st = await navigator.permissions.query({ name: 'camera' })
-          if (st.state !== 'granted') {
-            console.log('🛑 WebView: диагностика без старта камеры — статус разрешения:', st.state)
-          } else {
-            startedForDiagnostics = true
-            console.log('🟡 Временный запуск камеры для диагностики...')
-            await startCamera()
-          }
-        } catch {
-          // Если не можем проверить — ведём себя как раньше
-          startedForDiagnostics = true
-          console.log('🟡 Временный запуск камеры для диагностики (без проверки permission)...')
-          await startCamera()
-        }
-      } else {
-        startedForDiagnostics = true
-        console.log('🟡 Временный запуск камеры для диагностики...')
-        await startCamera()
-      }
-    }
-  } catch (e) {
-    console.warn('⚠️ Не удалось временно запустить камеру для диагностики:', e?.message)
-  }
-
-  // Информация о браузере и устройстве
-  diagnosticInfo += `🌐 Протокол: ${window.location.protocol}\n`
-  diagnosticInfo += `📱 User Agent: ${navigator.userAgent}\n`
-  diagnosticInfo += `🔒 HTTPS: ${window.location.protocol === 'https:' ? '✅' : '❌'}\n`
-  diagnosticInfo += `📹 MediaDevices: ${navigator.mediaDevices ? '✅' : '❌'}\n`
-  diagnosticInfo += `🎥 getUserMedia: ${navigator.mediaDevices?.getUserMedia ? '✅' : '❌'}\n\n`
-
-  // Информация об устройстве
-  diagnosticInfo += `📱 ИНФОРМАЦИЯ ОБ УСТРОЙСТВЕ:\n`
-  diagnosticInfo += `  iOS: ${deviceInfo.value.isIOS ? '✅' : '❌'}\n`
-  if (deviceInfo.value.isIOS && deviceInfo.value.iosVersion) {
-    diagnosticInfo += `  Версия iOS: ${deviceInfo.value.iosVersion}\n`
-    diagnosticInfo += `  Старая версия iOS: ${deviceInfo.value.isOldIOS ? '✅ (может не поддерживать torch)' : '❌'}\n`
-  }
-  diagnosticInfo += `  Android: ${deviceInfo.value.isAndroid ? '✅' : '❌'}\n`
-  diagnosticInfo += `  Chrome: ${deviceInfo.value.isChrome ? '✅' : '❌'}\n`
-  diagnosticInfo += `  Safari: ${deviceInfo.value.isSafari ? '✅' : '❌'}\n`
-  diagnosticInfo += `  YaBrowser: ${deviceInfo.value.isYaBrowser ? '✅' : '❌'}\n`
-  diagnosticInfo += `  Telegram WebView: ${deviceInfo.value.isTelegramWebView ? '✅ (ограничения копирования)' : '❌'}\n`
-  diagnosticInfo += `  Поддержка torch: ${deviceInfo.value.supportsTorch ? '✅' : '❌'}\n`
-  diagnosticInfo += `  Поддержка fillLightMode: ${deviceInfo.value.supportsFillLightMode ? '✅' : '❌'}\n\n`
-
-  try {
-    // Проверяем устройства
-    const devices = await navigator.mediaDevices.enumerateDevices()
-    const videoDevices = devices.filter(d => d.kind === 'videoinput')
-
-    diagnosticInfo += `📹 Видеоустройства (${videoDevices.length}):\n`
-    videoDevices.forEach((device, index) => {
-      diagnosticInfo += `  ${index + 1}. ${device.label || 'Без названия'} (${device.deviceId})\n`
-    })
-    diagnosticInfo += '\n'
-
-    // Проверяем разрешения
-    if (navigator.permissions) {
-      try {
-        const permission = await navigator.permissions.query({ name: 'camera' })
-        diagnosticInfo += `🔐 Разрешение камеры: ${permission.state}\n`
-      } catch {
-        diagnosticInfo += `🔐 Разрешение камеры: Не удалось проверить\n`
-      }
-    }
-
-    // Если есть активный трек, проверяем его возможности
-    if (track) {
-      const settings = track.getSettings()
-      const capabilities = track.getCapabilities()
-
-      diagnosticInfo += '\n📹 АКТИВНЫЙ ТРЕК:\n'
-      diagnosticInfo += `  Разрешение: ${settings.width}x${settings.height}\n`
-      diagnosticInfo += `  Частота кадров: ${settings.frameRate || 'неизвестно'}\n`
-      diagnosticInfo += `  Камера: ${settings.facingMode || 'неизвестно'}\n`
-      diagnosticInfo += `  Device ID: ${settings.deviceId || 'неизвестно'}\n`
-      diagnosticInfo += `  fillLightMode: ${capabilities.fillLightMode ? capabilities.fillLightMode.join(', ') : 'не поддерживается'}\n`
-      diagnosticInfo += `  torch: ${capabilities.torch !== undefined ? capabilities.torch : 'не поддерживается'}\n`
-
-      // Дополнительная информация о фонарике
-      if (capabilities.fillLightMode && capabilities.fillLightMode.includes('flash')) {
-        diagnosticInfo += `  ✅ Фонарик поддерживается (fillLightMode)\n`
-      } else if (capabilities.torch === true) {
-        diagnosticInfo += `  ✅ Фонарик поддерживается (torch)\n`
-      } else {
-        diagnosticInfo += `  ❌ Фонарик НЕ поддерживается\n`
-      }
-    }
-
-  } catch (error) {
-    diagnosticInfo += `❌ Ошибка диагностики: ${error.message}\n`
-  }
-
-  // Если камера была запущена только для диагностики, останавливаем её, если не идёт воспроизведение ритма
-  try {
-    if (startedForDiagnostics && !isPlayingMusic.value) {
-      console.log('🟢 Останавливаем временно запущенную камеру после диагностики')
-      stopCamera()
-    }
-  } catch { /* игнорируем ошибки остановки временного трека */ }
-
-  console.log(diagnosticInfo)
-
-  // Копируем в буфер обмена
-  const copied = await copyToClipboard(diagnosticInfo)
-
-  // Показываем алерт с информацией о копировании
-  let alertMessage = ''
-
-  if (copied) {
-    alertMessage = `📋 ДИАГНОСТИКА СКОПИРОВАНА В БУФЕР ОБМЕНА\n\n${diagnosticInfo}`
-  } else {
-    // Специальные инструкции для Telegram WebView
-    if (deviceInfo.value.isTelegramWebView) {
-      alertMessage = `⚠️ TELEGRAM WEBVIEW - ОГРАНИЧЕНИЯ КОПИРОВАНИЯ\n\n` +
-        `📱 Для копирования в Telegram:\n` +
-        `1. Выделите весь текст ниже\n` +
-        `2. Нажмите "Копировать" в контекстном меню\n` +
-        `3. Или используйте Ctrl+C (Cmd+C на Mac)\n\n` +
-        `📋 ДИАГНОСТИКА:\n\n${diagnosticInfo}`
-    } else {
-      alertMessage = `⚠️ НЕ УДАЛОСЬ СКОПИРОВАТЬ В БУФЕР ОБМЕНА\n\n` +
-        `📱 Попробуйте:\n` +
-        `1. Выделить текст вручную\n` +
-        `2. Нажать Ctrl+C (Cmd+C на Mac)\n\n` +
-        `📋 ДИАГНОСТИКА:\n\n${diagnosticInfo}`
-    }
-  }
-
-  alert(alertMessage)
-}
 
 onMounted(async () => {
-  console.log('🚀 Инициализация страницы фонарика...')
-  console.log('🌐 Протокол:', window.location.protocol)
-  console.log('📱 User Agent:', navigator.userAgent)
-  console.log('🔒 HTTPS:', window.location.protocol === 'https:')
-  console.log('📹 MediaDevices:', !!navigator.mediaDevices)
-  console.log('🎥 getUserMedia:', !!navigator.mediaDevices?.getUserMedia)
+  addLog('init: начало')
 
   // Определяем устройство и браузер
   detectDeviceAndBrowser()
