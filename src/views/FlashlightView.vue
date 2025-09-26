@@ -104,6 +104,8 @@ const exportLogs = async () => {
 }
 // Флаг, предотвращающий параллельные/зацикленные старты камеры
 const isStartingCamera = ref(false)
+// КРИТИЧНО: флаг для отслеживания отказа в разрешениях
+const permissionDenied = ref(false)
 // Анти-зацикливание: кулдаун и лимиты для Telegram WebView
 const tgStartAttempts = ref(0)
 const lastStartAt = ref(0)
@@ -385,10 +387,14 @@ const startCamera = async () => {
       return
     }
 
+    // КРИТИЧНО: проверяем, не было ли отказа в разрешениях
+    if (permissionDenied.value) {
+      addLog('startCamera: skip (permission denied)');
+      throw new Error('Доступ к камере запрещен. Разрешите доступ к камере в настройках браузера.')
+    }
+
     // КРИТИЧНО: глобальная защита от зацикливания
     const startTime = Date.now()
-    const MAX_START_TIME = 30000 // 30 секунд максимум
-    const startKey = `camera_start_${startTime}`
 
     // Проверяем, не было ли недавних попыток запуска
     const lastStart = localStorage.getItem('last_camera_start')
@@ -440,6 +446,13 @@ const startCamera = async () => {
             addLog('preflight: успех')
           } catch (e) {
             addLog('preflight: ошибка', e?.message)
+
+            // КРИТИЧНО: если Permission denied - немедленно прекращаем
+            if (e?.message?.includes('Permission denied') || e?.name === 'NotAllowedError') {
+              addLog('preflight: PERMISSION DENIED - прекращаем')
+              permissionDenied.value = true
+              throw new Error('Доступ к камере запрещен. Разрешите доступ к камере в настройках браузера.')
+            }
           }
         }
       }
@@ -552,10 +565,21 @@ const startCamera = async () => {
               } catch (e) {
                 lastErr = e
                 addLog('tryAndroidBackCamerasForTorch: ошибка getUserMedia', { error: e?.message, attempt: attemptsCount })
+
+                // КРИТИЧНО: если Permission denied - немедленно прекращаем попытки
+                if (e?.message?.includes('Permission denied') || e?.name === 'NotAllowedError') {
+                  addLog('tryAndroidBackCamerasForTorch: PERMISSION DENIED - прекращаем попытки')
+                  permissionDenied.value = true
+                  break
+                }
                 continue
               }
 
               const localTrack = localStream.getVideoTracks()[0]
+
+              // КРИТИЧНО: НЕМЕДЛЕННО выходим из всех циклов после первого успешного getUserMedia
+              addLog('tryAndroidBackCamerasForTorch: УСПЕХ - прекращаем все попытки')
+
               // Небольшой «прайминг» трека, чтобы capabilities стабилизировались
               try {
                 if (videoEl.value) {
@@ -603,6 +627,10 @@ const startCamera = async () => {
                 )
                 deviceInfo.value.torchCapability = caps?.torch ?? photoCaps?.torch ?? null
                 console.log('✅ Найдена камера/профиль с поддержкой фонарика:', cam, v)
+
+                // КРИТИЧНО: НЕМЕДЛЕННО сбрасываем флаг запуска, чтобы остановить все остальные попытки
+                isStartingCamera.value = false
+                addLog('tryAndroidBackCamerasForTorch: КАМЕРА НАЙДЕНА - сбрасываем флаг')
                 return true
               }
 
@@ -621,6 +649,12 @@ const startCamera = async () => {
       const picked = await tryAndroidBackCamerasForTorch()
 
       if (!picked) {
+        // КРИТИЧНО: проверяем, не был ли сброшен флаг запуска
+        if (isStartingCamera.value === false) {
+          addLog('Android: прервано (флаг сброшен после tryAndroidBackCamerasForTorch)')
+          return
+        }
+
         console.log('↩️ Переходим к стандартным вариантам ограничений для Android')
         // Стандартные варианты для случаев без torch
         constraintsOptions = [
@@ -680,6 +714,12 @@ const startCamera = async () => {
     stream = null
     let lastError = null
 
+    // КРИТИЧНО: проверяем флаг запуска перед началом цикла
+    if (isStartingCamera.value === false) {
+      addLog('constraintsOptions: прервано (флаг сброшен перед циклом)')
+      return
+    }
+
     // Пробуем каждый вариант ограничений
     for (let i = 0; i < constraintsOptions.length; i++) {
       // КРИТИЧНО: проверяем флаг запуска перед каждым getUserMedia
@@ -695,11 +735,22 @@ const startCamera = async () => {
         stream = await navigator.mediaDevices.getUserMedia(constraintsOptions[i])
         console.log(`✅ Успешно запущена камера с ограничениями ${i + 1}`)
         addLog('constraintsOptions: успех', { attempt: i + 1 })
+
+        // КРИТИЧНО: НЕМЕДЛЕННО сбрасываем флаг запуска после успешного getUserMedia
+        isStartingCamera.value = false
+        addLog('constraintsOptions: УСПЕХ - сбрасываем флаг')
         break
       } catch (error) {
         console.warn(`❌ Попытка ${i + 1} неудачна:`, error.message)
         addLog('constraintsOptions: ошибка', { attempt: i + 1, error: error.message })
         lastError = error
+
+        // КРИТИЧНО: если Permission denied - немедленно прекращаем попытки
+        if (error?.message?.includes('Permission denied') || error?.name === 'NotAllowedError') {
+          addLog('constraintsOptions: PERMISSION DENIED - прекращаем попытки')
+          permissionDenied.value = true
+          break
+        }
       }
     }
 
@@ -813,6 +864,9 @@ const startCamera = async () => {
       tgStartAttempts.value = 0
       lastStartAt.value = Date.now()
     }
+
+    // КРИТИЧНО: сбрасываем флаг отказа в разрешениях при успешном запуске
+    permissionDenied.value = false
 
     // Убираем автоматические повторные запуски камеры, которые вызывают зацикливание
     // Вместо этого просто логируем информацию о возможностях фонарика
