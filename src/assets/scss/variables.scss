@@ -62,6 +62,17 @@ $gradient-start: $color-vibrant-blue;
 $gradient-middle: $color-vibrant-purple;
 $gradient-end: $color-vibrant-pink;
 
+/* Новые градиенты для лэндинга */
+$gradient-hero: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+$gradient-section-1: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+$gradient-section-2: linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%);
+$gradient-section-3: linear-gradient(135deg, #fbc2eb 0%, #a6c1ee 100%);
+$gradient-section-4: linear-gradient(135deg, #fdcbf1 0%, #e6dee9 100%);
+$gradient-section-5: linear-gradient(135deg, #fff1eb 0%, #ace0f9 100%);
+$gradient-accent: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+$gradient-success: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+$gradient-primary: linear-gradient(135deg, $color-vibrant-blue 0%, $color-vibrant-purple 100%);
+
 /* Responsive breakpoints */
 @mixin layout-mobile {
   @media (max-width: $breakpoint-mobile) {

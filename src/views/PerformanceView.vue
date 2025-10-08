@@ -25,11 +25,11 @@
           </div>
         </div>
         <div class="hero__cta">
-          <a href="#investment" class="hero__button hero__button--primary">
-            Инвестиционная возможность
+          <a href="#investment">
+            <ButtonComp>Инвестиционная возможность</ButtonComp>
           </a>
-          <router-link to="/demo" class="hero__button hero__button--secondary">
-            Посмотреть демо
+          <router-link to="/demo">
+            <ButtonComp mod="secondary">Посмотреть демо</ButtonComp>
           </router-link>
         </div>
       </div>
@@ -620,11 +620,11 @@
           </div>
         </div>
         <div class="cta__actions">
-          <a href="https://t.me/orlovskiy_rl" target="_blank" class="cta__button cta__button--primary">
-            Связаться с основателем
+          <a href="https://t.me/orlovskiy_rl" target="_blank">
+            <ButtonComp>Связаться с основателем</ButtonComp>
           </a>
-          <router-link to="/demo" class="cta__button cta__button--secondary">
-            Посмотреть демо
+          <router-link to="/demo">
+            <ButtonComp mod="secondary">Посмотреть демо</ButtonComp>
           </router-link>
         </div>
         <div class="cta__contact">
@@ -637,25 +637,30 @@
 </template>
 
 <script setup>
-// No imports needed
+import ButtonComp from '@/components/ButtonComp.vue'
 </script>
 
 <style lang="scss" scoped>
 .investor-landing {
   width: 100%;
   overflow-x: hidden;
+  background: $color-white;
 }
 
 // Common styles
 .section-title {
-  font-size: 2.5rem;
+  font-size: 2.8rem;
   font-weight: $font-weight-bold;
   text-align: center;
-  margin-bottom: 3rem;
+  margin-bottom: 3.5rem;
+  background: $gradient-primary;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 
   @include layout-aspect-mobile {
-    font-size: 2rem;
-    margin-bottom: 2rem;
+    font-size: 2.2rem;
+    margin-bottom: 2.5rem;
   }
 }
 
@@ -666,45 +671,61 @@
   align-items: center;
   justify-content: center;
   padding: 4rem 2rem;
-  background: linear-gradient(135deg, #1a1a2e 0%, #0f0f1e 100%);
+  background: $gradient-hero;
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(circle at 30% 50%, rgba(255, 255, 255, 0.2) 0%, transparent 50%);
+    pointer-events: none;
+  }
 
   &__container {
     max-width: 1200px;
     width: 100%;
     text-align: center;
+    position: relative;
+    z-index: 1;
   }
 
   &__title {
-    font-size: 5rem;
-    font-weight: $font-weight-bold;
+    font-size: 6rem;
+    font-weight: $font-weight-black;
     margin-bottom: 1.5rem;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    color: $color-white;
+    text-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    animation: fadeInUp 0.8s ease-out;
 
     @include layout-aspect-mobile {
-      font-size: 3rem;
+      font-size: 3.5rem;
     }
   }
 
   &__subtitle {
-    font-size: 2rem;
-    font-weight: $font-weight-medium;
+    font-size: 2.2rem;
+    font-weight: $font-weight-semi-bold;
     margin-bottom: 1rem;
-    color: rgba(255, 255, 255, 0.9);
+    color: $color-white;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 
     @include layout-aspect-mobile {
-      font-size: 1.5rem;
+      font-size: 1.6rem;
     }
   }
 
   &__description {
     font-size: 1.3rem;
-    color: rgba(255, 255, 255, 0.7);
-    max-width: 800px;
+    color: rgba(255, 255, 255, 0.95);
+    max-width: 900px;
     margin: 0 auto 4rem;
-    line-height: 1.6;
+    line-height: 1.8;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 
     @include layout-aspect-mobile {
       font-size: 1.1rem;
@@ -715,32 +736,76 @@
   &__metrics {
     display: flex;
     justify-content: center;
-    gap: 4rem;
+    gap: 5rem;
     flex-wrap: wrap;
+    margin-bottom: 3rem;
 
     @include layout-aspect-mobile {
-      gap: 2rem;
+      gap: 2.5rem;
+    }
+  }
+
+  &__cta {
+    margin-top: 2rem;
+    display: flex;
+    justify-content: center;
+    gap: 1.5rem;
+
+    @include layout-aspect-mobile {
+      flex-direction: column;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    a {
+      text-decoration: none;
     }
   }
 }
 
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .metric {
+  padding: 2rem;
+  background: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(10px);
+  border-radius: 1.5rem;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+
+  &:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 12px 48px rgba(0, 0, 0, 0.15);
+  }
+
   &__value {
-    font-size: 3rem;
-    font-weight: $font-weight-bold;
-    color: #667eea;
-      margin-bottom: 0.5rem;
+    font-size: 3.2rem;
+    font-weight: $font-weight-black;
+    color: $color-white;
+    margin-bottom: 0.5rem;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
 
     @include layout-aspect-mobile {
-      font-size: 2rem;
+      font-size: 2.4rem;
     }
   }
 
   &__label {
     font-size: 1rem;
-    color: rgba(255, 255, 255, 0.6);
+    color: rgba(255, 255, 255, 0.9);
     text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: 1.5px;
+    font-weight: $font-weight-semi-bold;
 
     @include layout-aspect-mobile {
       font-size: 0.9rem;
@@ -750,8 +815,8 @@
 
 // Demo Section
 .demo {
-  padding: 6rem 2rem;
-  background: #0f0f1e;
+  padding: 7rem 2rem;
+  background: $gradient-section-1;
 
   &__container {
     max-width: 1200px;
@@ -760,10 +825,11 @@
 
   &__video-wrapper {
     max-width: 900px;
-    margin: 0 auto 4rem;
-    border-radius: 1rem;
+    margin: 0 auto 5rem;
+    border-radius: 2rem;
     overflow: hidden;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+    border: 4px solid $color-white;
   }
 
   &__video {
@@ -774,7 +840,7 @@
   &__features {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 2rem;
+    gap: 2.5rem;
     margin-top: 4rem;
 
     @include layout-aspect-mobile {
@@ -785,39 +851,69 @@
 
 .feature {
     text-align: center;
-  padding: 2rem;
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 1rem;
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  padding: 3rem 2rem;
+  background: $color-white;
+  border-radius: 2rem;
+  border: 3px solid transparent;
+  background-clip: padding-box;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+  transition: all 0.4s ease;
+  position: relative;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border-radius: 2rem;
+    padding: 3px;
+    background: $gradient-primary;
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask-composite: exclude;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+  }
 
   &:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+    transform: translateY(-10px) scale(1.02);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+
+    &::before {
+      opacity: 1;
+    }
   }
 
   &__icon {
-    font-size: 3rem;
-    margin-bottom: 1rem;
+    font-size: 4rem;
+    margin-bottom: 1.5rem;
+    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.1));
   }
 
   &__title {
-    font-size: 1.3rem;
+    font-size: 1.5rem;
     font-weight: $font-weight-bold;
-    margin-bottom: 0.5rem;
+    margin-bottom: 1rem;
+    background: $gradient-primary;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
   }
 
   &__text {
-    font-size: 1rem;
-    color: rgba(255, 255, 255, 0.7);
+    font-size: 1.1rem;
+    color: $color-gray-600;
+    line-height: 1.6;
   }
 }
 
 // Problem & Solution
 .problem-solution {
-  padding: 6rem 2rem;
-  background: linear-gradient(135deg, #1a1a2e 0%, #0f0f1e 100%);
+  padding: 7rem 2rem;
+  background: $gradient-section-2;
 
   &__container {
     max-width: 1200px;
@@ -839,24 +935,32 @@
     padding: 0;
 
     li {
-      padding: 1.5rem;
-      margin-bottom: 1rem;
-      background: rgba(255, 255, 255, 0.05);
-      border-radius: 0.5rem;
-      border-left: 4px solid #667eea;
-      font-size: 1.1rem;
-      line-height: 1.6;
+      padding: 2rem;
+      margin-bottom: 1.5rem;
+      background: $color-white;
+      border-radius: 1.5rem;
+      border-left: 6px solid $color-vibrant-blue;
+      font-size: 1.15rem;
+      line-height: 1.7;
+      color: $color-gray-700;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+      transition: all 0.3s ease;
+
+      &:hover {
+        transform: translateX(8px);
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+      }
 
       @include layout-aspect-mobile {
-        font-size: 1rem;
-        padding: 1.2rem;
+        font-size: 1.05rem;
+        padding: 1.5rem;
       }
     }
   }
 }
 
 .solution__list li {
-  border-left-color: #10b981;
+  border-left-color: $color-vibrant-teal;
 }
 
 // Market Section
@@ -1338,57 +1442,10 @@
   }
 }
 
-// Hero CTA buttons
-.hero {
-  &__cta {
-    margin-top: 3rem;
-    display: flex;
-    justify-content: center;
-    gap: 1.5rem;
-
-    @include layout-aspect-mobile {
-      flex-direction: column;
-      align-items: center;
-    }
-  }
-
-  &__button {
-    padding: 1.2rem 3rem;
-    font-size: 1.1rem;
-    font-weight: $font-weight-bold;
-    border-radius: 3rem;
-    text-decoration: none;
-    transition: all 0.3s ease;
-    display: inline-block;
-
-    &--primary {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-
-      &:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
-      }
-    }
-
-    &--secondary {
-      background: transparent;
-      color: white;
-      border: 2px solid rgba(255, 255, 255, 0.5);
-
-      &:hover {
-        border-color: white;
-        background: rgba(255, 255, 255, 0.1);
-        transform: translateY(-3px);
-      }
-    }
-  }
-}
-
 // Key Insights Section
 .key-insights {
-  padding: 6rem 2rem;
-  background: linear-gradient(135deg, #0f0f1e 0%, #1a1a2e 100%);
+  padding: 7rem 2rem;
+  background: $gradient-section-3;
 
   &__container {
     max-width: 1400px;
@@ -1398,8 +1455,8 @@
 
 .insights-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 2rem;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2.5rem;
 
   @include layout-aspect-mobile {
     gap: 1.5rem;
@@ -1407,46 +1464,70 @@
 }
 
 .insight-card {
-  padding: 2.5rem;
-  background: rgba(255, 255, 255, 0.05);
-    border-radius: 1rem;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 3rem;
+  background: $color-white;
+  border-radius: 2rem;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
   position: relative;
-  transition: all 0.3s ease;
+    overflow: hidden;
+  transition: all 0.4s ease;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 6px;
+    background: $gradient-accent;
+  }
 
   &:hover {
-    transform: translateY(-5px);
-    background: rgba(255, 255, 255, 0.08);
-    border-color: #667eea;
+    transform: translateY(-12px) scale(1.03);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+
+    .insight-card__number {
+      opacity: 0.3;
+      transform: scale(1.1);
+    }
   }
 
   &__number {
     position: absolute;
-    top: 1rem;
-    right: 1rem;
-    font-size: 3rem;
-    font-weight: $font-weight-bold;
-    color: rgba(102, 126, 234, 0.2);
+    top: 1.5rem;
+    right: 1.5rem;
+    font-size: 4rem;
+    font-weight: $font-weight-black;
+    background: $gradient-primary;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    opacity: 0.15;
+    transition: all 0.4s ease;
   }
 
   &__title {
-    font-size: 1.5rem;
+    font-size: 1.6rem;
     font-weight: $font-weight-bold;
-    margin-bottom: 1rem;
-    color: #667eea;
+    margin-bottom: 1.2rem;
+    color: $color-gray-700;
+    position: relative;
+    z-index: 1;
   }
 
   &__text {
-    font-size: 1rem;
-    color: rgba(255, 255, 255, 0.8);
-    line-height: 1.6;
+    font-size: 1.05rem;
+    color: $color-gray-600;
+    line-height: 1.7;
+    position: relative;
+    z-index: 1;
   }
 }
 
 // Market Sizing Section
 .market-sizing {
-  padding: 6rem 2rem;
-  background: #0f0f1e;
+  padding: 7rem 2rem;
+  background: $gradient-section-4;
 
   &__container {
     max-width: 1400px;
@@ -1456,8 +1537,8 @@
   &__grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-    gap: 2rem;
-    margin-bottom: 3rem;
+    gap: 3rem;
+    margin-bottom: 4rem;
 
     @include layout-aspect-mobile {
       grid-template-columns: 1fr;
@@ -1466,56 +1547,59 @@
 }
 
 .market-size-card {
-  padding: 3rem;
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 1rem;
-  border: 2px solid rgba(255, 255, 255, 0.1);
-  transition: all 0.3s ease;
+  padding: 3.5rem;
+  background: $color-white;
+  border-radius: 2rem;
+  border: 4px solid;
+  transition: all 0.4s ease;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
 
   &:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    transform: translateY(-10px) scale(1.02);
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.15);
   }
 
   &--tam {
-    border-color: #667eea;
+    border-color: $color-vibrant-blue;
   }
 
   &--sam {
-    border-color: #10b981;
+    border-color: $color-vibrant-teal;
   }
 
   &--som {
-    border-color: #f59e0b;
+    border-color: $color-vibrant-orange;
   }
 
   &__label {
-    font-size: 0.9rem;
+    font-size: 1rem;
     text-transform: uppercase;
-    letter-spacing: 2px;
-      margin-bottom: 1rem;
-    opacity: 0.7;
+    letter-spacing: 3px;
+    margin-bottom: 1.5rem;
+    font-weight: $font-weight-bold;
+    color: $color-gray-500;
   }
 
   &__value {
-    font-size: 3rem;
-    font-weight: $font-weight-bold;
-    margin-bottom: 1rem;
-    color: #667eea;
+    font-size: 3.5rem;
+    font-weight: $font-weight-black;
+    margin-bottom: 1.5rem;
+    color: $color-vibrant-blue;
 
     .market-size-card--sam & {
-      color: #10b981;
+      color: $color-vibrant-teal;
     }
 
     .market-size-card--som & {
-      color: #f59e0b;
+      color: $color-vibrant-orange;
     }
   }
 
   &__description {
-    font-size: 1.1rem;
-    margin-bottom: 1.5rem;
-    opacity: 0.9;
+    font-size: 1.2rem;
+    margin-bottom: 2rem;
+    color: $color-gray-700;
+    font-weight: $font-weight-medium;
   }
 
   &__breakdown {
@@ -1523,10 +1607,10 @@
     padding: 0;
 
     li {
-      padding: 0.8rem 0;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-      font-size: 1rem;
-      opacity: 0.8;
+      padding: 1rem 0;
+      border-bottom: 2px solid $color-gray-200;
+      font-size: 1.05rem;
+      color: $color-gray-600;
 
       &:last-child {
         border-bottom: none;
@@ -1538,11 +1622,16 @@
 .market-growth {
   display: flex;
   justify-content: center;
-  gap: 6rem;
-  margin-top: 4rem;
+  gap: 8rem;
+  margin-top: 5rem;
+  padding: 3rem;
+  background: $color-white;
+  border-radius: 2rem;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
 
   @include layout-aspect-mobile {
     gap: 3rem;
+    flex-direction: column;
   }
 
   &__stat {
@@ -1550,24 +1639,28 @@
   }
 
   &__value {
-    font-size: 3.5rem;
-    font-weight: $font-weight-bold;
-    color: #10b981;
-    margin-bottom: 0.5rem;
+    font-size: 4rem;
+    font-weight: $font-weight-black;
+    background: $gradient-success;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 0.8rem;
   }
 
   &__label {
-    font-size: 1rem;
-    opacity: 0.7;
+    font-size: 1.1rem;
+    color: $color-gray-600;
     text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: 1.5px;
+    font-weight: $font-weight-semi-bold;
   }
 }
 
 // Target Segments Section
 .target-segments {
-  padding: 6rem 2rem;
-  background: linear-gradient(135deg, #1a1a2e 0%, #0f0f1e 100%);
+  padding: 7rem 2rem;
+  background: $gradient-section-5;
 
   &__container {
     max-width: 1400px;
@@ -1578,7 +1671,7 @@
 .segments-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-  gap: 2rem;
+  gap: 2.5rem;
 
   @include layout-aspect-mobile {
     grid-template-columns: 1fr;
@@ -1586,41 +1679,59 @@
 }
 
 .segment-card {
-  padding: 2.5rem;
-  background: rgba(255, 255, 255, 0.05);
-    border-radius: 1rem;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 3rem;
+  background: $color-white;
+  border-radius: 2rem;
+  border: 3px solid $color-gray-200;
   position: relative;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+  transition: all 0.4s ease;
+
+  &:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+    border-color: $color-vibrant-purple;
+  }
 
   &--priority {
-    border: 2px solid #667eea;
-    background: rgba(102, 126, 234, 0.1);
+    border: 4px solid $color-vibrant-purple;
+    background: linear-gradient(135deg, $color-white 0%, rgba($color-vibrant-purple, 0.05) 100%);
+
+    .segment-card__title {
+      background: $gradient-primary;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
   }
 
   &__badge {
     position: absolute;
-    top: -12px;
+    top: -15px;
     right: 20px;
-    padding: 0.5rem 1rem;
-    background: #667eea;
-    border-radius: 2rem;
-    font-size: 0.8rem;
+    padding: 0.8rem 1.5rem;
+    background: $gradient-accent;
+    border-radius: 3rem;
+    font-size: 0.85rem;
     font-weight: $font-weight-bold;
     text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: 1.5px;
+    color: $color-white;
+    box-shadow: 0 4px 20px rgba(245, 87, 108, 0.4);
   }
 
   &__title {
-    font-size: 1.8rem;
+    font-size: 2rem;
     font-weight: $font-weight-bold;
-    margin-bottom: 1rem;
+    margin-bottom: 1.2rem;
+    color: $color-gray-700;
   }
 
   &__size {
-    font-size: 1.1rem;
-    color: #667eea;
-    margin-bottom: 1.5rem;
-    font-weight: $font-weight-medium;
+    font-size: 1.2rem;
+    color: $color-vibrant-purple;
+    margin-bottom: 2rem;
+    font-weight: $font-weight-semi-bold;
   }
 
   &__features {
@@ -1628,10 +1739,12 @@
     padding: 0;
 
     li {
-      padding: 1rem 0;
-      padding-left: 1.5rem;
+      padding: 1.2rem 0;
+      padding-left: 2rem;
       position: relative;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      border-bottom: 2px solid $color-gray-200;
+      font-size: 1.05rem;
+      color: $color-gray-600;
 
       &:last-child {
         border-bottom: none;
@@ -1641,8 +1754,9 @@
         content: "✓";
         position: absolute;
         left: 0;
-        color: #10b981;
-        font-weight: $font-weight-bold;
+        color: $color-vibrant-teal;
+        font-weight: $font-weight-black;
+        font-size: 1.3rem;
       }
     }
   }
@@ -1650,19 +1764,19 @@
 
 // Unit Economics Section
 .unit-economics {
-  padding: 6rem 2rem;
-  background: #0f0f1e;
+  padding: 7rem 2rem;
+  background: $gradient-section-1;
 
   &__container {
-    max-width: 1200px;
+    max-width: 1300px;
     margin: 0 auto;
   }
 }
 
 .economics-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 2rem;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 2.5rem;
 
   @include layout-aspect-mobile {
     grid-template-columns: 1fr;
@@ -1670,45 +1784,72 @@
 }
 
 .economics-card {
-  padding: 3rem;
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 1rem;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 3.5rem;
+  background: $color-white;
+  border-radius: 2rem;
+  border: 3px solid transparent;
   text-align: center;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+  transition: all 0.4s ease;
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 6px;
+    background: $gradient-success;
+  }
+
+  &:hover {
+    transform: translateY(-10px) scale(1.03);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+  }
 
   &__label {
-    font-size: 1rem;
+    font-size: 1.1rem;
     text-transform: uppercase;
-    letter-spacing: 1px;
-    opacity: 0.7;
-    margin-bottom: 1rem;
+    letter-spacing: 2px;
+    color: $color-gray-500;
+    margin-bottom: 1.5rem;
+    font-weight: $font-weight-bold;
   }
 
   &__value {
-    font-size: 4rem;
-    font-weight: $font-weight-bold;
-    color: #10b981;
-    margin-bottom: 1rem;
+    font-size: 5rem;
+    font-weight: $font-weight-black;
+    background: $gradient-success;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 1.5rem;
+    line-height: 1;
   }
 
   &__description {
-    font-size: 1rem;
-    opacity: 0.8;
-    margin-bottom: 1rem;
-    line-height: 1.5;
+    font-size: 1.1rem;
+    color: $color-gray-600;
+    margin-bottom: 1.5rem;
+    line-height: 1.6;
   }
 
   &__note {
-    font-size: 0.9rem;
-    color: #10b981;
-    font-weight: $font-weight-medium;
+    font-size: 1rem;
+    color: $color-vibrant-teal;
+    font-weight: $font-weight-semi-bold;
+    padding: 1rem;
+    background: rgba($color-vibrant-teal, 0.1);
+    border-radius: 1rem;
   }
 }
 
 // Financial Projections Section
 .financial-projections {
-  padding: 6rem 2rem;
-  background: linear-gradient(135deg, #1a1a2e 0%, #0f0f1e 100%);
+  padding: 7rem 2rem;
+  background: $gradient-section-2;
 
   &__container {
     max-width: 1400px;
@@ -1720,50 +1861,60 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: 2rem;
-  margin-bottom: 3rem;
+    margin-bottom: 3rem;
 
-  @include layout-aspect-mobile {
+    @include layout-aspect-mobile {
     grid-template-columns: 1fr;
   }
 }
 
 .projection-year {
-  padding: 2.5rem;
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 1rem;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 3rem;
+  background: $color-white;
+  border-radius: 2rem;
+  border: 3px solid $color-gray-200;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+  transition: all 0.4s ease;
+
+  &:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+    border-color: $color-vibrant-purple;
+  }
 
   &__header {
-    margin-bottom: 2rem;
-    padding-bottom: 1.5rem;
-    border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+    margin-bottom: 2.5rem;
+    padding-bottom: 2rem;
+    border-bottom: 3px solid $color-gray-200;
   }
 
   &__title {
-    font-size: 2rem;
-    font-weight: $font-weight-bold;
+    font-size: 2.5rem;
+    font-weight: $font-weight-black;
     margin-bottom: 0.5rem;
+    color: $color-gray-700;
   }
 
   &__subtitle {
-    font-size: 1rem;
-    color: #667eea;
-    font-weight: $font-weight-medium;
+    font-size: 1.1rem;
+    color: $color-vibrant-purple;
+    font-weight: $font-weight-semi-bold;
   }
 
   &__metrics {
     display: flex;
     flex-direction: column;
-    gap: 1.5rem;
+    gap: 1.8rem;
   }
 
   &__note {
-    margin-top: 1.5rem;
-    padding-top: 1.5rem;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
-    font-size: 0.9rem;
-    color: #10b981;
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 2px solid $color-gray-200;
+    font-size: 1rem;
+    color: $color-vibrant-teal;
     text-align: center;
+    font-weight: $font-weight-semi-bold;
   }
 }
 
@@ -1771,23 +1922,25 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  padding: 0.5rem 0;
 
   &__label {
-    font-size: 1rem;
-    opacity: 0.8;
+    font-size: 1.1rem;
+    color: $color-gray-600;
+    font-weight: $font-weight-medium;
   }
 
   &__value {
-    font-size: 1.8rem;
-    font-weight: $font-weight-bold;
-    color: #667eea;
+    font-size: 2.2rem;
+    font-weight: $font-weight-black;
+    color: $color-vibrant-blue;
 
     &--positive {
-      color: #10b981;
+      color: $color-vibrant-teal;
     }
 
     &--negative {
-      color: #ef4444;
+      color: $color-vibrant-coral;
     }
   }
 }
@@ -1795,10 +1948,11 @@
 .projections-summary {
   display: flex;
   justify-content: space-around;
-  padding: 3rem;
-  background: rgba(102, 126, 234, 0.1);
-  border-radius: 1rem;
-  border: 1px solid #667eea;
+  padding: 3.5rem;
+  background: $color-white;
+  border-radius: 2rem;
+  border: 4px solid $color-vibrant-purple;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
 
   @include layout-aspect-mobile {
     flex-direction: column;
@@ -1810,15 +1964,19 @@
   }
 
   &__label {
-    font-size: 1rem;
-    opacity: 0.8;
-    margin-bottom: 0.5rem;
+    font-size: 1.1rem;
+    color: $color-gray-600;
+    margin-bottom: 0.8rem;
+    font-weight: $font-weight-medium;
   }
 
   &__value {
-    font-size: 2.5rem;
-    font-weight: $font-weight-bold;
-    color: #667eea;
+    font-size: 3rem;
+    font-weight: $font-weight-black;
+    background: $gradient-primary;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
   }
 }
 
@@ -1921,14 +2079,14 @@
   &__title {
     font-size: 1.5rem;
     font-weight: $font-weight-bold;
-    margin-bottom: 1rem;
+      margin-bottom: 1rem;
+    }
   }
-}
 
 .return-scenario {
   padding: 2.5rem;
   background: rgba(255, 255, 255, 0.05);
-  border-radius: 1rem;
+    border-radius: 1rem;
   border: 1px solid rgba(255, 255, 255, 0.1);
 
   &__header {
