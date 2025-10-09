@@ -22,7 +22,7 @@
           <div class="performance__text">
             <p>Платформа для создания интерактивных световых перформансов с помощью мобильных устройств зрителей. Каждый телефон становится частью единого визуального шоу, формируя динамичные световые картины.</p>
             <ul class="performance__list">
-              <li>● <strong>Разноцветные картины</strong> через экраны смартфонов</li>
+              <li>● <strong>Разноцветные картины</strong> на всём стадионе</li>
               <li>● <strong>Динамичные эффекты</strong> с помощью экранов или фонариков</li>
               <li>● <strong>Синхронные волны</strong> света по всему залу или стадиону</li>
             </ul>
@@ -170,22 +170,34 @@
         <h2 class="performance__section-title">На что это может быть похоже?</h2>
         <div class="performance__comparison">
           <div class="performance__comparison-item">
-            <div class="performance__image-placeholder">
-              <span>Xylobands на концертах Coldplay</span>
+            <div class="performance__image-container">
+              <img
+                src="@/assets/images/home/refs/img1.webp"
+                alt="Xylobands на концертах Coldplay"
+                class="performance__image"
+              />
             </div>
             <h3>Световые шоу на стадионах</h3>
             <p>Браслеты Xylobands на концертах Coldplay</p>
           </div>
           <div class="performance__comparison-item">
-            <div class="performance__image-placeholder">
-              <span>Дрон-шоу в небе</span>
+            <div class="performance__image-container">
+              <img
+                src="@/assets/images/home/refs/img2.webp"
+                alt="Дрон-шоу в небе"
+                class="performance__image"
+              />
             </div>
             <h3>Дроны-шоу</h3>
             <p>Но с использованием мобильных устройств зрителей</p>
           </div>
           <div class="performance__comparison-item">
-            <div class="performance__image-placeholder">
-              <span>Интерактивный перформанс</span>
+            <div class="performance__image-container">
+              <img
+                src="@/assets/images/home/refs/img3.webp"
+                alt="Интерактивный перформанс"
+                class="performance__image"
+              />
             </div>
             <h3>Интерактивные перформансы</h3>
             <p>С активным участием зрителей</p>
@@ -539,6 +551,23 @@ const scrollToProject = () => {
     @include layout-aspect-mobile {
       min-height: 15rem;
     }
+  }
+
+  /* Comparison Images */
+  &__comparison .performance__image-container {
+    height: 25rem;
+    overflow: hidden;
+
+    @include layout-aspect-mobile {
+      height: 20rem;
+    }
+  }
+
+  &__comparison .performance__image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    min-height: unset;
   }
 
   /* Demo Video */
