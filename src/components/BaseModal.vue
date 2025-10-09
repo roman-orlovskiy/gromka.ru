@@ -8,6 +8,11 @@
           class="base-modal__content"
           @click.stop
         >
+        <button class="base-modal__close" @click="handleCloseModal">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
         <div
           v-if="modalType === 'login'"
           class="base-modal__content-inner"
@@ -72,10 +77,53 @@ const handleCloseModal = () => {
     padding: 4rem;
     border-radius: 1.5rem;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    position: relative;
 
     a {
       color: $color-primary;
       text-decoration: underline;
+    }
+  }
+
+  &__close {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    width: 3.5rem;
+    height: 3.5rem;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    color: $color-black;
+    z-index: 100;
+    background: none;
+
+    &:hover {
+      transform: scale(1.1);
+    }
+
+    &:active {
+      transform: scale(0.95);
+    }
+
+    svg {
+      width: 2rem;
+      height: 2rem;
+    }
+
+    @include layout-aspect-mobile {
+      top: 1rem;
+      right: 1rem;
+      width: 3rem;
+      height: 3rem;
+
+      svg {
+        width: 2.1rem;
+        height: 2.1rem;
+      }
     }
   }
 
