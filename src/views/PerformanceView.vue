@@ -2,13 +2,13 @@
   <div class="performance">
     <!-- Hero Section -->
     <section class="performance__hero">
-      <h1 class="performance__title">грОмка – платформа для перформансов</h1>
+      <h1 class="performance__title">Gromkaыдели  – платформа для перформансов</h1>
       <p class="performance__subtitle">Рисуйте динамические картины с помощью экранов телефонов</p>
       <div class="performance__hero-video">
         <video class="performance__video" autoplay loop muted src="/videos/gromka.mp4" type="video/mp4">
-          Ваш браузер не поддерживает видео.
-        </video>
-      </div>
+        Ваш браузер не поддерживает видео.
+      </video>
+    </div>
       <button @click="scrollToProject" class="performance__cta-link">
         <ButtonComp mod="secondary">Что это за проект</ButtonComp>
       </button>
@@ -42,29 +42,29 @@
     <section class="performance__demo">
       <div class="performance__video-block">
         <div class="performance__video-container" @click="toggleVideo">
-          <video
-            ref="verticalVideo"
+        <video
+          ref="verticalVideo"
             class="performance__vertical-video"
-            src="/videos/demo.mp4"
-            type="video/mp4"
-            loop
-          >
-            Ваш браузер не поддерживает видео.
-          </video>
-          <button
-            v-if="!isVideoPlaying"
+          src="/videos/demo.mp4"
+          type="video/mp4"
+          loop
+        >
+          Ваш браузер не поддерживает видео.
+        </video>
+        <button
+          v-if="!isVideoPlaying"
             class="performance__play-button"
-          >
-            {{ videoStarted ? '▶ Продолжить' : '▶ Запустить видео' }}
-          </button>
-          <button
-            v-else
+        >
+          {{ videoStarted ? '▶ Продолжить' : '▶ Запустить видео' }}
+        </button>
+        <button
+          v-else
             class="performance__pause-button"
-          >
-            ⏸ Пауза
-          </button>
-        </div>
+        >
+          ⏸ Пауза
+        </button>
       </div>
+    </div>
     </section>
 
     <!-- Advantages Section -->
@@ -92,7 +92,7 @@
             <h3 class="performance__card-title">Гибкость</h3>
             <p>Адаптация под концерты, спектакли, митинги, спортивные мероприятия</p>
           </div>
-          <div class="performance__card">
+          <div class="performance__card performance__card--highlighted">
             <div class="performance__card-icon">■</div>
             <h3 class="performance__card-title">Монетизация</h3>
             <p>Через рекламу и брендированные активности</p>
@@ -330,7 +330,7 @@
             <p>Периодически подключается к проекту</p>
           </div>
         </div>
-      </div>
+    </div>
     </section>
 
     <!-- CTA Section -->
@@ -386,15 +386,17 @@ const scrollToProject = () => {
 
   /* Hero Section */
   &__hero {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
     padding: 4rem 2rem;
-    background: $gradient-hero;
+    background: linear-gradient(-45deg, #667eea, #ff6b6b, #4ecdc4, #45b7d1, #96ceb4, #feca57, #ff9ff3, #667eea);
+    background-size: 600% 600%;
+    animation: gradientShift 12s ease infinite;
     color: $color-white;
 
-    @include layout-aspect-mobile {
-      padding: 2rem 1rem;
+  @include layout-aspect-mobile {
+    padding: 2rem 1rem;
     }
   }
 
@@ -736,6 +738,24 @@ const scrollToProject = () => {
     line-height: 1.6;
   }
 
+  &__card--highlighted {
+    background: linear-gradient(-45deg, #ff6b6b, #4ecdc4, #45b7d1, #96ceb4, #feca57, #ff9ff3, #667eea, #ff6b6b);
+    background-size: 600% 600%;
+    animation: gradientShift 12s ease infinite;
+    color: $color-white;
+    border: 2px solid rgba($color-white, 0.3);
+
+    .performance__card-title {
+      color: $color-white;
+      text-shadow: 0 0.1rem 0.3rem rgba($color-black, 0.3);
+    }
+
+    p {
+      color: rgba($color-white, 0.9);
+      text-shadow: 0 0.1rem 0.2rem rgba($color-black, 0.2);
+    }
+  }
+
   /* Stadium Photos */
   &__stadium-photos {
     display: flex;
@@ -999,6 +1019,24 @@ const scrollToProject = () => {
     margin-bottom: 1.5rem;
   }
 
+  &__monetization-card--highlighted {
+    background: linear-gradient(-45deg, #ff6b6b, #4ecdc4, #45b7d1, #96ceb4, #feca57, #ff9ff3, #667eea, #ff6b6b);
+    background-size: 600% 600%;
+    animation: gradientShift 12s ease infinite;
+    color: $color-white;
+    border: 2px solid rgba($color-white, 0.3);
+
+    h3 {
+      color: $color-white;
+      text-shadow: 0 0.1rem 0.3rem rgba($color-black, 0.3);
+    }
+
+    p {
+      color: rgba($color-white, 0.9);
+      text-shadow: 0 0.1rem 0.2rem rgba($color-black, 0.2);
+    }
+  }
+
   /* Team */
   &__team {
     display: grid;
@@ -1084,6 +1122,25 @@ const scrollToProject = () => {
     &:hover {
       transform: scale(1.05);
     }
+  }
+}
+
+/* Gradient Animation */
+@keyframes gradientShift {
+  0% {
+    background-position: 0% 50%;
+  }
+  25% {
+    background-position: 100% 0%;
+  }
+  50% {
+    background-position: 100% 100%;
+  }
+  75% {
+    background-position: 0% 100%;
+  }
+  100% {
+    background-position: 0% 50%;
   }
 }
 </style>
