@@ -1028,6 +1028,30 @@ const onVideoEnded2 = () => {
     margin-bottom: 1.5rem;
   }
 
+  &__target-card:nth-child(1) .performance__target-icon {
+    color: $color-vibrant-orange;
+  }
+
+  &__target-card:nth-child(2) .performance__target-icon {
+    color: $color-vibrant-teal;
+  }
+
+  &__target-card:nth-child(3) .performance__target-icon {
+    color: $color-vibrant-orange;
+  }
+
+  &__target-card:nth-child(4) .performance__target-icon {
+    color: $color-vibrant-mint;
+  }
+
+  &__target-card:nth-child(5) .performance__target-icon {
+    color: $color-vibrant-orange;
+  }
+
+  &__target-card:nth-child(6) .performance__target-icon {
+    color: $color-vibrant-teal;
+  }
+
   /* Comparison */
   &__comparison {
     display: grid;
