@@ -362,6 +362,11 @@ const toggleVideo = () => {
       verticalVideo.value.pause()
       isVideoPlaying.value = false
     } else {
+      // Останавливаем второе видео, если оно играет
+      if (isVideoPlaying2.value && verticalVideo2.value) {
+        verticalVideo2.value.pause()
+        isVideoPlaying2.value = false
+      }
       verticalVideo.value.play()
       isVideoPlaying.value = true
       videoStarted.value = true
@@ -375,6 +380,11 @@ const toggleVideo2 = () => {
       verticalVideo2.value.pause()
       isVideoPlaying2.value = false
     } else {
+      // Останавливаем первое видео, если оно играет
+      if (isVideoPlaying.value && verticalVideo.value) {
+        verticalVideo.value.pause()
+        isVideoPlaying.value = false
+      }
       verticalVideo2.value.play()
       isVideoPlaying2.value = true
       videoStarted2.value = true
