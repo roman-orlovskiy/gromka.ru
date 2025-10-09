@@ -350,6 +350,21 @@
       :initial-slide="currentSlide"
       @close="closeGallery"
     />
+
+    <!-- Sticky CTA Button -->
+    <transition name="slide-from-right">
+      <a
+        href="https://t.me/orlovskiy_rl"
+        target="_blank"
+        class="performance__sticky-cta"
+        v-show="showStickyButton"
+        title="Написать в Telegram"
+      >
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" fill="currentColor"/>
+        </svg>
+      </a>
+    </transition>
   </div>
 </template>
 
@@ -498,12 +513,15 @@ onMounted(() => {
   document.addEventListener('fullscreenchange', handleFullscreenChange)
   document.addEventListener('webkitfullscreenchange', handleFullscreenChange)
   document.addEventListener('msfullscreenchange', handleFullscreenChange)
+  window.addEventListener('scroll', handleScroll)
+  handleScroll() // Проверяем сразу при загрузке
 })
 
 onUnmounted(() => {
   document.removeEventListener('fullscreenchange', handleFullscreenChange)
   document.removeEventListener('webkitfullscreenchange', handleFullscreenChange)
   document.removeEventListener('msfullscreenchange', handleFullscreenChange)
+  window.removeEventListener('scroll', handleScroll)
 })
 
 const onVideoPlay = () => {
@@ -534,6 +552,23 @@ const onVideoEnded2 = () => {
 
 const openDemoModal = () => {
   mainStore.openModal('demo')
+}
+
+// Sticky CTA button logic
+const showStickyButton = ref(false)
+
+const handleScroll = () => {
+  const whatIsSection = document.getElementById('what-is-project')
+  const ctaSection = document.querySelector('.performance__cta')
+
+  if (whatIsSection && ctaSection) {
+    const whatIsSectionTop = whatIsSection.offsetTop
+    const ctaSectionTop = ctaSection.offsetTop
+    const scrollPosition = window.scrollY + window.innerHeight
+
+    // Показываем кнопку после секции "Что это за проект" и скрываем, когда дошли до секции CTA
+    showStickyButton.value = window.scrollY > whatIsSectionTop && scrollPosition < ctaSectionTop + 100
+  }
 }
 </script>
 <style lang="scss" scoped>
@@ -1400,6 +1435,76 @@ const openDemoModal = () => {
       transform: scale(1.05);
     }
   }
+
+  /* Sticky CTA Button */
+  &__sticky-cta {
+    position: fixed;
+    bottom: 3rem;
+    right: 3rem;
+    z-index: 1000;
+    width: 6rem;
+    height: 6rem;
+    background: linear-gradient(135deg, #FF6B00 0%, #FF9F1C 50%, #FFB84D 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    box-shadow: 0 0.5rem 2rem rgba($color-black, 0.3);
+    color: $color-white;
+
+    &:hover {
+      transform: translateY(-0.3rem) scale(1.1);
+      box-shadow: 0 0.7rem 2.5rem rgba($color-black, 0.4);
+    }
+
+    &:active {
+      transform: translateY(0) scale(1);
+    }
+
+    svg {
+      width: 3.2rem;
+      height: 3.2rem;
+    }
+
+    @include layout-aspect-mobile {
+      bottom: 2rem;
+      right: 2rem;
+      width: 5.5rem;
+      height: 5.5rem;
+
+      svg {
+        width: 2.8rem;
+        height: 2.8rem;
+      }
+    }
+  }
+}
+
+// Анимация выезда справа
+.slide-from-right-enter-active {
+  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.slide-from-right-leave-active {
+  transition: all 0.3s ease;
+}
+
+.slide-from-right-enter-from {
+  opacity: 0;
+  transform: translateX(10rem);
+}
+
+.slide-from-right-leave-to {
+  opacity: 0;
+  transform: translateX(10rem);
+}
+
+.slide-from-right-enter-to,
+.slide-from-right-leave-from {
+  opacity: 1;
+  transform: translateX(0);
 }
 
 /* Gradient Animation */
