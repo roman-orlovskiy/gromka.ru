@@ -8,7 +8,7 @@
       </video>
     </div>
 
-    <router-link to="/demo" class="home__button">
+    <router-link to="/parinn" target="_blank" class="home__button">
       <ButtonComp mod="secondary"> Посмотреть демо </ButtonComp>
     </router-link>
 
