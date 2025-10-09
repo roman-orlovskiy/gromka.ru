@@ -78,8 +78,7 @@
       </div>
     </div>
     </section>
-
-    <!-- Advantages Section -->
+<!-- Advantages Section -->
     <section class="performance__section performance__section--gradient-2">
       <div class="performance__container">
         <h2 class="performance__section-title">Преимущества</h2>
