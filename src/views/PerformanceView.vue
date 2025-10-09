@@ -322,7 +322,9 @@
             <p>Стратегия и развитие продукта</p>
           </div>
           <div class="performance__team-item">
-            <div class="performance__team-icon">◉</div>
+            <div class="performance__team-photo">
+              <img src="@/assets/images/home/team/anton-zyuzin.webp" alt="Антон Зюзин" />
+            </div>
             <h3>CMO Антон Зюзин</h3>
             <p>Маркетинг, пиар, продвижение проекта</p>
           </div>
