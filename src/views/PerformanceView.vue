@@ -27,8 +27,12 @@
               <li>● <strong>Синхронные волны</strong> света по всему залу или стадиону</li>
             </ul>
           </div>
-          <div class="performance__image-placeholder">
-            <span>Место для фото: экраны телефонов в темноте</span>
+          <div class="performance__image-container">
+            <img
+              src="@/assets/images/home/1.webp"
+              alt="Световое шоу на стадионе с экранами телефонов"
+              class="performance__image"
+            />
           </div>
         </div>
       </div>
@@ -564,6 +568,26 @@ const toggleVideo = () => {
       &--large {
         min-height: 20rem;
       }
+    }
+  }
+
+  /* Image Container */
+  &__image-container {
+    border-radius: 1rem;
+    overflow: hidden;
+    box-shadow: 0 0.5rem 2rem rgba($color-black, 0.2);
+    background: $color-white;
+  }
+
+  &__image {
+    width: 100%;
+    height: auto;
+    display: block;
+    object-fit: cover;
+    min-height: 20rem;
+
+    @include layout-aspect-mobile {
+      min-height: 15rem;
     }
   }
 
