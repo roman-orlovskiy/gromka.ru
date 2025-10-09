@@ -9,13 +9,13 @@
           Ваш браузер не поддерживает видео.
         </video>
       </div>
-      <router-link to="/parinn" target="_blank" class="performance__cta-link">
-        <ButtonComp mod="secondary">Посмотреть демо</ButtonComp>
-      </router-link>
+      <button @click="scrollToProject" class="performance__cta-link">
+        <ButtonComp mod="secondary">Что это за проект</ButtonComp>
+      </button>
     </section>
 
     <!-- What is it Section -->
-    <section class="performance__section performance__section--gradient-1">
+    <section id="what-is-project" class="performance__section performance__section--gradient-1">
       <div class="performance__container">
         <h2 class="performance__section-title">Что это за проект?</h2>
         <div class="performance__content">
@@ -366,6 +366,16 @@ const toggleVideo = () => {
     }
   }
 }
+
+const scrollToProject = () => {
+  const element = document.getElementById('what-is-project')
+  if (element) {
+    element.scrollIntoView({
+      behavior: 'smooth',
+      block: 'start'
+    })
+  }
+}
 </script>
 <style lang="scss" scoped>
 .performance {
@@ -594,7 +604,7 @@ const toggleVideo = () => {
   /* Demo Video */
   &__demo {
     padding: 0;
-    background: $color-black;
+    background: $gradient-red;
   }
 
   &__video-block {
@@ -602,7 +612,6 @@ const toggleVideo = () => {
     max-width: 42rem;
     margin: 0 auto;
     padding: 1rem;
-    background: $gradient-hero;
 
     @include layout-aspect-mobile {
       padding: 1rem;
@@ -1068,6 +1077,9 @@ const toggleVideo = () => {
     display: inline-block;
     text-decoration: none;
     transition: transform 0.3s ease;
+    background: none;
+    border: none;
+    cursor: pointer;
 
     &:hover {
       transform: scale(1.05);
