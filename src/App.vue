@@ -3,9 +3,11 @@
     <RouterView />
     <RightMenu v-if="!isParyPage" />
 
-    <BaseModal
-      v-if="modalType"
-    />
+    <transition name="fade">
+      <BaseModal
+        v-if="modalType"
+      />
+    </transition>
   </div>
 </template>
 

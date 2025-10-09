@@ -119,11 +119,11 @@
       <div class="performance__container">
         <h2 class="performance__section-title">Демо</h2>
         <p class="performance__demo-description">
-          Попробуйте интерактивную демонстрацию прямо сейчас! Увидьте, как работает синхронизация устройств и создаются световые эффекты.
+          Пример, как зритель подключается к перформансу
         </p>
-        <RouterLink to="/demo" class="performance__demo-link">
-          <ButtonComp>Начать демонстрацию</ButtonComp>
-        </RouterLink>
+        <button @click="openDemoModal" class="performance__demo-link">
+          <ButtonComp>Демонстрация</ButtonComp>
+        </button>
       </div>
     </section>
 
@@ -343,8 +343,10 @@
 
 <script setup>
 import { ref } from 'vue'
-import { RouterLink } from 'vue-router'
 import ButtonComp from '@/components/ButtonComp.vue'
+import { useMainStore } from '@/stores/main'
+
+const mainStore = useMainStore()
 
 const verticalVideo = ref(null)
 const isVideoPlaying = ref(false)
@@ -469,6 +471,10 @@ const onVideoPause2 = () => {
 
 const onVideoEnded2 = () => {
   isVideoPlaying2.value = false
+}
+
+const openDemoModal = () => {
+  mainStore.openModal('demo')
 }
 </script>
 <style lang="scss" scoped>
