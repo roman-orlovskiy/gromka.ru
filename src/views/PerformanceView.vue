@@ -312,17 +312,19 @@
     <!-- Team Section -->
     <section class="performance__section performance__section--primary">
       <div class="performance__container">
-        <h2 class="performance__section-title">Команда разработки</h2>
+        <h2 class="performance__section-title">Команда проекта</h2>
         <div class="performance__team">
           <div class="performance__team-item">
-            <div class="performance__team-icon">◆</div>
-            <h3>Фронтенд-разработчик</h3>
-            <p>Постоянный член команды</p>
+            <div class="performance__team-photo">
+              <img src="@/assets/images/home/team/roman-orlovskiy.webp" alt="Роман Орловский" />
+            </div>
+            <h3>CEO Роман Орловский</h3>
+            <p>Стратегия и развитие продукта</p>
           </div>
           <div class="performance__team-item">
             <div class="performance__team-icon">◉</div>
-            <h3>Бэкенд-разработчик</h3>
-            <p>Периодически подключается к проекту</p>
+            <h3>CMO Антон Зюзин</h3>
+            <p>Маркетинг, пиар, продвижение проекта</p>
           </div>
         </div>
     </div>
@@ -1305,6 +1307,25 @@ const openDemoModal = () => {
   &__team-icon {
     font-size: 5rem;
     margin-bottom: 1.5rem;
+  }
+
+  &__team-photo {
+    width: 15rem;
+    height: 15rem;
+    margin: 0 auto 1.5rem;
+    border-radius: 50%;
+    overflow: hidden;
+    box-shadow: 0 0.5rem 2rem rgba($color-black, 0.2);
+    border: 3px solid rgba($color-white, 0.8);
+
+    img {
+      width: 100%;
+    }
+
+    @include layout-aspect-mobile {
+      width: 12rem;
+      height: 12rem;
+    }
   }
 
   /* CTA Section */
