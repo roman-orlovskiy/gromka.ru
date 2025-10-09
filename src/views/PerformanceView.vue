@@ -13,7 +13,7 @@
     </router-link>
 
     <div class="home__video-block">
-      <div class="home__video-container">
+      <div class="home__video-container" @click="toggleVideo">
         <video
           ref="verticalVideo"
           class="home__vertical-video"
@@ -25,10 +25,15 @@
         </video>
         <button
           v-if="!isVideoPlaying"
-          @click="playVideo"
           class="home__play-button"
         >
-          ▶ Запустить видео
+          {{ videoStarted ? '▶ Продолжить' : '▶ Запустить видео' }}
+        </button>
+        <button
+          v-else
+          class="home__pause-button"
+        >
+          ⏸ Пауза
         </button>
       </div>
     </div>
@@ -49,11 +54,18 @@ import ButtonComp from '@/components/ButtonComp.vue'
 
 const verticalVideo = ref(null)
 const isVideoPlaying = ref(false)
+const videoStarted = ref(false)
 
-const playVideo = () => {
+const toggleVideo = () => {
   if (verticalVideo.value) {
-    verticalVideo.value.play()
-    isVideoPlaying.value = true
+    if (isVideoPlaying.value) {
+      verticalVideo.value.pause()
+      isVideoPlaying.value = false
+    } else {
+      verticalVideo.value.play()
+      isVideoPlaying.value = true
+      videoStarted.value = true
+    }
   }
 }
 </script>
@@ -119,21 +131,22 @@ const playVideo = () => {
   }
 
   &__video-block {
-    width: 90%;
-    max-width: 64rem;
+    width: 100%;
+    max-width: 42rem;
     margin: 3rem 0;
-    padding: 3rem;
+    padding: 1rem;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
     border-radius: 2rem;
     box-shadow: 0 1rem 3rem rgba($color-black, 0.3);
 
     @include layout-aspect-mobile {
-      padding: 2rem;
+      padding: 1rem;
       margin: 2rem 0;
     }
   }
 
   &__video-container {
+    width: 100%;
     position: relative;
     margin: 0 auto;
     background-color: $color-black;
@@ -152,7 +165,8 @@ const playVideo = () => {
     object-fit: cover;
   }
 
-  &__play-button {
+  &__play-button,
+  &__pause-button {
     position: absolute;
     top: 50%;
     left: 50%;
@@ -167,6 +181,8 @@ const playVideo = () => {
     cursor: pointer;
     transition: all 0.3s ease;
     box-shadow: 0 0.5rem 1.5rem rgba($color-black, 0.3);
+    pointer-events: none;
+    white-space: nowrap;
 
     &:hover {
       transform: translate(-50%, -50%) scale(1.05);
@@ -181,6 +197,15 @@ const playVideo = () => {
       padding: 1rem 2rem;
       font-size: 1.5rem;
     }
+  }
+
+  &__pause-button {
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  &__video-container:hover &__pause-button {
+    opacity: 1;
   }
 }
 </style>
