@@ -228,7 +228,7 @@
           <div class="performance__monetization-card">
             <div class="performance__monetization-icon">◆</div>
             <h3>Спецпроекты</h3>
-            <p>2-3 млн за перформанс</p>
+            <p>Уникальные под заказчика</p>
           </div>
           <div class="performance__monetization-card">
             <div class="performance__monetization-icon">◉</div>
@@ -875,6 +875,23 @@ const scrollToProject = () => {
   &__monetization-icon {
     font-size: 4rem;
     margin-bottom: 1.5rem;
+    color: $color-black;
+  }
+
+  &__monetization-card:nth-child(1) .performance__monetization-icon {
+    color: #4ecdc4; /* мятный */
+  }
+
+  &__monetization-card:nth-child(2) .performance__monetization-icon {
+    color: #ff9f1c; /* оранжевый */
+  }
+
+  &__monetization-card:nth-child(3) .performance__monetization-icon {
+    color: #ff6b6b; /* красный */
+  }
+
+  &__monetization-card:nth-child(4) .performance__monetization-icon {
+    color: #45b7d1; /* бирюзовый */
   }
 
   &__monetization-card--highlighted {
