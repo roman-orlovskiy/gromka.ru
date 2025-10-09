@@ -70,7 +70,7 @@ const handleCloseModal = () => {
   &__content {
     background-color: white;
     padding: 4rem;
-    border-radius: 0.5rem;
+    border-radius: 1.5rem;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 
     a {
@@ -175,7 +175,7 @@ const handleCloseModal = () => {
       height: 100%;
       border-radius: 2rem;
       overflow-y: auto;
-      background: linear-gradient(135deg, #FF9F1C 0%, #FF61D2 100%);
+      background: linear-gradient(135deg, #FF9F1C 0%, #FFB84D 30%, #FFFFFF 70%, #FFB84D 100%);
 
       @include layout-aspect-mobile {
         border-radius: 1.5rem;

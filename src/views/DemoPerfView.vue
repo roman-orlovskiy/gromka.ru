@@ -52,7 +52,7 @@
       </div>
 
       <div class="demo__button">
-        <ButtonComp mode="big" @click="handleStart">Начать</ButtonComp>
+        <ButtonComp mod="gradient-5" @click="handleStart">Начать</ButtonComp>
       </div>
     </div>
 
@@ -199,7 +199,6 @@ const handleStart = () => {
   if (validateFields()) {
     isLayerVisible.value = true
     isInstructionVisible.value = true
-    enterFullscreen()
     requestWakeLock()
 
     clearTimeout(instructionTimeout)
@@ -211,31 +210,9 @@ const handleStart = () => {
   }
 }
 
-const enterFullscreen = () => {
-  const element = document.documentElement
-  if (element.requestFullscreen) {
-    element.requestFullscreen()
-  } else if (element.webkitRequestFullscreen) {
-    element.webkitRequestFullscreen()
-  } else if (element.msRequestFullscreen) {
-    element.msRequestFullscreen()
-  }
-}
-
-const exitFullscreen = () => {
-  if (document.exitFullscreen) {
-    document.exitFullscreen()
-  } else if (document.webkitExitFullscreen) {
-    document.webkitExitFullscreen()
-  } else if (document.msExitFullscreen) {
-    document.msExitFullscreen()
-  }
-}
-
 const handleCloseLayer = () => {
   isLayerVisible.value = false
   clearTimeout(instructionTimeout)
-  exitFullscreen()
   releaseWakeLock()
 }
 
@@ -275,6 +252,7 @@ const sectorOptions = ref([
   justify-content: center;
   padding: 1.5rem 2rem 6rem 2rem;
   min-height: 100%;
+  position: relative;
 
   &__title {
     font-size: 2.8rem;
@@ -324,7 +302,7 @@ const sectorOptions = ref([
     justify-content: center;
     width: 3.4rem;
     height: 3.4rem;
-    background-color: $color-primary;
+    background-color: $color-vibrant-orange;
     color: $color-white;
     border-radius: 50%;
     font-weight: $font-weight-bold;
@@ -341,12 +319,12 @@ const sectorOptions = ref([
   }
 
   &__layer {
-    position: fixed;
+    position: absolute;
     top: 0;
     left: 0;
     bottom: 0;
     right: 0;
-    background-color: $color-pary;
+    background-color: $color-vibrant-orange;
     animation: colorShift 1.5s infinite;
     z-index: 1000;
     color: $color-white;
@@ -355,6 +333,7 @@ const sectorOptions = ref([
     align-items: center;
     justify-content: center;
     padding: 2rem;
+    border-radius: 2rem;
 
     & .pary__instruction-text {
       color: $color-white;
@@ -403,13 +382,13 @@ const sectorOptions = ref([
 
 @keyframes colorShift {
   0% {
-    background-color: $color-pary;
+    background-color: $color-vibrant-orange;
   }
   50% {
-    background-color: $color-primary;
+    background-color: $color-white;
   }
   100% {
-    background-color: $color-pary;
+    background-color: $color-vibrant-orange;
   }
 }
 </style>
