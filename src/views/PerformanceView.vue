@@ -113,6 +113,20 @@
       </div>
     </div>
     </section>
+
+    <!-- Demo Section -->
+    <section class="performance__section performance__section--demo">
+      <div class="performance__container">
+        <h2 class="performance__section-title">Демо</h2>
+        <p class="performance__demo-description">
+          Попробуйте интерактивную демонстрацию прямо сейчас! Увидьте, как работает синхронизация устройств и создаются световые эффекты.
+        </p>
+        <RouterLink to="/demo" class="performance__demo-link">
+          <ButtonComp>Начать демонстрацию</ButtonComp>
+        </RouterLink>
+      </div>
+    </section>
+
 <!-- Advantages Section -->
     <section class="performance__section performance__section--gradient-2">
       <div class="performance__container">
@@ -329,6 +343,7 @@
 
 <script setup>
 import { ref } from 'vue'
+import { RouterLink } from 'vue-router'
 import ButtonComp from '@/components/ButtonComp.vue'
 
 const verticalVideo = ref(null)
@@ -580,6 +595,17 @@ const onVideoEnded2 = () => {
     &--stadium {
       background: $gradient-red;
       color: $color-white;
+    }
+
+    &--demo {
+      background: linear-gradient(135deg, #FF9F1C 0%, #FFB84D 30%, #FFFFFF 70%, #FFB84D 100%);
+      color: $color-black;
+      text-align: center;
+      padding: 6rem 2rem;
+
+      @include layout-aspect-mobile {
+        padding: 4rem 1rem;
+      }
     }
   }
 
@@ -1247,6 +1273,30 @@ const onVideoEnded2 = () => {
     background: none;
     border: none;
     cursor: pointer;
+
+    &:hover {
+      transform: scale(1.05);
+    }
+  }
+
+  /* Demo Description */
+  &__demo-description {
+    font-size: 2rem;
+    line-height: 1.6;
+    margin: 0 auto 3rem;
+    max-width: 70rem;
+    opacity: 0.95;
+
+    @include layout-aspect-mobile {
+      font-size: 1.6rem;
+      margin-bottom: 2rem;
+    }
+  }
+
+  &__demo-link {
+    display: inline-block;
+    text-decoration: none;
+    transition: transform 0.3s ease;
 
     &:hover {
       transform: scale(1.05);
