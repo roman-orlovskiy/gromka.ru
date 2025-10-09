@@ -58,7 +58,7 @@
           v-if="!isVideoPlaying"
             class="performance__play-button"
         >
-          {{ videoStarted ? '▶ Продолжить' : '▶ Запустить видео' }}
+          {{ videoStarted ? '▶ Продолжить' : '▶ Реальные кейсы' }}
         </button>
         <button
           v-else
@@ -69,6 +69,41 @@
           <button
             class="performance__fullscreen-button"
             @click.stop="toggleFullscreen"
+            title="Полноэкранный режим"
+          >
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M8 3H5a2 2 0 0 0-2 2v3m13-5h3a2 2 0 0 1 2 2v3m-5 13h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+        </button>
+      </div>
+      <div class="performance__video-container" @click="toggleVideo2">
+        <video
+          ref="verticalVideo2"
+            class="performance__vertical-video"
+          src="/videos/ai_presentation.mp4"
+          type="video/mp4"
+          loop
+            @play="onVideoPlay2"
+            @pause="onVideoPause2"
+            @ended="onVideoEnded2"
+        >
+          Ваш браузер не поддерживает видео.
+        </video>
+        <button
+          v-if="!isVideoPlaying2"
+            class="performance__play-button"
+        >
+          {{ videoStarted2 ? '▶ Продолжить' : '▶ Презентация' }}
+        </button>
+        <button
+          v-else
+            class="performance__pause-button"
+        >
+          ⏸ Пауза
+        </button>
+          <button
+            class="performance__fullscreen-button"
+            @click.stop="toggleFullscreen2"
             title="Полноэкранный режим"
           >
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -300,6 +335,10 @@ const verticalVideo = ref(null)
 const isVideoPlaying = ref(false)
 const videoStarted = ref(false)
 
+const verticalVideo2 = ref(null)
+const isVideoPlaying2 = ref(false)
+const videoStarted2 = ref(false)
+
 const toggleVideo = () => {
   if (verticalVideo.value) {
     if (isVideoPlaying.value) {
@@ -309,6 +348,19 @@ const toggleVideo = () => {
       verticalVideo.value.play()
       isVideoPlaying.value = true
       videoStarted.value = true
+    }
+  }
+}
+
+const toggleVideo2 = () => {
+  if (verticalVideo2.value) {
+    if (isVideoPlaying2.value) {
+      verticalVideo2.value.pause()
+      isVideoPlaying2.value = false
+    } else {
+      verticalVideo2.value.play()
+      isVideoPlaying2.value = true
+      videoStarted2.value = true
     }
   }
 }
@@ -338,10 +390,28 @@ const toggleFullscreen = () => {
   }
 }
 
+const toggleFullscreen2 = () => {
+  if (verticalVideo2.value) {
+    // Добавляем класс для полноэкранного режима
+    verticalVideo2.value.classList.add('fullscreen-video')
+
+    if (verticalVideo2.value.requestFullscreen) {
+      verticalVideo2.value.requestFullscreen()
+    } else if (verticalVideo2.value.webkitRequestFullscreen) {
+      verticalVideo2.value.webkitRequestFullscreen()
+    } else if (verticalVideo2.value.msRequestFullscreen) {
+      verticalVideo2.value.msRequestFullscreen()
+    }
+  }
+}
+
 // Обработчик выхода из полноэкранного режима
 const handleFullscreenChange = () => {
   if (verticalVideo.value && !document.fullscreenElement) {
     verticalVideo.value.classList.remove('fullscreen-video')
+  }
+  if (verticalVideo2.value && !document.fullscreenElement) {
+    verticalVideo2.value.classList.remove('fullscreen-video')
   }
 }
 
@@ -371,6 +441,19 @@ const onVideoPause = () => {
 
 const onVideoEnded = () => {
   isVideoPlaying.value = false
+}
+
+const onVideoPlay2 = () => {
+  isVideoPlaying2.value = true
+  videoStarted2.value = true
+}
+
+const onVideoPause2 = () => {
+  isVideoPlaying2.value = false
+}
+
+const onVideoEnded2 = () => {
+  isVideoPlaying2.value = false
 }
 </script>
 <style lang="scss" scoped>
@@ -639,24 +722,36 @@ const onVideoEnded = () => {
 
   &__video-block {
     width: 100%;
-    max-width: 42rem;
+    max-width: 90rem;
     margin: 0 auto;
     padding: 1rem;
+    display: flex;
+    flex-direction: row;
+    gap: 2rem;
+    justify-content: center;
 
     @include layout-aspect-mobile {
       padding: 1rem;
+      flex-direction: column;
+      gap: 2rem;
     }
   }
 
   &__video-container {
     width: 100%;
+    max-width: 42rem;
     position: relative;
-    margin: 0 auto;
     background: $gradient-mint-teal;
     border-radius: 1rem;
     overflow: hidden;
     box-shadow: 0 0.5rem 0.5rem rgba($color-black, 0.5);
     cursor: pointer;
+    flex: 1;
+
+    @include layout-aspect-mobile {
+      max-width: 100%;
+      flex: auto;
+    }
   }
 
   &__vertical-video {
@@ -704,7 +799,7 @@ const onVideoEnded = () => {
     font-size: 1.8rem;
     font-weight: $font-weight-bold;
     color: $color-white;
-    background: $gradient-primary;
+    background: linear-gradient(135deg, #FF6B00 0%, #FF9F1C 50%, #FFB84D 100%);
     border: none;
     border-radius: 5rem;
     cursor: pointer;
