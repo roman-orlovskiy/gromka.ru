@@ -48,6 +48,9 @@
           src="/videos/demo.mp4"
           type="video/mp4"
           loop
+            @play="onVideoPlay"
+            @pause="onVideoPause"
+            @ended="onVideoEnded"
         >
           Ваш браузер не поддерживает видео.
         </video>
@@ -62,6 +65,15 @@
             class="performance__pause-button"
         >
           ⏸ Пауза
+        </button>
+          <button
+            class="performance__fullscreen-button"
+            @click.stop="toggleFullscreen"
+            title="Полноэкранный режим"
+          >
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M8 3H5a2 2 0 0 0-2 2v3m13-5h3a2 2 0 0 1 2 2v3m-5 13h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
         </button>
       </div>
     </div>
@@ -109,7 +121,7 @@
     <!-- Stadium Photo Section -->
     <section class="performance__section performance__section--stadium">
       <div class="performance__container">
-        <h2 class="performance__section-title">Реальный запуск на стадионе Спартак</h2>
+        <h2 class="performance__section-title">Реальный запуск на матче Спартака</h2>
         <div class="performance__stadium-block">
           <div class="performance__image-container performance__image-container--large">
             <img
@@ -310,6 +322,56 @@ const scrollToProject = () => {
       block: 'start'
     })
   }
+}
+
+const toggleFullscreen = () => {
+  if (verticalVideo.value) {
+    // Добавляем класс для полноэкранного режима
+    verticalVideo.value.classList.add('fullscreen-video')
+
+    if (verticalVideo.value.requestFullscreen) {
+      verticalVideo.value.requestFullscreen()
+    } else if (verticalVideo.value.webkitRequestFullscreen) {
+      verticalVideo.value.webkitRequestFullscreen()
+    } else if (verticalVideo.value.msRequestFullscreen) {
+      verticalVideo.value.msRequestFullscreen()
+    }
+  }
+}
+
+// Обработчик выхода из полноэкранного режима
+const handleFullscreenChange = () => {
+  if (verticalVideo.value && !document.fullscreenElement) {
+    verticalVideo.value.classList.remove('fullscreen-video')
+  }
+}
+
+// Добавляем обработчик при монтировании компонента
+import { onMounted, onUnmounted } from 'vue'
+
+onMounted(() => {
+  document.addEventListener('fullscreenchange', handleFullscreenChange)
+  document.addEventListener('webkitfullscreenchange', handleFullscreenChange)
+  document.addEventListener('msfullscreenchange', handleFullscreenChange)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('fullscreenchange', handleFullscreenChange)
+  document.removeEventListener('webkitfullscreenchange', handleFullscreenChange)
+  document.removeEventListener('msfullscreenchange', handleFullscreenChange)
+})
+
+const onVideoPlay = () => {
+  isVideoPlaying.value = true
+  videoStarted.value = true
+}
+
+const onVideoPause = () => {
+  isVideoPlaying.value = false
+}
+
+const onVideoEnded = () => {
+  isVideoPlaying.value = false
 }
 </script>
 <style lang="scss" scoped>
@@ -603,6 +665,34 @@ const scrollToProject = () => {
     height: 100%;
     display: block;
     object-fit: cover;
+
+    // Стили для полноэкранного режима с пропорцией 9:16
+    &.fullscreen-video {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 100vh;
+      height: 100vw;
+      max-width: 100vw;
+      max-height: 100vh;
+      z-index: 9999;
+      background: $color-black;
+
+      // Если высота больше ширины, используем высоту как основу
+      @media (orientation: portrait) {
+        width: 100vw;
+        height: 177.78vw; // 16/9 * 100vw
+        max-height: 100vh;
+      }
+
+      // Если ширина больше высоты, используем ширину как основу
+      @media (orientation: landscape) {
+        width: 177.78vh; // 16/9 * 100vh
+        height: 100vh;
+        max-width: 100vw;
+      }
+    }
   }
 
   &__play-button,
@@ -642,6 +732,52 @@ const scrollToProject = () => {
 
   &__video-container:hover &__pause-button {
     opacity: 1;
+  }
+
+  &__fullscreen-button {
+    position: absolute;
+    bottom: 1rem;
+    right: 1rem;
+    width: 4rem;
+    height: 4rem;
+    background: rgba($color-black, 0.7);
+    border: 2px solid rgba($color-white, 0.8);
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    color: $color-white;
+    opacity: 1;
+    pointer-events: auto;
+
+    &:hover {
+      background: rgba($color-black, 0.9);
+      border-color: $color-white;
+      transform: scale(1.1);
+    }
+
+    &:active {
+      transform: scale(0.95);
+    }
+
+    svg {
+      width: 2rem;
+      height: 2rem;
+    }
+
+    @include layout-aspect-mobile {
+      width: 3.5rem;
+      height: 3.5rem;
+      bottom: 0.8rem;
+      right: 0.8rem;
+
+      svg {
+        width: 1.8rem;
+        height: 1.8rem;
+      }
+    }
   }
 
   /* Grid Layouts */
