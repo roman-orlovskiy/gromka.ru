@@ -2,7 +2,7 @@
   <div class="performance">
     <!-- Hero Section -->
     <section class="performance__hero">
-      <h1 class="performance__title">Gromkaыдели  – платформа для перформансов</h1>
+      <h1 class="performance__title">Gromka  – платформа для перформансов</h1>
       <p class="performance__subtitle">Рисуйте динамические картины с помощью экранов телефонов</p>
       <div class="performance__hero-video">
         <video class="performance__video" autoplay loop muted src="/videos/gromka.mp4" type="video/mp4">
@@ -107,16 +107,19 @@
     </section>
 
     <!-- Stadium Photo Section -->
-    <section class="performance__section performance__section--dark">
+    <section class="performance__section performance__section--stadium">
       <div class="performance__container">
         <h2 class="performance__section-title">Реальный запуск на стадионе Спартак</h2>
-        <div class="performance__stadium-photos">
-          <div class="performance__image-placeholder performance__image-placeholder--large">
-            <span>Фото со стадиона: общий план</span>
+        <div class="performance__stadium-block">
+          <div class="performance__image-container performance__image-container--large">
+            <img
+              src="@/assets/images/home/spartak.webp"
+              alt="Реальный запуск на стадионе Спартак"
+              class="performance__image"
+            />
           </div>
           <div class="performance__stadium-info">
-            <p>Даже при неполной посадке можно создавать визуальные волны или мерцания на стадионе.</p>
-            <p><strong>Для сложных картин нужна полная посадка</strong></p>
+            <p>Даже при неполной посадке можно создавать<br>визуальные волны или мерцания на стадионе.</p>
           </div>
         </div>
       </div>
@@ -204,86 +207,6 @@
       </div>
     </section>
 
-    <!-- Key Points Section -->
-    <section class="performance__section performance__section--gradient-5">
-      <div class="performance__container">
-        <h2 class="performance__section-title">Ключевые тезисы</h2>
-        <div class="performance__key-points">
-          <div class="performance__key-point">
-            <div class="performance__key-icon">◈</div>
-            <h3>Технологии объединяют зрителей</h3>
-            <p>Шоу создается самим залом</p>
-          </div>
-          <div class="performance__key-point">
-            <div class="performance__key-icon">◆</div>
-            <h3>Простота участия</h3>
-            <p>Не нужны специальные устройства, достаточно смартфона</p>
-          </div>
-          <div class="performance__key-point">
-            <div class="performance__key-icon">◉</div>
-            <h3>Визуальный эффект масштаба</h3>
-            <p>Световые волны, паттерны, тексты</p>
-          </div>
-          <div class="performance__key-point">
-            <div class="performance__key-icon">■</div>
-            <h3>Коммерческий потенциал</h3>
-            <p>Реклама, сувениры, интеграция с клубами и брендами</p>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Examples Section -->
-    <section class="performance__section performance__section--dark">
-      <div class="performance__container">
-        <h2 class="performance__section-title">Примеры и референсы</h2>
-        <div class="performance__examples">
-          <div class="performance__example">
-            <div class="performance__image-placeholder">
-              <span>Перформанс Лацио</span>
-            </div>
-            <h3>Недавний перформанс Лацио</h3>
-            <a href="https://t.me/top_foot_ball/26580" target="_blank" class="performance__link">
-              Смотреть видео →
-            </a>
-          </div>
-          <div class="performance__example">
-            <div class="performance__image-placeholder">
-              <span>Coldplay - Xylobands</span>
-            </div>
-            <h3>Coldplay – Xylobands</h3>
-            <p>Световые браслеты, синхронизированные с шоу</p>
-          </div>
-          <div class="performance__example">
-            <div class="performance__image-placeholder">
-              <span>Intel Drone Light Shows</span>
-            </div>
-            <h3>Intel Drone Light Shows</h3>
-            <p>Световые дроны, создающие фигуры в небе</p>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Technical Details Section -->
-    <section class="performance__section performance__section--gradient-2">
-      <div class="performance__container">
-        <h2 class="performance__section-title">Технические детали запуска</h2>
-        <div class="performance__timeline">
-          <div class="performance__timeline-item">
-            <div class="performance__timeline-icon">①</div>
-            <h3>Первый этап</h3>
-            <p>Реализация шоу под конкретную площадку</p>
-            <span class="performance__timeline-duration">≈ 2 месяца</span>
-          </div>
-          <div class="performance__timeline-item">
-            <div class="performance__timeline-icon">②</div>
-            <h3>Развитие</h3>
-            <p>После 10 успешных кейсов создание редактора для автоматизации процесса</p>
-          </div>
-        </div>
-      </div>
-    </section>
 
     <!-- Monetization Section -->
     <section class="performance__section performance__section--success">
@@ -497,6 +420,11 @@ const scrollToProject = () => {
       background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
       color: $color-white;
     }
+
+    &--stadium {
+      background: $gradient-red;
+      color: $color-white;
+    }
   }
 
   &__container {
@@ -589,6 +517,16 @@ const scrollToProject = () => {
     overflow: hidden;
     box-shadow: 0 0.5rem 2rem rgba($color-black, 0.2);
     background: $color-white;
+
+    &--large {
+      min-height: 30rem;
+      box-shadow: 0 1rem 3rem rgba($color-black, 0.3);
+      border: 2px solid rgba($color-spartak, 0.3);
+
+      @include layout-aspect-mobile {
+        min-height: 20rem;
+      }
+    }
   }
 
   &__image {
@@ -605,8 +543,8 @@ const scrollToProject = () => {
 
   /* Demo Video */
   &__demo {
-    padding: 0;
-    background: $gradient-red;
+    padding: 2rem;
+    background: $gradient-mint-teal;
   }
 
   &__video-block {
@@ -624,7 +562,7 @@ const scrollToProject = () => {
     width: 100%;
     position: relative;
     margin: 0 auto;
-    background-color: $color-black;
+    background: $gradient-mint-teal;
     border-radius: 1rem;
     overflow: hidden;
     box-shadow: 0 0.5rem 0.5rem rgba($color-black, 0.5);
@@ -756,19 +694,35 @@ const scrollToProject = () => {
     }
   }
 
-  /* Stadium Photos */
-  &__stadium-photos {
-    display: flex;
-    flex-direction: column;
-    gap: 2rem;
+  /* Stadium Block */
+  &__stadium-block {
+    background: $color-white;
+    border-radius: 2rem;
+    padding: 3rem;
+    box-shadow: 0 1rem 3rem rgba($color-black, 0.3);
+    border: 3px solid rgba($color-white, 0.8);
+    text-align: center;
+    max-width: 90rem;
+    margin: 0 auto;
+
+    @include layout-aspect-mobile {
+      padding: 2rem;
+      border-radius: 1.5rem;
+    }
   }
 
   &__stadium-info {
-    background: rgba($color-white, 0.1);
+    background: rgba($color-gray-100, 0.5);
     border-radius: 1rem;
     padding: 2rem;
-    font-size: 1.6rem;
+    font-size: 2.2rem;
     line-height: 1.8;
+    color: $color-black;
+    margin-top: 2rem;
+
+    @include layout-aspect-mobile {
+      font-size: 1.8rem;
+    }
 
     p {
       margin-bottom: 1rem;
@@ -776,6 +730,11 @@ const scrollToProject = () => {
       &:last-child {
         margin-bottom: 0;
       }
+    }
+
+    strong {
+      color: $color-spartak;
+      font-weight: $font-weight-bold;
     }
   }
 
@@ -856,136 +815,6 @@ const scrollToProject = () => {
     }
   }
 
-  /* Key Points */
-  &__key-points {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 3rem;
-
-    @include layout-aspect-mobile {
-      grid-template-columns: 1fr;
-      gap: 2rem;
-    }
-  }
-
-  &__key-point {
-    background: rgba($color-white, 0.95);
-    border-radius: 1.5rem;
-    padding: 3rem;
-    text-align: center;
-    box-shadow: 0 0.5rem 2rem rgba($color-black, 0.1);
-
-    h3 {
-      font-size: 2.2rem;
-      font-weight: $font-weight-bold;
-      margin-bottom: 1rem;
-      color: $color-black;
-    }
-
-    p {
-      font-size: 1.6rem;
-      color: $color-gray-700;
-      line-height: 1.6;
-    }
-  }
-
-  &__key-icon {
-    font-size: 4.5rem;
-    margin-bottom: 1.5rem;
-  }
-
-  /* Examples */
-  &__examples {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 3rem;
-
-    @include layout-aspect-mobile {
-      grid-template-columns: 1fr;
-      gap: 2rem;
-    }
-  }
-
-  &__example {
-    h3 {
-      font-size: 2rem;
-      font-weight: $font-weight-bold;
-      margin: 2rem 0 1rem;
-    }
-
-    p {
-      font-size: 1.5rem;
-      line-height: 1.6;
-      opacity: 0.9;
-    }
-  }
-
-  &__link {
-    display: inline-block;
-    margin-top: 1rem;
-    color: $color-white;
-    font-size: 1.6rem;
-    font-weight: $font-weight-semi-bold;
-    text-decoration: none;
-    background: $gradient-accent;
-    padding: 0.8rem 2rem;
-    border-radius: 2rem;
-    transition: transform 0.3s ease;
-
-    &:hover {
-      transform: translateY(-0.2rem);
-    }
-  }
-
-  /* Timeline */
-  &__timeline {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 3rem;
-
-    @include layout-aspect-mobile {
-      grid-template-columns: 1fr;
-      gap: 2rem;
-    }
-  }
-
-  &__timeline-item {
-    background: rgba($color-white, 0.95);
-    border-radius: 1.5rem;
-    padding: 3rem;
-    text-align: center;
-    box-shadow: 0 0.5rem 2rem rgba($color-black, 0.1);
-
-    h3 {
-      font-size: 2.2rem;
-      font-weight: $font-weight-bold;
-      margin-bottom: 1.5rem;
-      color: $color-black;
-    }
-
-    p {
-      font-size: 1.6rem;
-      color: $color-gray-700;
-      line-height: 1.6;
-      margin-bottom: 1rem;
-    }
-  }
-
-  &__timeline-icon {
-    font-size: 4rem;
-    margin-bottom: 1.5rem;
-  }
-
-  &__timeline-duration {
-    display: inline-block;
-    background: $gradient-primary;
-    color: $color-white;
-    padding: 0.5rem 1.5rem;
-    border-radius: 2rem;
-    font-size: 1.4rem;
-    font-weight: $font-weight-bold;
-    margin-top: 1rem;
-  }
 
   /* Monetization Cards */
   &__monetization-card {
