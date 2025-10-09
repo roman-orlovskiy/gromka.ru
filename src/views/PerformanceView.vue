@@ -12,6 +12,27 @@
       <ButtonComp mod="secondary"> Посмотреть демо </ButtonComp>
     </router-link>
 
+    <div class="home__video-block">
+      <div class="home__video-container">
+        <video
+          ref="verticalVideo"
+          class="home__vertical-video"
+          src="/videos/demo.mp4"
+          type="video/mp4"
+          loop
+        >
+          Ваш браузер не поддерживает видео.
+        </video>
+        <button
+          v-if="!isVideoPlaying"
+          @click="playVideo"
+          class="home__play-button"
+        >
+          ▶ Запустить видео
+        </button>
+      </div>
+    </div>
+
     <div class="home__description">
       Напишите нам и мы сделаем перформанс под конкретную площадку.
     </div>
@@ -23,15 +44,31 @@
 </template>
 
 <script setup>
+import { ref } from 'vue'
 import ButtonComp from '@/components/ButtonComp.vue'
+
+const verticalVideo = ref(null)
+const isVideoPlaying = ref(false)
+
+const playVideo = () => {
+  if (verticalVideo.value) {
+    verticalVideo.value.play()
+    isVideoPlaying.value = true
+  }
+}
 </script>
 <style lang="scss" scoped>
 .home {
+  flex: auto;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  min-height: 100%;
+  justify-content: flex-start;
+  padding: 3rem 1rem;
+
+  @include layout-aspect-mobile {
+    padding: 2rem 1rem;
+  }
 
   &__title {
     font-size: 3rem;
@@ -79,6 +116,71 @@ import ButtonComp from '@/components/ButtonComp.vue'
     width: 100%;
     height: 100%;
     border-radius: 1rem;
+  }
+
+  &__video-block {
+    width: 90%;
+    max-width: 64rem;
+    margin: 3rem 0;
+    padding: 3rem;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+    border-radius: 2rem;
+    box-shadow: 0 1rem 3rem rgba($color-black, 0.3);
+
+    @include layout-aspect-mobile {
+      padding: 2rem;
+      margin: 2rem 0;
+    }
+  }
+
+  &__video-container {
+    position: relative;
+    margin: 0 auto;
+    background-color: $color-black;
+    border-radius: 1rem;
+    overflow: hidden;
+    box-shadow: 0 0.5rem 0.5rem rgba($color-black, 0.5);
+
+    @include layout-aspect-mobile {
+      max-width: 100%;
+    }
+  }
+
+  &__vertical-video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  &__play-button {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    padding: 1.5rem 3rem;
+    font-size: 1.8rem;
+    font-weight: $font-weight-bold;
+    color: $color-white;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    border-radius: 5rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 0.5rem 1.5rem rgba($color-black, 0.3);
+
+    &:hover {
+      transform: translate(-50%, -50%) scale(1.05);
+      box-shadow: 0 0.7rem 2rem rgba($color-black, 0.4);
+    }
+
+    &:active {
+      transform: translate(-50%, -50%) scale(0.98);
+    }
+
+    @include layout-aspect-mobile {
+      padding: 1rem 2rem;
+      font-size: 1.5rem;
+    }
   }
 }
 </style>

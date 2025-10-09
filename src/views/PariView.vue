@@ -272,7 +272,7 @@ const sectorOptions = ref([
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: flex-start;
+  justify-content: center;
   padding: 1.5rem 2rem 6rem 2rem;
   min-height: 100%;
 

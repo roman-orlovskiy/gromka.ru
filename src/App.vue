@@ -25,12 +25,19 @@ const isParyPage = true;
 
 <style lang="scss">
 .app {
+  display: flex;
+  flex-direction: column;
   height: 100%;
   min-height: 100%;
-  display: flex;
 
   & > div:first-child {
     flex: 1;
+    background: linear-gradient(135deg,
+    $color-vibrant-blue 0%,
+    $color-vibrant-purple 35%,
+    $color-vibrant-pink 65%,
+    $color-vibrant-orange 100%
+  );
   }
 
   @include layout-aspect-mobile {
@@ -46,7 +53,6 @@ body {
   width: 100%;
   height: 100%;
   min-height: 100%;
-  overflow-x: hidden;
   font-family: $font-default !important;
   font-weight: $font-weight-medium;
   color: $color-black;
@@ -55,12 +61,6 @@ body {
   -ms-text-size-adjust: 100%;
   -webkit-text-size-adjust: 100%;
   font-size: vh(10);
-  background: linear-gradient(135deg,
-    $color-vibrant-blue 0%,
-    $color-vibrant-purple 35%,
-    $color-vibrant-pink 65%,
-    $color-vibrant-orange 100%
-  );
   box-sizing: border-box;
 
   @include layout-aspect-tablet {
