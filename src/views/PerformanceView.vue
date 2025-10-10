@@ -180,7 +180,7 @@
             <h3 class="performance__card-title">Гибкость</h3>
             <p>Адаптация под концерты, спектакли, митинги, спортивные мероприятия</p>
           </div>
-          <div class="performance__card performance__card--highlighted">
+          <div class="performance__card performance__card--highlighted performance__card--clickable" @click="scrollToMonetization">
             <div class="performance__card-icon">■</div>
             <h3 class="performance__card-title">Монетизация</h3>
             <p>Через рекламу и брендированные активности</p>
@@ -195,7 +195,7 @@
     </section>
 
     <!-- Monetization Section -->
-    <section class="performance__section performance__section--success">
+    <section id="monetization" class="performance__section performance__section--success">
       <div class="performance__container">
         <h2 class="performance__section-title">Монетизация</h2>
         <div class="performance__grid performance__grid--four-cols">
@@ -609,6 +609,16 @@ const onVideoEnded2 = () => {
 
 const openDemoModal = () => {
   mainStore.openModal('demo')
+}
+
+const scrollToMonetization = () => {
+  const element = document.getElementById('monetization')
+  if (element) {
+    element.scrollIntoView({
+      behavior: 'smooth',
+      block: 'start'
+    })
+  }
 }
 
 // Sticky CTA button logic
@@ -1112,6 +1122,14 @@ const handleScroll = () => {
     &:hover {
       transform: translateY(-0.5rem);
       box-shadow: 0 1rem 3rem rgba($color-black, 0.2);
+    }
+
+    &--clickable {
+      cursor: pointer;
+
+      &:active {
+        transform: translateY(-0.3rem);
+      }
     }
   }
 
