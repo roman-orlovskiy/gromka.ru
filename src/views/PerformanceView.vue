@@ -294,7 +294,7 @@
               <img
                 src="@/assets/images/home/refs/img3.webp"
                 alt="Интерактивный перформанс"
-                class="performance__image"
+                class="performance__image performance__image--shifted-up"
               />
             </div>
             <h3>Интерактивные перформансы</h3>
@@ -916,6 +916,10 @@ const handleScroll = () => {
 
     @include layout-aspect-mobile {
       min-height: 15rem;
+    }
+
+    &--shifted-up {
+      object-position: center 30%;
     }
   }
 
