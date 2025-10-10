@@ -37,6 +37,56 @@
       </div>
     </section>
 
+    <!-- Demo Section -->
+    <section class="performance__section performance__section--demo">
+      <div class="performance__container">
+        <h2 class="performance__section-title">Демо</h2>
+        <p class="performance__demo-description">
+          Пример, как зритель подключается к перформансу
+        </p>
+      </div>
+      <div class="performance__video-block">
+        <div class="performance__video-container" @click="toggleVideo2">
+          <video
+            ref="verticalVideo2"
+            class="performance__vertical-video"
+            src="/videos/ai_presentation.mp4"
+            type="video/mp4"
+            loop
+            @play="onVideoPlay2"
+            @pause="onVideoPause2"
+            @ended="onVideoEnded2"
+          >
+            Ваш браузер не поддерживает видео.
+          </video>
+          <button
+            v-if="!isVideoPlaying2"
+            class="performance__play-button"
+          >
+            {{ videoStarted2 ? '▶ Продолжить' : '▶ Презентация' }}
+          </button>
+          <button
+            v-else
+            class="performance__pause-button"
+          >
+            ⏸ Пауза
+          </button>
+          <button
+            class="performance__fullscreen-button"
+            @click.stop="toggleFullscreen2"
+            title="Полноэкранный режим"
+          >
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M8 3H5a2 2 0 0 0-2 2v3m13-5h3a2 2 0 0 1 2 2v3m-5 13h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+      <button @click="openDemoModal" class="performance__demo-link">
+        <ButtonComp>Демонстрация</ButtonComp>
+      </button>
+    </section>
+
     <!-- Demo Video Section -->
     <section class="performance__demo">
       <div class="performance__video-block">
@@ -75,55 +125,7 @@
             </svg>
         </button>
       </div>
-      <div class="performance__video-container" @click="toggleVideo2">
-        <video
-          ref="verticalVideo2"
-            class="performance__vertical-video"
-          src="/videos/ai_presentation.mp4"
-          type="video/mp4"
-          loop
-            @play="onVideoPlay2"
-            @pause="onVideoPause2"
-            @ended="onVideoEnded2"
-        >
-          Ваш браузер не поддерживает видео.
-        </video>
-        <button
-          v-if="!isVideoPlaying2"
-            class="performance__play-button"
-        >
-          {{ videoStarted2 ? '▶ Продолжить' : '▶ Презентация' }}
-        </button>
-        <button
-          v-else
-            class="performance__pause-button"
-        >
-          ⏸ Пауза
-        </button>
-          <button
-            class="performance__fullscreen-button"
-            @click.stop="toggleFullscreen2"
-            title="Полноэкранный режим"
-          >
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M8 3H5a2 2 0 0 0-2 2v3m13-5h3a2 2 0 0 1 2 2v3m-5 13h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-        </button>
-      </div>
     </div>
-    </section>
-
-    <!-- Demo Section -->
-    <section class="performance__section performance__section--demo">
-      <div class="performance__container">
-        <h2 class="performance__section-title">Демо</h2>
-        <p class="performance__demo-description">
-          Пример, как зритель подключается к перформансу
-        </p>
-        <button @click="openDemoModal" class="performance__demo-link">
-          <ButtonComp>Демонстрация</ButtonComp>
-        </button>
-      </div>
     </section>
 
 <!-- Advantages Section -->
@@ -645,10 +647,10 @@ const handleScroll = () => {
 
   /* Section Styles */
   &__section {
-    padding: 5rem 2rem;
+    padding: 3rem 2rem;
 
     @include layout-aspect-mobile {
-      padding: 3rem 1rem;
+      padding: 2rem 1rem;
     }
 
     &--gradient-1 {
@@ -697,13 +699,25 @@ const handleScroll = () => {
     }
 
     &--demo {
-      background: linear-gradient(135deg, #FF9F1C 0%, #FFB84D 30%, #FFFFFF 70%, #FFB84D 100%);
+      background: $gradient-mint-teal;
       color: $color-black;
       text-align: center;
-      padding: 6rem 2rem;
+      padding: 3rem 2rem;
 
       @include layout-aspect-mobile {
-        padding: 4rem 1rem;
+        padding: 2rem 1rem;
+      }
+
+      .performance__video-block {
+        margin-top: 1.5rem;
+      }
+
+      .performance__demo-link {
+        margin-top: 2rem;
+
+        @include layout-aspect-mobile {
+          margin-top: 1.5rem;
+        }
       }
     }
   }
@@ -717,11 +731,11 @@ const handleScroll = () => {
     font-size: 3.5rem;
     font-weight: $font-weight-bold;
     text-align: center;
-    margin-bottom: 3rem;
+    margin-bottom: 2rem;
 
     @include layout-aspect-mobile {
       font-size: 2.5rem;
-      margin-bottom: 2rem;
+      margin-bottom: 1.5rem;
     }
   }
 
@@ -851,7 +865,7 @@ const handleScroll = () => {
   /* Demo Video */
   &__demo {
     padding: 2rem;
-    background: $gradient-mint-teal;
+    background: linear-gradient(135deg, #FF9F1C 0%, #FFB84D 30%, #FFFFFF 70%, #FFB84D 100%);
   }
 
   &__video-block {
@@ -873,7 +887,7 @@ const handleScroll = () => {
 
   &__video-container {
     width: 100%;
-    max-width: 42rem;
+    max-width: 30rem;
     position: relative;
     background: $gradient-mint-teal;
     border-radius: 1rem;
@@ -1412,13 +1426,13 @@ const handleScroll = () => {
   &__demo-description {
     font-size: 2rem;
     line-height: 1.6;
-    margin: 0 auto 3rem;
+    margin: 0 auto 1rem;
     max-width: 70rem;
     opacity: 0.95;
 
     @include layout-aspect-mobile {
       font-size: 1.6rem;
-      margin-bottom: 2rem;
+      margin-bottom: 1rem;
     }
   }
 
