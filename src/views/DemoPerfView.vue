@@ -262,6 +262,10 @@ const sectorOptions = ref([
     width: 100%;
     text-align: center;
     line-height: 1.2;
+
+    @include layout-aspect-mobile {
+      font-size: 2.2rem;
+    }
   }
 
   &__content {

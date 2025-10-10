@@ -179,7 +179,7 @@
             />
           </div>
           <div class="performance__stadium-info">
-            <p>Даже при неполной посадке можно создавать<br>визуальные волны или мерцания на стадионе.</p>
+            <p>Даже при неполной посадке можно создавать визуальные волны или&nbsp;мерцания на стадионе.</p>
           </div>
         </div>
       </div>
@@ -801,13 +801,8 @@ const handleScroll = () => {
     background: $color-white;
 
     &--large {
-      min-height: 30rem;
       box-shadow: 0 1rem 3rem rgba($color-black, 0.3);
       border: 2px solid rgba($color-spartak, 0.3);
-
-      @include layout-aspect-mobile {
-        min-height: 20rem;
-      }
     }
 
     &--clickable {
@@ -1105,7 +1100,7 @@ const handleScroll = () => {
     margin: 0 auto;
 
     @include layout-aspect-mobile {
-      padding: 2rem;
+      padding: 1rem;
       border-radius: 1.5rem;
     }
   }
@@ -1120,7 +1115,9 @@ const handleScroll = () => {
     margin-top: 2rem;
 
     @include layout-aspect-mobile {
-      font-size: 1.8rem;
+      font-size: 1.6rem;
+      margin-top: 1rem;
+      padding: 1rem;
     }
 
     p {

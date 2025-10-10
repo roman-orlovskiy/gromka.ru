@@ -83,6 +83,11 @@ const handleCloseModal = () => {
       color: $color-primary;
       text-decoration: underline;
     }
+
+    @include layout-aspect-mobile {
+      padding: 2rem;
+      border-radius: 1rem;
+    }
   }
 
   &__close {
@@ -110,19 +115,21 @@ const handleCloseModal = () => {
     }
 
     svg {
-      width: 2rem;
-      height: 2rem;
+      width: 3rem;
+      height: 3rem;
     }
 
     @include layout-aspect-mobile {
-      top: 1rem;
-      right: 1rem;
-      width: 3rem;
-      height: 3rem;
+      top: -1rem;
+      right: -1rem;
+      width: 3.5rem;
+      height: 3.5rem;
+      background-color: $color-gray-100;
+      border-radius: 50%;
 
       svg {
-        width: 2.1rem;
-        height: 2.1rem;
+        width: 2.5rem;
+        height: 2.5rem;
       }
     }
   }
@@ -174,7 +181,7 @@ const handleCloseModal = () => {
     flex-direction: column;
 
     @include layout-aspect-mobile {
-      width: 95vw;
+      width: 80vw;
       height: 90vh;
       border-radius: 2rem;
       padding: 1.5rem 0.8rem;
