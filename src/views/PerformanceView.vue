@@ -3,7 +3,7 @@
     <!-- Hero Section -->
     <section class="performance__hero">
       <h1 class="performance__title">Gromka  – платформа для перформансов</h1>
-      <p class="performance__subtitle">Рисуйте динамические картины с помощью экранов<br>или <b>фонариков</b> телефонов</p>
+      <p class="performance__subtitle">Рисуйте динамические картины с&nbsp;помощью&nbsp;экранов<br>или <b>фонариков</b> телефонов</p>
       <div class="performance__hero-video">
         <video class="performance__video" autoplay loop muted src="/videos/gromka.mp4" type="video/mp4">
         Ваш браузер не поддерживает видео.
