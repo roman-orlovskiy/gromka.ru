@@ -14,12 +14,21 @@
           :navigation="true"
           :pagination="{ clickable: true }"
           :keyboard="{ enabled: true }"
+          :zoom="{
+            maxRatio: 3,
+            minRatio: 1,
+            toggle: true
+          }"
           :loop="true"
           class="gallery__swiper"
+          @swiper="onSwiper"
+          @dblclick="handleDoubleClick"
         >
           <swiper-slide v-for="(image, index) in images" :key="index">
             <div class="gallery__slide">
-              <img :src="image.src" :alt="image.alt" class="gallery__image" />
+              <div class="swiper-zoom-container">
+                <img :src="image.src" :alt="image.alt" class="gallery__image" />
+              </div>
               <div class="gallery__caption">{{ image.caption }}</div>
             </div>
           </swiper-slide>
@@ -30,11 +39,13 @@
 </template>
 
 <script setup>
+import { ref, onMounted, onUnmounted } from 'vue'
 import { Swiper, SwiperSlide } from 'swiper/vue'
-import { Navigation, Pagination, Keyboard } from 'swiper/modules'
+import { Navigation, Pagination, Keyboard, Zoom } from 'swiper/modules'
 import 'swiper/css'
 import 'swiper/css/navigation'
 import 'swiper/css/pagination'
+import 'swiper/css/zoom'
 
 const props = defineProps({
   isOpen: {
@@ -53,11 +64,54 @@ const props = defineProps({
 
 const emit = defineEmits(['close'])
 
-const modules = [Navigation, Pagination, Keyboard]
+const modules = [Navigation, Pagination, Keyboard, Zoom]
+const swiperInstance = ref(null)
 
 const closeGallery = () => {
   emit('close')
 }
+
+const handleDoubleClick = (swiper) => {
+  swiperInstance.value = swiper
+  const zoom = swiper.zoom
+  if (zoom.scale === 1) {
+    zoom.in()
+  } else {
+    zoom.out()
+  }
+}
+
+const handleWheel = (e) => {
+  if (!swiperInstance.value || !swiperInstance.value.zoom) return
+
+  e.preventDefault()
+  const zoom = swiperInstance.value.zoom
+  const delta = e.deltaY || e.detail || e.wheelDelta
+
+  if (delta < 0) {
+    // Прокрутка вверх - увеличение
+    if (zoom.scale < 3) {
+      zoom.in()
+    }
+  } else {
+    // Прокрутка вниз - уменьшение
+    if (zoom.scale > 1) {
+      zoom.out()
+    }
+  }
+}
+
+const onSwiper = (swiper) => {
+  swiperInstance.value = swiper
+}
+
+onMounted(() => {
+  document.addEventListener('wheel', handleWheel, { passive: false })
+})
+
+onUnmounted(() => {
+  document.removeEventListener('wheel', handleWheel)
+})
 </script>
 
 <style scoped lang="scss">
@@ -140,13 +194,28 @@ const closeGallery = () => {
     @include layout-aspect-mobile {
       padding: 2rem;
     }
+
+    .swiper-zoom-container {
+      width: 100%;
+      height: calc(100% - 6rem);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
   }
 
   &__image {
     max-width: 100%;
-    max-height: calc(100% - 6rem);
+    max-height: 100%;
     object-fit: contain;
     border-radius: 1rem;
+    cursor: zoom-in;
+  }
+
+  .swiper-slide-zoomed {
+    .gallery__image {
+      cursor: zoom-out;
+    }
   }
 
   &__caption {
