@@ -398,17 +398,17 @@ const spartakSlideIndex = ref(0)
 
 const spartakGalleryImages = [
   {
+    src: new URL('@/assets/images/home/spartak-2.webp', import.meta.url).href,
+    alt: 'Матч Спартак — Ростов',
+    caption: 'Матч Спартак — Ростов'
+  },
+  {
     src: new URL('@/assets/images/home/spartak.webp', import.meta.url).href,
     alt: 'Матч Спартак — Ростов',
     caption: 'Матч Спартак — Ростов'
   },
   {
     src: new URL('@/assets/images/home/spartak-1.webp', import.meta.url).href,
-    alt: 'Матч Спартак — Ростов',
-    caption: 'Матч Спартак — Ростов'
-  },
-  {
-    src: new URL('@/assets/images/home/spartak-2.webp', import.meta.url).href,
     alt: 'Матч Спартак — Ростов',
     caption: 'Матч Спартак — Ростов'
   },
