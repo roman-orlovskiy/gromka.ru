@@ -87,45 +87,6 @@
       </button>
     </section>
 
-<!-- Advantages Section -->
-    <section class="performance__section performance__section--gradient-2">
-      <div class="performance__container">
-        <h2 class="performance__section-title">Преимущества</h2>
-        <div class="performance__grid">
-          <div class="performance__card">
-            <div class="performance__card-icon">▲</div>
-            <h3 class="performance__card-title">Масштабируемость</h3>
-            <p>От небольших залов до стадионов</p>
-          </div>
-          <div class="performance__card">
-            <div class="performance__card-icon">◆</div>
-            <h3 class="performance__card-title">Простота участия</h3>
-            <p>Переход по ссылке и ввод номера места/геолокации</p>
-          </div>
-          <div class="performance__card">
-            <div class="performance__card-icon">★</div>
-            <h3 class="performance__card-title">Визуальный эффект</h3>
-            <p>Тысячи экранов создают синхронное световое шоу</p>
-          </div>
-          <div class="performance__card">
-            <div class="performance__card-icon">◉</div>
-            <h3 class="performance__card-title">Гибкость</h3>
-            <p>Адаптация под концерты, спектакли, митинги, спортивные мероприятия</p>
-          </div>
-          <div class="performance__card performance__card--highlighted">
-            <div class="performance__card-icon">■</div>
-            <h3 class="performance__card-title">Монетизация</h3>
-            <p>Через рекламу и брендированные активности</p>
-          </div>
-          <div class="performance__card">
-            <div class="performance__card-icon">●</div>
-            <h3 class="performance__card-title">Взаимодействие</h3>
-            <p>Через браузер или ТГ бот с последующей монетизацией</p>
-          </div>
-        </div>
-      </div>
-    </section>
-
     <!-- Stadium Photo Section -->
     <section class="performance__section performance__section--stadium">
       <div class="performance__container">
@@ -189,6 +150,74 @@
                 <path d="M8 3H5a2 2 0 0 0-2 2v3m13-5h3a2 2 0 0 1 2 2v3m-5 13h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
               </svg>
             </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+<!-- Advantages Section -->
+    <section class="performance__section performance__section--gradient-2">
+      <div class="performance__container">
+        <h2 class="performance__section-title">Преимущества</h2>
+        <div class="performance__grid">
+          <div class="performance__card">
+            <div class="performance__card-icon">▲</div>
+            <h3 class="performance__card-title">Масштабируемость</h3>
+            <p>От небольших залов до стадионов</p>
+          </div>
+          <div class="performance__card">
+            <div class="performance__card-icon">◆</div>
+            <h3 class="performance__card-title">Простота участия</h3>
+            <p>Переход по ссылке и ввод номера места/геолокации</p>
+          </div>
+          <div class="performance__card">
+            <div class="performance__card-icon">★</div>
+            <h3 class="performance__card-title">Визуальный эффект</h3>
+            <p>Тысячи экранов создают синхронное световое шоу</p>
+          </div>
+          <div class="performance__card">
+            <div class="performance__card-icon">◉</div>
+            <h3 class="performance__card-title">Гибкость</h3>
+            <p>Адаптация под концерты, спектакли, митинги, спортивные мероприятия</p>
+          </div>
+          <div class="performance__card performance__card--highlighted">
+            <div class="performance__card-icon">■</div>
+            <h3 class="performance__card-title">Монетизация</h3>
+            <p>Через рекламу и брендированные активности</p>
+          </div>
+          <div class="performance__card">
+            <div class="performance__card-icon">●</div>
+            <h3 class="performance__card-title">Взаимодействие</h3>
+            <p>Через браузер или ТГ бот с последующей монетизацией</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Monetization Section -->
+    <section class="performance__section performance__section--success">
+      <div class="performance__container">
+        <h2 class="performance__section-title">Монетизация</h2>
+        <div class="performance__grid performance__grid--four-cols">
+          <div class="performance__monetization-card">
+            <div class="performance__monetization-icon">◆</div>
+            <h3>Спецпроекты</h3>
+            <p>Уникальные под заказчика</p>
+          </div>
+          <div class="performance__monetization-card">
+            <div class="performance__monetization-icon">◉</div>
+            <h3>Рекламные интеграции</h3>
+            <p>Брендированные активности</p>
+          </div>
+          <div class="performance__monetization-card">
+            <div class="performance__monetization-icon">■</div>
+            <h3>Сувениры и реклама</h3>
+            <p>Продажа через платформу</p>
+          </div>
+          <div class="performance__monetization-card">
+            <div class="performance__monetization-icon">▲</div>
+            <h3>Фрибеты и ставки</h3>
+            <p>На текущее мероприятие</p>
           </div>
         </div>
       </div>
@@ -284,36 +313,6 @@
             Создать инновационный инструмент для организации массовых интерактивных шоу,
             увеличивая вовлеченность зрителей и открывая новые возможности для рекламы и брендирования.
           </p>
-        </div>
-      </div>
-    </section>
-
-
-    <!-- Monetization Section -->
-    <section class="performance__section performance__section--success">
-      <div class="performance__container">
-        <h2 class="performance__section-title">Монетизация</h2>
-        <div class="performance__grid performance__grid--four-cols">
-          <div class="performance__monetization-card">
-            <div class="performance__monetization-icon">◆</div>
-            <h3>Спецпроекты</h3>
-            <p>Уникальные под заказчика</p>
-          </div>
-          <div class="performance__monetization-card">
-            <div class="performance__monetization-icon">◉</div>
-            <h3>Рекламные интеграции</h3>
-            <p>Брендированные активности</p>
-          </div>
-          <div class="performance__monetization-card">
-            <div class="performance__monetization-icon">■</div>
-            <h3>Сувениры и реклама</h3>
-            <p>Продажа через платформу</p>
-          </div>
-          <div class="performance__monetization-card">
-            <div class="performance__monetization-icon">▲</div>
-            <h3>Фрибеты и ставки</h3>
-            <p>На текущее мероприятие</p>
-          </div>
         </div>
       </div>
     </section>
