@@ -818,7 +818,7 @@ const handleScroll = () => {
 
     @include layout-aspect-mobile {
       grid-template-columns: 1fr;
-      gap: 2rem;
+      gap: 1rem;
     }
   }
 
@@ -839,6 +839,10 @@ const handleScroll = () => {
     list-style: none;
     padding: 0;
     margin: 2rem 0;
+
+    @include layout-aspect-mobile {
+      margin-bottom: 0;
+    }
 
     li {
       padding: 1rem 0;
