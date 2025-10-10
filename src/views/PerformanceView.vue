@@ -129,9 +129,9 @@
     <!-- Stadium Photo Section -->
     <section class="performance__section performance__section--stadium">
       <div class="performance__container">
-        <h2 class="performance__section-title">Реальный запуск на матче Спартака</h2>
+        <h2 class="performance__section-title">Запуски на матчах Спартака</h2>
         <div class="performance__stadium-block">
-          <div class="performance__image-container performance__image-container--large performance__image-container--clickable" @click="openGallery(0)">
+          <div class="performance__image-container performance__image-container--large performance__image-container--clickable" @click="openSpartakGallery">
             <img
               src="@/assets/images/home/spartak.webp"
               alt="Реальный запуск на стадионе Спартак"
@@ -227,7 +227,7 @@
         <h2 class="performance__section-title">На что это может быть похоже?</h2>
         <div class="performance__comparison">
           <div class="performance__comparison-item">
-            <div class="performance__image-container performance__image-container--clickable" @click="openGallery(1)">
+            <div class="performance__image-container performance__image-container--clickable" @click="openGallery(0)">
               <img
                 src="@/assets/images/home/refs/img1.webp"
                 alt="Xylobands на концертах Coldplay"
@@ -238,7 +238,7 @@
             <p>Браслеты Xylobands на концертах Coldplay</p>
           </div>
           <div class="performance__comparison-item">
-            <div class="performance__image-container performance__image-container--clickable" @click="openGallery(2)">
+            <div class="performance__image-container performance__image-container--clickable" @click="openGallery(1)">
               <img
                 src="@/assets/images/home/refs/img2.webp"
                 alt="Дрон-шоу в небе"
@@ -249,7 +249,7 @@
             <p>Но с использованием мобильных устройств зрителей</p>
           </div>
           <div class="performance__comparison-item">
-            <div class="performance__image-container performance__image-container--clickable" @click="openGallery(3)">
+            <div class="performance__image-container performance__image-container--clickable" @click="openGallery(2)">
               <img
                 src="@/assets/images/home/refs/img3.webp"
                 alt="Интерактивный перформанс"
@@ -340,7 +340,15 @@
       </div>
     </section>
 
-    <!-- Image Gallery -->
+    <!-- Image Gallery for Spartak -->
+    <ImageGallery
+      :is-open="isSpartakGalleryOpen"
+      :images="spartakGalleryImages"
+      :initial-slide="0"
+      @close="closeSpartakGallery"
+    />
+
+    <!-- Image Gallery for Similar Cases -->
     <ImageGallery
       :is-open="isGalleryOpen"
       :images="galleryImages"
@@ -373,16 +381,30 @@ import { useMainStore } from '@/stores/main'
 
 const mainStore = useMainStore()
 
-// Галерея изображений
-const isGalleryOpen = ref(false)
-const currentSlide = ref(0)
+// Галерея изображений для Спартака
+const isSpartakGalleryOpen = ref(false)
 
-const galleryImages = [
+const spartakGalleryImages = [
   {
     src: new URL('@/assets/images/home/spartak.webp', import.meta.url).href,
     alt: 'Реальный запуск на стадионе Спартак',
     caption: 'Реальный запуск на матче Спартака'
-  },
+  }
+]
+
+const openSpartakGallery = () => {
+  isSpartakGalleryOpen.value = true
+}
+
+const closeSpartakGallery = () => {
+  isSpartakGalleryOpen.value = false
+}
+
+// Галерея изображений для аналогичных кейсов
+const isGalleryOpen = ref(false)
+const currentSlide = ref(0)
+
+const galleryImages = [
   {
     src: new URL('@/assets/images/home/refs/img1.webp', import.meta.url).href,
     alt: 'Xylobands на концертах Coldplay',
