@@ -131,12 +131,24 @@
       <div class="performance__container">
         <h2 class="performance__section-title">Запуски на матчах Спартака</h2>
         <div class="performance__stadium-block">
-          <div class="performance__image-container performance__image-container--large performance__image-container--clickable" @click="openSpartakGallery">
-            <img
-              src="@/assets/images/home/spartak.webp"
-              alt="Реальный запуск на стадионе Спартак"
-              class="performance__image"
-            />
+          <div class="performance__stadium-preview">
+            <div class="performance__image-container performance__image-container--large performance__image-container--clickable" @click="openSpartakGallery(0)">
+              <img
+                :src="spartakGalleryImages[0].src"
+                :alt="spartakGalleryImages[0].alt"
+                class="performance__image"
+              />
+              <button class="performance__arrow performance__arrow--left" @click="prevSpartakPhoto">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </button>
+              <button class="performance__arrow performance__arrow--right" @click="nextSpartakPhoto">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M9 18L15 12L9 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </button>
+            </div>
           </div>
           <div class="performance__stadium-info">
             <p>Даже при неполной посадке можно создавать визуальные волны или&nbsp;мерцания на стадионе.</p>
@@ -344,7 +356,7 @@
     <ImageGallery
       :is-open="isSpartakGalleryOpen"
       :images="spartakGalleryImages"
-      :initial-slide="0"
+      :initial-slide="spartakSlideIndex"
       @close="closeSpartakGallery"
     />
 
@@ -383,6 +395,7 @@ const mainStore = useMainStore()
 
 // Галерея изображений для Спартака
 const isSpartakGalleryOpen = ref(false)
+const spartakSlideIndex = ref(0)
 
 const spartakGalleryImages = [
   {
@@ -407,12 +420,23 @@ const spartakGalleryImages = [
   }
 ]
 
-const openSpartakGallery = () => {
+const openSpartakGallery = (index = 0) => {
+  spartakSlideIndex.value = index
   isSpartakGalleryOpen.value = true
 }
 
 const closeSpartakGallery = () => {
   isSpartakGalleryOpen.value = false
+}
+
+const nextSpartakPhoto = (e) => {
+  e.stopPropagation()
+  openSpartakGallery(1)
+}
+
+const prevSpartakPhoto = (e) => {
+  e.stopPropagation()
+  openSpartakGallery(3)
 }
 
 // Галерея изображений для аналогичных кейсов
@@ -1171,6 +1195,73 @@ const handleScroll = () => {
     strong {
       color: $color-spartak;
       font-weight: $font-weight-bold;
+    }
+  }
+
+  &__stadium-preview {
+    position: relative;
+    margin-bottom: 2rem;
+
+    .performance__image-container {
+      position: relative;
+    }
+  }
+
+  &__arrow {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba($color-black, 0.5);
+    border: none;
+    border-radius: 50%;
+    width: 5rem;
+    height: 5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: $color-white;
+    transition: all 0.3s ease;
+    z-index: 10;
+
+    &:hover {
+      background: rgba($color-black, 0.7);
+      transform: translateY(-50%) scale(1.1);
+    }
+
+    &:active {
+      transform: translateY(-50%) scale(0.95);
+    }
+
+    svg {
+      width: 2.4rem;
+      height: 2.4rem;
+    }
+
+    @include layout-aspect-mobile {
+      width: 4rem;
+      height: 4rem;
+
+      svg {
+        width: 2rem;
+        height: 2rem;
+      }
+    }
+
+    &--left {
+      left: 2rem;
+
+      @include layout-aspect-mobile {
+        left: 1rem;
+      }
+    }
+
+    &--right {
+      right: 2rem;
+
+      @include layout-aspect-mobile {
+        right: 1rem;
+      }
     }
   }
 
