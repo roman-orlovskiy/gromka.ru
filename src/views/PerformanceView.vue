@@ -919,7 +919,7 @@ const handleScroll = () => {
     }
 
     &--shifted-up {
-      object-position: center 30%;
+      object-position: center 70%;
     }
   }
 
