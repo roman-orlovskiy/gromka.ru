@@ -387,8 +387,23 @@ const isSpartakGalleryOpen = ref(false)
 const spartakGalleryImages = [
   {
     src: new URL('@/assets/images/home/spartak.webp', import.meta.url).href,
-    alt: 'Реальный запуск на стадионе Спартак',
-    caption: 'Реальный запуск на матче Спартака'
+    alt: 'Матч Спартак — Ростов',
+    caption: 'Матч Спартак — Ростов'
+  },
+  {
+    src: new URL('@/assets/images/home/spartak-1.webp', import.meta.url).href,
+    alt: 'Матч Спартак — Ростов',
+    caption: 'Матч Спартак — Ростов'
+  },
+  {
+    src: new URL('@/assets/images/home/spartak-2.webp', import.meta.url).href,
+    alt: 'Матч Спартак — Ростов',
+    caption: 'Матч Спартак — Ростов'
+  },
+  {
+    src: new URL('@/assets/images/home/spartak-3.webp', import.meta.url).href,
+    alt: 'ЖФК Спартак — ЖФК ЦСКА',
+    caption: 'ЖФК Спартак — ЖФК ЦСКА'
   }
 ]
 
