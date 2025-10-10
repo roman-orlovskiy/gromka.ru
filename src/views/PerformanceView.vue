@@ -3,7 +3,7 @@
     <!-- Hero Section -->
     <section class="performance__hero">
       <h1 class="performance__title">Gromka  – платформа для перформансов</h1>
-      <p class="performance__subtitle">Рисуйте динамические картины с помощью экранов телефонов</p>
+      <p class="performance__subtitle">Рисуйте динамические картины с помощью экранов<br>или <b>фонариков</b> телефонов</p>
       <div class="performance__hero-video">
         <video class="performance__video" autoplay loop muted src="/videos/gromka.mp4" type="video/mp4">
         Ваш браузер не поддерживает видео.
@@ -681,6 +681,10 @@ const handleScroll = () => {
     text-align: center;
     opacity: 0.95;
 
+    & b {
+      color: $color-black;
+    }
+
     @include layout-aspect-mobile {
       font-size: 1.5rem;
       margin-bottom: 2rem;
@@ -974,25 +978,24 @@ const handleScroll = () => {
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      width: 100vh;
-      height: 100vw;
-      max-width: 100vw;
-      max-height: 100vh;
       z-index: 9999;
       background: $color-black;
+      object-fit: contain;
 
-      // Если высота больше ширины, используем высоту как основу
+      // Для портретной ориентации (высота больше ширины)
       @media (orientation: portrait) {
         width: 100vw;
-        height: 177.78vw; // 16/9 * 100vw
+        height: 177.78vw; // 16/9 * 100vw для пропорции 9:16
         max-height: 100vh;
+        max-width: 56.25vh; // 9/16 * 100vh
       }
 
-      // Если ширина больше высоты, используем ширину как основу
+      // Для ландшафтной ориентации (ширина больше высоты)
       @media (orientation: landscape) {
-        width: 177.78vh; // 16/9 * 100vh
+        width: 56.25vh; // 9/16 * 100vh для пропорции 9:16
         height: 100vh;
         max-width: 100vw;
+        max-height: 177.78vw; // 16/9 * 100vw
       }
     }
   }
