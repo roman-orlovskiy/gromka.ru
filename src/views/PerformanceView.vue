@@ -17,7 +17,6 @@
     <!-- What is it Section -->
     <section id="what-is-project" class="performance__section performance__section--gradient-1">
       <div class="performance__container">
-        <h2 class="performance__section-title">Что это за проект?</h2>
         <div class="performance__content">
           <div class="performance__text">
             <p>Платформа для создания интерактивных световых перформансов с помощью мобильных устройств зрителей. Каждый телефон становится частью единого визуального шоу, формируя динамичные световые картины.</p>
