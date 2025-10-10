@@ -87,47 +87,6 @@
       </button>
     </section>
 
-    <!-- Demo Video Section -->
-    <section class="performance__demo">
-      <div class="performance__video-block">
-        <div class="performance__video-container" @click="toggleVideo">
-        <video
-          ref="verticalVideo"
-            class="performance__vertical-video"
-          src="/videos/demo.mp4"
-          type="video/mp4"
-          loop
-            @play="onVideoPlay"
-            @pause="onVideoPause"
-            @ended="onVideoEnded"
-        >
-          Ваш браузер не поддерживает видео.
-        </video>
-        <button
-          v-if="!isVideoPlaying"
-            class="performance__play-button"
-        >
-          {{ videoStarted ? '▶ Продолжить' : '▶ Реальные кейсы' }}
-        </button>
-        <button
-          v-else
-            class="performance__pause-button"
-        >
-          ⏸ Пауза
-        </button>
-          <button
-            class="performance__fullscreen-button"
-            @click.stop="toggleFullscreen"
-            title="Полноэкранный режим"
-          >
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M8 3H5a2 2 0 0 0-2 2v3m13-5h3a2 2 0 0 1 2 2v3m-5 13h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-        </button>
-      </div>
-    </div>
-    </section>
-
 <!-- Advantages Section -->
     <section class="performance__section performance__section--gradient-2">
       <div class="performance__container">
@@ -181,6 +140,43 @@
           </div>
           <div class="performance__stadium-info">
             <p>Даже при неполной посадке можно создавать визуальные волны или&nbsp;мерцания на стадионе.</p>
+          </div>
+        </div>
+        <div class="performance__video-block">
+          <div class="performance__video-container" @click="toggleVideo">
+            <video
+              ref="verticalVideo"
+              class="performance__vertical-video"
+              src="/videos/demo.mp4"
+              type="video/mp4"
+              loop
+              @play="onVideoPlay"
+              @pause="onVideoPause"
+              @ended="onVideoEnded"
+            >
+              Ваш браузер не поддерживает видео.
+            </video>
+            <button
+              v-if="!isVideoPlaying"
+              class="performance__play-button"
+            >
+              {{ videoStarted ? '▶ Продолжить' : '▶ Реальные кейсы' }}
+            </button>
+            <button
+              v-else
+              class="performance__pause-button"
+            >
+              ⏸ Пауза
+            </button>
+            <button
+              class="performance__fullscreen-button"
+              @click.stop="toggleFullscreen"
+              title="Полноэкранный режим"
+            >
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M8 3H5a2 2 0 0 0-2 2v3m13-5h3a2 2 0 0 1 2 2v3m-5 13h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
           </div>
         </div>
       </div>
@@ -862,12 +858,6 @@ const handleScroll = () => {
     min-height: unset;
   }
 
-  /* Demo Video */
-  &__demo {
-    padding: 2rem;
-    background: linear-gradient(135deg, #FF9F1C 0%, #FFB84D 30%, #FFFFFF 70%, #FFB84D 100%);
-  }
-
   &__video-block {
     width: 100%;
     max-width: 90rem;
@@ -1144,6 +1134,19 @@ const handleScroll = () => {
     strong {
       color: $color-spartak;
       font-weight: $font-weight-bold;
+    }
+  }
+
+  &__section--stadium {
+    .performance__video-block {
+      margin-top: 3rem;
+      max-width: 90rem;
+      margin-left: auto;
+      margin-right: auto;
+
+      @include layout-aspect-mobile {
+        margin-top: 2rem;
+      }
     }
   }
 
