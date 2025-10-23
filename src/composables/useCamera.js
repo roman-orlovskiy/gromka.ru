@@ -11,12 +11,40 @@ export const useCamera = () => {
   const cachedMethod = ref(null) // Кэшированный успешный метод
   const cachedStream = ref(null) // Кэшированный стрим
   const isProcessing = ref(false) // Флаг для предотвращения множественных вызовов
+  const isInitialized = ref(false) // Флаг инициализации
+  const backCameras = ref([]) // Предзагруженные back камеры
+  const allCameras = ref([]) // Предзагруженные все камеры
 
-  const getDevices = async () => {
+  // Инициализация - предзагрузка устройств
+  const initialize = async () => {
+    if (isInitialized.value) return
+
     try {
       devices.value = await navigator.mediaDevices.enumerateDevices()
+
+      // Предзагружаем back камеры
+      backCameras.value = devices.value.filter(device => {
+        const label = device.label.toLowerCase()
+        return device.kind === 'videoinput' && (
+          label.includes('back') ||
+          label.includes('rear') ||
+          label.includes('задняя') ||
+          label.includes('environment')
+        )
+      })
+
+      // Предзагружаем все камеры
+      allCameras.value = devices.value.filter(device => device.kind === 'videoinput')
+
+      isInitialized.value = true
     } catch (err) {
-      error.value = `Ошибка получения устройств: ${err.message}`
+      error.value = `Ошибка инициализации устройств: ${err.message}`
+    }
+  }
+
+  const getDevices = async () => {
+    if (!isInitialized.value) {
+      await initialize()
     }
   }
 
@@ -51,7 +79,7 @@ export const useCamera = () => {
     }
   }
 
-  // Включение фонарика
+  // Включение фонарика с параллельными попытками
   const turnOnFlashlight = async () => {
     // Если уже знаем, что фонарик не поддерживается, не пытаемся
     if (isFlashlightSupported.value === false) {
@@ -64,6 +92,9 @@ export const useCamera = () => {
     }
 
     try {
+      // Инициализируем устройства если нужно
+      await initialize()
+
       // Если есть кэшированный метод, пробуем его первым
       if (cachedMethod.value) {
         if (await tryCachedMethod()) {
@@ -72,25 +103,23 @@ export const useCamera = () => {
         }
       }
 
-      // Метод 1: Попытка использовать environment с torch
-      if (await tryEnvironmentTorch()) {
-        cachedMethod.value = 'environment'
-        isFlashlightOn.value = true
-        return
-      }
+      // Параллельные попытки всех методов
+      const methods = [
+        tryEnvironmentTorch(),
+        tryBackCameraTorch(),
+        tryAnyCameraTorch()
+      ]
 
-      // Метод 2: Попытка использовать back камеру с torch
-      if (await tryBackCameraTorch()) {
-        cachedMethod.value = 'back'
-        isFlashlightOn.value = true
-        return
-      }
+      // Используем Promise.race для быстрого результата
+      const results = await Promise.allSettled(methods)
 
-      // Метод 3: Fallback - использование любой доступной камеры
-      if (await tryAnyCameraTorch()) {
-        cachedMethod.value = 'any'
-        isFlashlightOn.value = true
-        return
+      for (let i = 0; i < results.length; i++) {
+        if (results[i].status === 'fulfilled' && results[i].value) {
+          const methodNames = ['environment', 'back', 'any']
+          cachedMethod.value = methodNames[i]
+          isFlashlightOn.value = true
+          return
+        }
       }
 
       throw new Error('Не удалось включить фонарик ни одним из доступных методов')
@@ -100,7 +129,7 @@ export const useCamera = () => {
     }
   }
 
-  // Выключение фонарика
+  // Быстрое выключение фонарика
   const turnOffFlashlight = async () => {
     // Если фонарик уже выключен, ничего не делаем
     if (!isFlashlightOn.value) {
@@ -108,20 +137,12 @@ export const useCamera = () => {
     }
 
     try {
+      // Минимальные операции - только выключение torch
       if (camera.value && camera.value.getTracks) {
-        camera.value.getTracks().forEach(track => {
-          if (track.getCapabilities && track.getCapabilities().torch) {
-            track.applyConstraints({ advanced: [{ torch: false }] })
-          }
-          track.stop()
-        })
-        camera.value = null
-      }
-
-      // Очищаем кэшированный стрим при выключении
-      if (cachedStream.value) {
-        cachedStream.value.getTracks().forEach(track => track.stop())
-        cachedStream.value = null
+        const videoTrack = camera.value.getVideoTracks()[0]
+        if (videoTrack && videoTrack.getCapabilities && videoTrack.getCapabilities().torch) {
+          await videoTrack.applyConstraints({ advanced: [{ torch: false }] })
+        }
       }
 
       isFlashlightOn.value = false
@@ -151,7 +172,7 @@ export const useCamera = () => {
     }
   }
 
-  // Метод 1: Попытка использовать environment с torch
+  // Метод 1: Попытка использовать environment с torch (минимальные constraints)
   const tryEnvironmentTorch = async (useCache = false) => {
     try {
       let stream
@@ -163,7 +184,10 @@ export const useCamera = () => {
         stream = await navigator.mediaDevices.getUserMedia({
           video: {
             facingMode: 'environment',
-            torch: true
+            torch: true,
+            width: { ideal: 320 },
+            height: { ideal: 240 },
+            frameRate: { ideal: 15 }
           }
         })
 
@@ -190,7 +214,7 @@ export const useCamera = () => {
     }
   }
 
-  // Метод 2: Попытка использовать back камеру с torch
+  // Метод 2: Попытка использовать back камеру с torch (упрощенные проверки)
   const tryBackCameraTorch = async (useCache = false) => {
     try {
       let stream
@@ -199,31 +223,21 @@ export const useCamera = () => {
       if (useCache && cachedStream.value) {
         stream = cachedStream.value
       } else {
-        // Получаем список устройств
-        await getDevices()
-
-        // Фильтруем камеры по названию (back, rear, задняя)
-        const backCameras = devices.value.filter(device => {
-          const label = device.label.toLowerCase()
-          return device.kind === 'videoinput' && (
-            label.includes('back') ||
-            label.includes('rear') ||
-            label.includes('задняя') ||
-            label.includes('environment')
-          )
-        })
-
-        if (backCameras.length === 0) {
+        // Используем предзагруженные back камеры
+        if (backCameras.value.length === 0) {
           return false
         }
 
         // Берем первую back камеру
-        const backCamera = backCameras[0]
+        const backCamera = backCameras.value[0]
 
         stream = await navigator.mediaDevices.getUserMedia({
           video: {
             deviceId: { exact: backCamera.deviceId },
-            torch: true
+            torch: true,
+            width: { ideal: 320 },
+            height: { ideal: 240 },
+            frameRate: { ideal: 15 }
           }
         })
 
@@ -249,7 +263,7 @@ export const useCamera = () => {
     }
   }
 
-  // Метод 3: Fallback - использование любой доступной камеры
+  // Метод 3: Fallback - использование любой доступной камеры (упрощенные проверки)
   const tryAnyCameraTorch = async (useCache = false) => {
     try {
       let stream
@@ -258,16 +272,16 @@ export const useCamera = () => {
       if (useCache && cachedStream.value) {
         stream = cachedStream.value
       } else {
-        await getDevices()
-
-        const videoDevices = devices.value.filter(device => device.kind === 'videoinput')
-
-        for (const device of videoDevices) {
+        // Используем предзагруженные камеры
+        for (const device of allCameras.value) {
           try {
             stream = await navigator.mediaDevices.getUserMedia({
               video: {
                 deviceId: { exact: device.deviceId },
-                torch: true
+                torch: true,
+                width: { ideal: 320 },
+                height: { ideal: 240 },
+                frameRate: { ideal: 15 }
               }
             })
 
@@ -329,6 +343,9 @@ export const useCamera = () => {
       cachedStream.value = null
     }
     isFlashlightSupported.value = null
+    isInitialized.value = false
+    backCameras.value = []
+    allCameras.value = []
   }
 
   return {
@@ -338,6 +355,8 @@ export const useCamera = () => {
     isFlashlightSupported,
     error,
     isProcessing,
+    isInitialized,
+    initialize,
     getDevices,
     toggleFlashlight,
     turnOnFlashlight,
