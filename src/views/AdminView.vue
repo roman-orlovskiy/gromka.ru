@@ -87,7 +87,6 @@
 <script setup>
 import { ref } from 'vue'
 import ButtonComp from '@/components/ButtonComp.vue'
-import { broadcast, getConnectionsCount } from '@/services/api'
 
 const isLoading = ref(false)
 const showSuccess = ref(false)
@@ -151,78 +150,6 @@ const onBroadcastClick = async (percentage) => {
       error: error.message,
       message: 'Ошибка при передаче сигнала'
     }
-  }
-}
-
-const onBroadcastClick__ = async (percentage) => {
-  isLoading.value = true
-  showSuccess.value = false
-
-  try {
-    // Получаем количество подключений
-    const connectionsData = await getConnectionsCount()
-    const totalConnections = connectionsData.total || 0
-
-    // Вычисляем количество шагов (по 500 записей на шаг)
-    const stepSize = 2500
-    const totalSteps = Math.ceil(totalConnections / stepSize)
-
-    // Создаем массив шагов
-    const steps = Array.from({ length: totalSteps }, (_, i) => i)
-
-    // Функция для выполнения запросов с задержкой
-    const executeWithDelay = async (step, delay) => {
-      await new Promise(resolve => setTimeout(resolve, delay))
-      return broadcast({ type: 'light-on', percentage }, step)
-    }
-
-    // Выполняем запросы с задержкой 100мс между каждым
-    const broadcastPromises = steps.map((step, index) =>
-      executeWithDelay(step, index * 100)
-    )
-
-    // Ждем завершения всех запросов
-    const responses = await Promise.allSettled(broadcastPromises)
-
-    // Собираем результаты
-    let totalSuccessful = 0
-    let totalFailed = 0
-    const errors = []
-
-    responses.forEach((result, index) => {
-      if (result.status === 'fulfilled') {
-        const response = result.value
-        totalSuccessful += response.successful || 0
-        totalFailed += response.failed || 0
-      } else {
-        console.error(`Error in step ${index}:`, result.reason)
-        errors.push({ step: index, error: result.reason.message })
-      }
-    })
-
-    // Обновляем последний результат
-    lastResult.value = {
-      timestamp: new Date(),
-      percentage,
-      totalConnections,
-      successful: totalSuccessful,
-      failed: totalFailed,
-      messageSent: { type: 'light-on', percentage },
-      steps: responses.length,
-      errors: errors.length > 0 ? errors : undefined
-    }
-
-    // Показываем состояние успеха
-    isLoading.value = false
-    showSuccess.value = true
-
-    // Автоматически скрываем через 1.5 секунды
-    setTimeout(() => {
-      showSuccess.value = false
-    }, 1500)
-  } catch (e) {
-    console.error(e)
-    isLoading.value = false
   }
 }
 
