@@ -1,9 +1,9 @@
 <template>
-  <div class="sound-view" :class="{ 'sound-view--white': isWhite, 'sound-view--red': isRed }">
+  <div class="sound-view" :class="soundViewClasses">
     <!-- Кнопка запуска -->
     <div v-if="!isStarted" class="sound-view__start">
       <div class="sound-view__content">
-        <div class="sound-view__title">Приемник ультразвуковых сигналов</div>
+        <div class="sound-view__title">Световой перформанс</div>
 
         <div class="sound-view__instructions">
           <div class="sound-view__instruction-item">
@@ -11,7 +11,7 @@
               <div class="sound-view__instruction-number">1</div>
             </div>
             <div class="sound-view__instruction-text">
-              Разреши доступ к <b>микрофону</b>
+              Разреши доступ к <b>микрофону и камере</b>
             </div>
           </div>
           <div class="sound-view__instruction-item">
@@ -19,7 +19,7 @@
               <div class="sound-view__instruction-number">2</div>
             </div>
             <div class="sound-view__instruction-text">
-              Нажми "Начать" для <b>прослушивания сигналов</b>
+              Нажми "Начать"
             </div>
           </div>
         </div>
@@ -34,9 +34,9 @@
     <div v-if="isStarted" class="sound-view__status">
       <div class="status-indicator">
         <div class="status-indicator__light" :class="{
-          'status-indicator__light--white': isWhite,
-          'status-indicator__light--red': isRed,
-          'status-indicator__light--off': !isWhite && !isRed
+          'status-indicator__light--white': isLightOn,
+          'status-indicator__light--black': !isLightOn,
+          'status-indicator__light--off': false
         }"></div>
         <div class="status-indicator__text">
           <div v-if="isListening" class="listening-text">Прослушивание...</div>
@@ -57,16 +57,27 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import ButtonComp from '@/components/ButtonComp.vue'
 
 const isStarted = ref(false)
 const isListening = ref(false)
 const hasPermission = ref(false)
-const isWhite = ref(false)
-const isRed = ref(false)
+const isLightOn = ref(null)
 const currentFrequency = ref(0)
 const lastSignal = ref(null)
+
+// Computed для классов звукового вида
+const soundViewClasses = computed(() => {
+  if (isLightOn.value === null) {
+    return {
+    }
+  }
+  return {
+    'sound-view--white': isLightOn.value,
+    'sound-view--black': !isLightOn.value
+  }
+})
 
 let audioContext = null
 let analyser = null
@@ -167,14 +178,12 @@ const detectSignal = (frequency, amplitude) => {
   // Частота ~9000 Гц = флаг 1 (белый)
   if (frequency >= 17500 && frequency <= 18500) {
     flag = 1
-    isWhite.value = true
-    isRed.value = false
+    isLightOn.value = true
   }
-  // Частота ~9700 Гц = флаг 0 (красный)
+  // Частота ~9700 Гц = флаг 0 (черный)
   else if (frequency >= 18500 && frequency <= 19500) {
     flag = 0
-    isWhite.value = false
-    isRed.value = true
+    isLightOn.value = false
   }
   else {
     // Неизвестная частота - флаг остается прежним
@@ -246,8 +255,8 @@ onUnmounted(() => {
     background: $color-white !important;
   }
 
-  &--red {
-    background: $color-error !important;
+  &--black {
+    background: $color-black !important;
   }
 }
 
@@ -342,9 +351,9 @@ onUnmounted(() => {
     box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
   }
 
-  &--red {
-    background: $color-error;
-    box-shadow: 0 0 10px rgba($color-error, 0.5);
+  &--black {
+    background: $color-black;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
   }
 
   &--off {
