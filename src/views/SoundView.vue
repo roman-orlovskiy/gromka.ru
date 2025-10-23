@@ -81,6 +81,7 @@ import { storeToRefs } from 'pinia'
 import ButtonComp from '@/components/ButtonComp.vue'
 import { useAudio } from '@/composables/useAudio'
 import { useCamera } from '@/composables/useCamera'
+import { useWakeLock } from '@/composables/useWakeLock'
 import { useMainStore } from '@/stores/main'
 
 const isStarted = ref(false)
@@ -106,6 +107,12 @@ const {
   turnOffFlashlight,
   checkFlashlightSupport
 } = useCamera()
+
+// Используем composable для предотвращения засыпания экрана
+const {
+  requestWakeLock,
+  releaseWakeLock
+} = useWakeLock()
 
 
 // Computed для классов звукового вида
@@ -145,6 +152,9 @@ watch(isLightOn, async (newValue) => {
 const handleStart = async () => {
   isStarted.value = true
 
+  // Активируем Wake Lock для предотвращения засыпания экрана
+  await requestWakeLock()
+
   // Проверяем поддержку фонарика
   const hasFlashlight = await checkFlashlightSupport()
   if (hasFlashlight) {
@@ -167,6 +177,9 @@ onUnmounted(async () => {
   } catch (error) {
     console.warn('Ошибка выключения фонарика при размонтировании:', error)
   }
+
+  // Деактивируем Wake Lock при размонтировании
+  await releaseWakeLock()
 
   cleanup()
 })
@@ -373,6 +386,31 @@ onUnmounted(async () => {
   font-size: 1rem;
   color: $color-error;
   margin-top: 0.5rem;
+}
+
+.wake-lock-status {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.wake-lock-status__label {
+  font-size: 1.2rem;
+  color: $color-gray-300;
+}
+
+.wake-lock-status__value {
+  font-size: 1.4rem;
+  font-weight: 600;
+
+  &--active {
+    color: $color-success;
+  }
+
+  &--inactive {
+    color: $color-gray-400;
+  }
 }
 
 // Адаптивность для мобильных устройств
