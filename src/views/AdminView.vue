@@ -22,26 +22,49 @@
           </div>
         </div>
         <div class="status-plate__details">
-          <div class="status-detail">
-            <span class="status-detail__label">Шагов выполнено:</span>
-            <span class="status-detail__value">{{ lastResult.steps || 1 }}</span>
-          </div>
-          <div class="status-detail">
-            <span class="status-detail__label">Всего подключений:</span>
-            <span class="status-detail__value">{{ lastResult.totalConnections }}</span>
-          </div>
-          <div class="status-detail">
-            <span class="status-detail__label">Успешно отправлено:</span>
-            <span class="status-detail__value status-detail__value--success">{{ lastResult.successful }}</span>
-          </div>
-          <div class="status-detail">
-            <span class="status-detail__label">Ошибок:</span>
-            <span class="status-detail__value status-detail__value--error">{{ lastResult.failed }}</span>
-          </div>
-          <div v-if="lastResult.errors && lastResult.errors.length > 0" class="status-detail">
-            <span class="status-detail__label">Ошибки по шагам:</span>
-            <span class="status-detail__value status-detail__value--error">{{ lastResult.errors.length }}</span>
-          </div>
+          <!-- Отображение для ультразвуковых сигналов -->
+          <template v-if="lastResult.type === 'ultrasonic'">
+            <div class="status-detail">
+              <span class="status-detail__label">Флаг:</span>
+              <span class="status-detail__value">{{ lastResult.flag }}</span>
+            </div>
+            <div v-if="lastResult.frequency" class="status-detail">
+              <span class="status-detail__label">Частота:</span>
+              <span class="status-detail__value">{{ lastResult.frequency }}</span>
+            </div>
+            <div v-if="lastResult.message" class="status-detail">
+              <span class="status-detail__label">Статус:</span>
+              <span class="status-detail__value">{{ lastResult.message }}</span>
+            </div>
+            <div v-if="lastResult.error" class="status-detail">
+              <span class="status-detail__label">Ошибка:</span>
+              <span class="status-detail__value status-detail__value--error">{{ lastResult.error }}</span>
+            </div>
+          </template>
+
+          <!-- Отображение для обычных broadcast запросов -->
+          <template v-else>
+            <div class="status-detail">
+              <span class="status-detail__label">Шагов выполнено:</span>
+              <span class="status-detail__value">{{ lastResult.steps || 1 }}</span>
+            </div>
+            <div class="status-detail">
+              <span class="status-detail__label">Всего подключений:</span>
+              <span class="status-detail__value">{{ lastResult.totalConnections }}</span>
+            </div>
+            <div class="status-detail">
+              <span class="status-detail__label">Успешно отправлено:</span>
+              <span class="status-detail__value status-detail__value--success">{{ lastResult.successful }}</span>
+            </div>
+            <div class="status-detail">
+              <span class="status-detail__label">Ошибок:</span>
+              <span class="status-detail__value status-detail__value--error">{{ lastResult.failed }}</span>
+            </div>
+            <div v-if="lastResult.errors && lastResult.errors.length > 0" class="status-detail">
+              <span class="status-detail__label">Ошибки по шагам:</span>
+              <span class="status-detail__value status-detail__value--error">{{ lastResult.errors.length }}</span>
+            </div>
+          </template>
         </div>
       </div>
       <div v-else class="status-plate__empty">
@@ -71,6 +94,67 @@ const showSuccess = ref(false)
 const lastResult = ref(null)
 
 const onBroadcastClick = async (percentage) => {
+  try {
+    // Создаем AudioContext для генерации ультразвуковых сигналов
+    const ctx = new (window.AudioContext || window.webkitAudioContext)()
+
+    // Функция для отправки ультразвукового сигнала
+    const sendFlag = (flag) => {
+      const oscillator = ctx.createOscillator()
+      const gainNode = ctx.createGain()
+
+      // Частота для 1 и 0
+      const frequency = flag === 1 ? 18000 : 19000
+
+      oscillator.frequency.value = frequency
+      oscillator.connect(gainNode)
+      gainNode.connect(ctx.destination)
+
+      // Устанавливаем громкость (0.2 для безопасности)
+      gainNode.gain.setValueAtTime(0.2, ctx.currentTime)
+
+      // Запускаем и останавливаем осциллятор
+      oscillator.start()
+      oscillator.stop(ctx.currentTime + 1) // длительность 1 сек
+
+      console.log(`Передан флаг ${flag} (${frequency} Гц)`)
+    }
+
+    // Определяем флаг на основе процента
+    const flag = percentage > 50 ? 1 : 0
+
+    // Отправляем сигнал
+    sendFlag(flag)
+
+    // Обновляем статус
+    lastResult.value = {
+      timestamp: new Date(),
+      percentage,
+      type: 'ultrasonic',
+      flag: flag,
+      frequency: flag === 1 ? '18000 Гц' : '19000 Гц',
+      message: `Передан флаг ${flag}`
+    }
+
+    // Показываем состояние успеха
+    showSuccess.value = true
+    setTimeout(() => {
+      showSuccess.value = false
+    }, 1500)
+
+  } catch (error) {
+    console.error('Ошибка при передаче ультразвукового сигнала:', error)
+    // Показываем ошибку пользователю
+    lastResult.value = {
+      timestamp: new Date(),
+      percentage,
+      error: error.message,
+      message: 'Ошибка при передаче сигнала'
+    }
+  }
+}
+
+const onBroadcastClick__ = async (percentage) => {
   isLoading.value = true
   showSuccess.value = false
 

@@ -26,6 +26,9 @@ export default defineConfig({
     port: 8080,
     host: true,
     https: false,
+    allowedHosts: [
+      '55cc9k-78-40-190-32.ru.tuna.am'
+    ],
     proxy: {
       '/api': {
         target: 'http://localhost:8000',

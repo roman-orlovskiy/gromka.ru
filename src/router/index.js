@@ -72,6 +72,11 @@ const router = createRouter({
       name: 'flashlight',
       component: () => import('../views/FlashlightView.vue'),
     },
+    {
+      path: '/sound',
+      name: 'sound',
+      component: () => import('../views/SoundView.vue'),
+    },
   ],
 })
 
