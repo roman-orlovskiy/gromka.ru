@@ -114,7 +114,7 @@ const onBroadcastClick = async (percentage) => {
 
       // Запускаем и останавливаем осциллятор
       oscillator.start()
-      oscillator.stop(ctx.currentTime + 0.1) // длительность 0.1 сек
+      oscillator.stop(ctx.currentTime + 0.05) // длительность 0.1 сек
 
       console.log(`Передан флаг ${flag} (${frequency} Гц)`)
     }
