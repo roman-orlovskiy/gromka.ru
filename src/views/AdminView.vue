@@ -103,7 +103,7 @@ const onBroadcastClick = async (percentage) => {
       const gainNode = ctx.createGain()
 
       // Частота для 1 и 0
-      const frequency = flag === 1 ? 18000 : 19000
+      const frequency = flag === 1 ? 19000 : 18000
 
       oscillator.frequency.value = frequency
       oscillator.connect(gainNode)
@@ -114,7 +114,7 @@ const onBroadcastClick = async (percentage) => {
 
       // Запускаем и останавливаем осциллятор
       oscillator.start()
-      oscillator.stop(ctx.currentTime + 0.05) // длительность 0.1 сек
+      oscillator.stop(ctx.currentTime + 0.15) // длительность 0.1 сек
 
       console.log(`Передан флаг ${flag} (${frequency} Гц)`)
     }
@@ -131,7 +131,7 @@ const onBroadcastClick = async (percentage) => {
       percentage,
       type: 'ultrasonic',
       flag: flag,
-      frequency: flag === 1 ? '18000 Гц' : '19000 Гц',
+      frequency: flag === 1 ? '19000 Гц' : '18000 Гц',
       message: `Передан флаг ${flag}`
     }
 
