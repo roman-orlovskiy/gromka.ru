@@ -44,53 +44,57 @@ export function useAudio() {
     analyser = audioContext.createAnalyser()
     microphone = audioContext.createMediaStreamSource(stream)
 
-  // Настройки анализатора для лучшего разрешения в ультразвуковом диапазоне
-  analyser.fftSize = 4096
-  analyser.smoothingTimeConstant = 0.15
+    // Настройки анализатора для мгновенной реакции на импульсы
+    analyser.fftSize = 4096
+    analyser.smoothingTimeConstant = 0 // мгновенная реакция на импульсы
 
     microphone.connect(analyser)
 
     const bufferLength = analyser.frequencyBinCount
     dataArray = new Uint8Array(bufferLength)
 
+    // Предвычисляем константы для ультразвукового диапазона
+    const MIN_FREQ = 17500
+    const MAX_FREQ = 19500
+    const minIndex = Math.floor((MIN_FREQ * analyser.fftSize) / audioContext.sampleRate)
+    const maxIndex = Math.min(
+      Math.ceil((MAX_FREQ * analyser.fftSize) / audioContext.sampleRate),
+      bufferLength
+    )
+    const frequencyResolution = audioContext.sampleRate / analyser.fftSize
+    const AMPLITUDE_THRESHOLD = 80
+
     isListening.value = true
-    startListening()
+    startListening(minIndex, maxIndex, frequencyResolution, AMPLITUDE_THRESHOLD)
   }
 
-  // Начало прослушивания
-  const startListening = () => {
+  // Начало прослушивания с предвычисленными константами
+  const startListening = (minIndex, maxIndex, frequencyResolution, amplitudeThreshold) => {
     const detectFrequency = () => {
       if (!analyser) return
 
       analyser.getByteFrequencyData(dataArray)
 
-      // Константы для ультразвукового диапазона
-      const MIN_FREQ = 17500
-      const MAX_FREQ = 19500
-
-      // Определяем диапазон индексов для ультразвука (17500-19500 Гц)
-      const minIndex = Math.floor((MIN_FREQ * analyser.fftSize) / audioContext.sampleRate)
-      const maxIndex = Math.ceil((MAX_FREQ * analyser.fftSize) / audioContext.sampleRate)
-
       // Находим доминирующую частоту ТОЛЬКО в ультразвуковом диапазоне
       let maxValue = 0
       let maxValueIndex = 0
 
-      for (let i = minIndex; i < Math.min(maxIndex, dataArray.length); i++) {
+      // Оптимизированный цикл без Math.min
+      for (let i = minIndex; i < maxIndex; i++) {
         if (dataArray[i] > maxValue) {
           maxValue = dataArray[i]
           maxValueIndex = i
         }
       }
 
-      // Конвертируем индекс в частоту
-      const frequency = (maxValueIndex * audioContext.sampleRate) / analyser.fftSize
+      // Быстрое вычисление частоты с предвычисленным разрешением
+      const frequency = maxValueIndex * frequencyResolution
 
-      // Обновляем currentFrequency только если есть значимый сигнал в ультразвуковом диапазоне
+      // Обновляем currentFrequency только если есть значимый сигнал
       if (maxValue > 0) {
-        currentFrequency.value = Math.round(frequency)
+        currentFrequency.value = frequency | 0 // быстрое целочисленное округление
         // Определяем сигнал на основе частоты
-        detectSignal(frequency, maxValue)
+        detectSignal(frequency, maxValue, amplitudeThreshold)
       } else {
         // Если нет сигнала в ультразвуковом диапазоне, сбрасываем частоту
         currentFrequency.value = 0
@@ -102,42 +106,31 @@ export function useAudio() {
     detectFrequency()
   }
 
-  // Определение сигнала по частоте (упрощенная версия для ультразвукового диапазона)
-  const detectSignal = (frequency, amplitude) => {
-    // Порог амплитуды для определения сигнала (увеличен для ультразвука)
-    const amplitudeThreshold = 80
+  // Оптимизированное определение сигнала по частоте
+  const detectSignal = (frequency, amplitude, amplitudeThreshold) => {
+    if (amplitude < amplitudeThreshold) return
 
-    if (amplitude < amplitudeThreshold) {
-      // Нет сигнала достаточной силы
-      return
-    }
-
-    // Определяем флаг по частоте (только для ультразвукового диапазона)
-    let flag = null
-
-    // Частота ~18000 Гц = флаг 1 (белый)
-    if (frequency >= 17500 && frequency <= 18500) {
+    // Упрощенная логика определения флага
+    let flag
+    if (frequency <= 18500) {
       flag = 1
       isLightOn.value = true
-    }
-    // Частота ~19000 Гц = флаг 0 (черный)
-    else if (frequency >= 18500 && frequency <= 19500) {
+    } else {
       flag = 0
       isLightOn.value = false
     }
-    else {
-      // Частота вне целевого диапазона - игнорируем
-      return
-    }
 
-    // Сохраняем последний сигнал
+    // Быстрое округление частоты один раз
+    const roundedFreq = frequency | 0
+
+    // Сохраняем последний сигнал с оптимизированным timestamp
     lastSignal.value = {
       flag,
-      frequency: Math.round(frequency),
-      timestamp: new Date()
+      frequency: roundedFreq,
+      timestamp: Date.now() // быстрее чем new Date()
     }
 
-    console.log(`Обнаружен ультразвуковой сигнал: флаг ${flag}, частота ${Math.round(frequency)} Гц, амплитуда ${amplitude}`)
+    console.log(`Сигнал: флаг ${flag}, ${roundedFreq} Гц, ${amplitude}`)
   }
 
   // Очистка ресурсов
