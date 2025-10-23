@@ -77,17 +77,20 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { storeToRefs } from 'pinia'
 import ButtonComp from '@/components/ButtonComp.vue'
 import { useAudio } from '@/composables/useAudio'
 import { useCamera } from '@/composables/useCamera'
+import { useMainStore } from '@/stores/main'
 
 const isStarted = ref(false)
+const mainStore = useMainStore()
+const { isLightOn } = storeToRefs(mainStore)
 
 // Используем composable для аудио
 const {
   isListening,
   hasPermission,
-  isLightOn,
   currentFrequency,
   lastSignal,
   requestMicrophonePermission,

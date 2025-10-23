@@ -1,9 +1,12 @@
 import { ref } from 'vue'
+import { storeToRefs } from 'pinia'
+import { useMainStore } from '@/stores/main'
 
 export function useAudio() {
+  const mainStore = useMainStore()
+  const { isLightOn } = storeToRefs(mainStore)
   const isListening = ref(false)
   const hasPermission = ref(false)
-  const isLightOn = ref(null)
   const currentFrequency = ref(0)
   const lastSignal = ref(null)
 
@@ -152,7 +155,6 @@ export function useAudio() {
     // Состояние
     isListening,
     hasPermission,
-    isLightOn,
     currentFrequency,
     lastSignal,
 

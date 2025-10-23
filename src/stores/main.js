@@ -8,6 +8,7 @@ export const useMainStore = defineStore('main', () => {
   const signature = ref(null);
   const startAppParam = ref(null);
   const user = ref({});
+  const isLightOn = ref(null);
 
   const isUserLoaded = computed(() => user.value?.id);
   const tgUsernameError = computed(() => {
@@ -86,5 +87,6 @@ export const useMainStore = defineStore('main', () => {
     getUserFromApi,
     isUserLoaded,
     tgUsernameError,
+    isLightOn,
   };
 });
