@@ -112,10 +112,10 @@ export function useAudio() {
 
     // Упрощенная логика определения флага
     let flag
-    if (frequency >= 18500) {
+    if (frequency >= 18800 && frequency <= 19200) {
       flag = 1  // 19000 Гц = флаг 1 (белый)
       isLightOn.value = true
-    } else {
+    } else if (frequency >= 17800 && frequency <= 18200) {
       flag = 0  // 18000 Гц = флаг 0 (черный)
       isLightOn.value = false
     }
