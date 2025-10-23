@@ -134,7 +134,7 @@ const startListening = () => {
     }
 
     // Конвертируем индекс в частоту
-    const frequency = (maxIndex * audioContext.sampleRate) / (analyser.fftSize * 2)
+    const frequency = (maxIndex * audioContext.sampleRate) / (analyser.fftSize)
     currentFrequency.value = Math.round(frequency)
 
     // Определяем сигнал на основе частоты
@@ -151,32 +151,33 @@ const detectSignal = (frequency, amplitude) => {
   // Порог амплитуды для определения сигнала
   const amplitudeThreshold = 50
 
+  // Проверяем, что частота выше 8000 Гц
+  if (frequency < 8000) {
+    return
+  }
+
   if (amplitude < amplitudeThreshold) {
-    // Нет сигнала
-    isWhite.value = false
-    isRed.value = false
+    // Нет сигнала достаточной силы, но флаг остается активным
     return
   }
 
   // Определяем флаг по частоте
   let flag = null
 
-  // Частота ~1000 Гц = флаг 1 (белый)
-  if (frequency >= 8600 && frequency <= 9400) {
+  // Частота ~9000 Гц = флаг 1 (белый)
+  if (frequency >= 17500 && frequency <= 18500) {
     flag = 1
     isWhite.value = true
     isRed.value = false
   }
-  // Частота ~2000 Гц = флаг 0 (красный)
-  else if (frequency >= 9450 && frequency <= 10000) {
+  // Частота ~9700 Гц = флаг 0 (красный)
+  else if (frequency >= 18500 && frequency <= 19500) {
     flag = 0
     isWhite.value = false
     isRed.value = true
   }
   else {
-    // Неизвестная частота
-    isWhite.value = false
-    isRed.value = false
+    // Неизвестная частота - флаг остается прежним
     return
   }
 
