@@ -109,12 +109,12 @@ const onBroadcastClick = async (percentage) => {
       oscillator.connect(gainNode)
       gainNode.connect(ctx.destination)
 
-      // Устанавливаем громкость (0.2 для безопасности)
-      gainNode.gain.setValueAtTime(0.2, ctx.currentTime)
+      // Максимальная громкость для ультразвука (безопасно)
+      gainNode.gain.setValueAtTime(1.0, ctx.currentTime)
 
       // Запускаем и останавливаем осциллятор
       oscillator.start()
-      oscillator.stop(ctx.currentTime + 0.15) // длительность 0.1 сек
+      oscillator.stop(ctx.currentTime + 0.15) // длительность 300 мс
 
       console.log(`Передан флаг ${flag} (${frequency} Гц)`)
     }

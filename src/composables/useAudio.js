@@ -45,10 +45,15 @@ export function useAudio() {
     microphone = audioContext.createMediaStreamSource(stream)
 
     // Настройки анализатора для мгновенной реакции на импульсы
-    analyser.fftSize = 4096
+    analyser.fftSize = 8192 // увеличенный размер для лучшей точности
     analyser.smoothingTimeConstant = 0 // мгновенная реакция на импульсы
 
-    microphone.connect(analyser)
+    // Добавляем усиление микрофона для лучшей чувствительности
+    const micGain = audioContext.createGain()
+    micGain.gain.value = 3.0 // усиливаем в 3 раза
+
+    microphone.connect(micGain)
+    micGain.connect(analyser)
 
     const bufferLength = analyser.frequencyBinCount
     dataArray = new Uint8Array(bufferLength)
@@ -62,7 +67,7 @@ export function useAudio() {
       bufferLength
     )
     const frequencyResolution = audioContext.sampleRate / analyser.fftSize
-    const AMPLITUDE_THRESHOLD = 80
+    const AMPLITUDE_THRESHOLD = 50 // более чувствительный порог
 
     isListening.value = true
     startListening(minIndex, maxIndex, frequencyResolution, AMPLITUDE_THRESHOLD)
