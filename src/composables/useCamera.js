@@ -4,6 +4,7 @@ export const useCamera = () => {
   const camera = ref(null)
   const devices = ref([])
   const isFlashlightOn = ref(false)
+  const isFlashlightSupported = ref(null) // null = не проверено, true/false = результат проверки
   const error = ref(null)
 
   const getDevices = async () => {
@@ -38,6 +39,11 @@ export const useCamera = () => {
 
   // Включение фонарика
   const turnOnFlashlight = async () => {
+    // Если уже знаем, что фонарик не поддерживается, не пытаемся
+    if (isFlashlightSupported.value === false) {
+      throw new Error('Фонарик не поддерживается на этом устройстве')
+    }
+
     try {
       // Метод 1: Попытка использовать environment с torch
       if (await tryEnvironmentTorch()) {
@@ -192,30 +198,12 @@ export const useCamera = () => {
   // Проверка поддержки фонарика
   const checkFlashlightSupport = async () => {
     try {
-      await getDevices()
-
-      const videoDevices = devices.value.filter(device => device.kind === 'videoinput')
-
-      for (const device of videoDevices) {
-        try {
-          const stream = await navigator.mediaDevices.getUserMedia({
-            video: { deviceId: { exact: device.deviceId } }
-          })
-
-          const videoTrack = stream.getVideoTracks()[0]
-          if (videoTrack && videoTrack.getCapabilities && videoTrack.getCapabilities().torch) {
-            stream.getTracks().forEach(track => track.stop())
-            return true
-          }
-
-          stream.getTracks().forEach(track => track.stop())
-        } catch {
-          continue
-        }
-      }
-
-      return false
+      // Просто пытаемся включить фонарик всеми доступными способами
+      await turnOnFlashlight()
+      isFlashlightSupported.value = true
+      return true
     } catch {
+      isFlashlightSupported.value = false
       return false
     }
   }
@@ -224,6 +212,7 @@ export const useCamera = () => {
     camera,
     devices,
     isFlashlightOn,
+    isFlashlightSupported,
     error,
     getDevices,
     toggleFlashlight,

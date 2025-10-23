@@ -55,7 +55,13 @@
 
       <div class="flashlight-status">
         <div class="flashlight-status__label">Фонарик:</div>
-        <div class="flashlight-status__value" :class="{
+        <div v-if="isFlashlightSupported === null" class="flashlight-status__value flashlight-status__value--checking">
+          Проверка поддержки...
+        </div>
+        <div v-else-if="isFlashlightSupported === false" class="flashlight-status__value flashlight-status__value--unsupported">
+          Не поддерживается
+        </div>
+        <div v-else class="flashlight-status__value" :class="{
           'flashlight-status__value--on': isFlashlightOn,
           'flashlight-status__value--off': !isFlashlightOn
         }">
@@ -91,6 +97,7 @@ const {
 // Используем composable для камеры/фонарика
 const {
   isFlashlightOn,
+  isFlashlightSupported,
   error: cameraError,
   turnOnFlashlight,
   turnOffFlashlight,
@@ -113,6 +120,9 @@ const soundViewClasses = computed(() => {
 // Управление фонариком на основе isLightOn
 watch(isLightOn, async (newValue) => {
   if (newValue === null) return
+
+  // Если фонарик не поддерживается, не пытаемся его включать
+  if (isFlashlightSupported.value === false) return
 
   try {
     if (newValue) {
@@ -345,6 +355,14 @@ onUnmounted(async () => {
 
   &--off {
     color: $color-gray-400;
+  }
+
+  &--checking {
+    color: $color-primary;
+  }
+
+  &--unsupported {
+    color: $color-error;
   }
 }
 
