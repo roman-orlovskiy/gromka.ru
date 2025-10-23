@@ -27,7 +27,7 @@ export default defineConfig({
     host: true,
     https: false,
     allowedHosts: [
-      '1nyjh6-2a05-fc1-40-3a--c.ru.tuna.am'
+      'ywhsxk-2a05-fc1-40-3a--c.ru.tuna.am'
     ],
     proxy: {
       '/api': {
