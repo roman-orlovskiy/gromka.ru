@@ -9,6 +9,7 @@ export function useAudio() {
   const hasPermission = ref(false)
   const currentFrequency = ref(0)
   const lastSignal = ref(null)
+  const isFirstSignal = ref(true)
 
   let audioContext = null
   let analyser = null
@@ -17,29 +18,43 @@ export function useAudio() {
   let animationId = null
 
   // Функция для запроса разрешения на микрофон
-  const requestMicrophonePermission = async () => {
+  const requestMicrophonePermission = async (loggingCallback = null) => {
+    const audioSettings = {
+      sampleRate: 44100,
+      channelCount: 1,
+      echoCancellation: false,
+      noiseSuppression: false,
+      autoGainControl: false
+    }
+
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
-        audio: {
-          sampleRate: 44100,
-          channelCount: 1,
-          echoCancellation: false,
-          noiseSuppression: false,
-          autoGainControl: false
-        }
+        audio: audioSettings
       })
 
       hasPermission.value = true
-      setupAudioAnalysis(stream)
+
+      // Логируем успешное получение разрешения
+      if (loggingCallback) {
+        loggingCallback.logMicrophonePermission(true)
+        loggingCallback.logAudioSettings(audioSettings)
+      }
+
+      setupAudioAnalysis(stream, loggingCallback)
       return stream
     } catch (error) {
       console.error('Ошибка доступа к микрофону:', error)
       hasPermission.value = false
+
+      // Логируем ошибку получения разрешения
+      if (loggingCallback) {
+        loggingCallback.logMicrophonePermission(false, error)
+      }
     }
   }
 
   // Настройка анализа аудио
-  const setupAudioAnalysis = (stream) => {
+  const setupAudioAnalysis = (stream, loggingCallback = null) => {
     audioContext = new (window.AudioContext || window.webkitAudioContext)()
     analyser = audioContext.createAnalyser()
     microphone = audioContext.createMediaStreamSource(stream)
@@ -70,11 +85,11 @@ export function useAudio() {
     const AMPLITUDE_THRESHOLD = 50 // более чувствительный порог
 
     isListening.value = true
-    startListening(minIndex, maxIndex, frequencyResolution, AMPLITUDE_THRESHOLD)
+    startListening(minIndex, maxIndex, frequencyResolution, AMPLITUDE_THRESHOLD, loggingCallback)
   }
 
   // Начало прослушивания с предвычисленными константами
-  const startListening = (minIndex, maxIndex, frequencyResolution, amplitudeThreshold) => {
+  const startListening = (minIndex, maxIndex, frequencyResolution, amplitudeThreshold, loggingCallback = null) => {
     const detectFrequency = () => {
       if (!analyser) return
 
@@ -99,7 +114,7 @@ export function useAudio() {
       if (maxValue > 0) {
         currentFrequency.value = frequency | 0 // быстрое целочисленное округление
         // Определяем сигнал на основе частоты
-        detectSignal(frequency, maxValue, amplitudeThreshold)
+        detectSignal(frequency, maxValue, amplitudeThreshold, loggingCallback)
       } else {
         // Если нет сигнала в ультразвуковом диапазоне, сбрасываем частоту
         currentFrequency.value = 0
@@ -112,7 +127,7 @@ export function useAudio() {
   }
 
   // Оптимизированное определение сигнала по частоте
-  const detectSignal = (frequency, amplitude, amplitudeThreshold) => {
+  const detectSignal = (frequency, amplitude, amplitudeThreshold, loggingCallback = null) => {
     if (amplitude < amplitudeThreshold) return
 
     // Упрощенная логика определения флага
@@ -133,6 +148,16 @@ export function useAudio() {
       flag,
       frequency: roundedFreq,
       timestamp: Date.now() // быстрее чем new Date()
+    }
+
+    // Логируем первый звуковой сигнал
+    if (isFirstSignal.value && loggingCallback) {
+      loggingCallback.logFirstSoundSignal({
+        frequency: roundedFreq,
+        amplitude,
+        flag
+      })
+      isFirstSignal.value = false
     }
 
     console.log(`Сигнал: флаг ${flag}, ${roundedFreq} Гц, ${amplitude}`)

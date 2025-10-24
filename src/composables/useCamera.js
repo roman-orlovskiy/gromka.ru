@@ -320,7 +320,7 @@ export const useCamera = () => {
   }
 
   // Проверка поддержки фонарика
-  const checkFlashlightSupport = async () => {
+  const checkFlashlightSupport = async (loggingCallback = null) => {
     // Если уже проверяли, возвращаем кэшированный результат
     if (isFlashlightSupported.value !== null) {
       return isFlashlightSupported.value
@@ -330,9 +330,21 @@ export const useCamera = () => {
       // Просто пытаемся включить фонарик всеми доступными способами
       await turnOnFlashlight()
       isFlashlightSupported.value = true
+
+      // Логируем успешную проверку
+      if (loggingCallback) {
+        loggingCallback.logFlashlightSupport(true, lastUsedMethod.value)
+      }
+
       return true
-    } catch {
+    } catch (error) {
       isFlashlightSupported.value = false
+
+      // Логируем неудачную проверку
+      if (loggingCallback) {
+        loggingCallback.logFlashlightSupport(false, null, error)
+      }
+
       return false
     }
   }

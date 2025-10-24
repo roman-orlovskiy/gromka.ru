@@ -122,7 +122,11 @@ const {
   enableLogging,
   trackSoundChange,
   trackFlashlightChange,
-  logCameraInfo
+  logCameraInfo,
+  logMicrophonePermission,
+  logAudioSettings,
+  logFirstSoundSignal,
+  logFlashlightSupport
 } = useLogging()
 
 
@@ -174,19 +178,28 @@ const handleStart = async () => {
   // Активируем Wake Lock для предотвращения засыпания экрана
   await requestWakeLock()
 
-  // Проверяем поддержку фонарика
-  const hasFlashlight = await checkFlashlightSupport()
+  // Проверяем поддержку фонарика с логированием
+  const hasFlashlight = await checkFlashlightSupport({
+    logFlashlightSupport
+  })
+
   if (hasFlashlight) {
     console.log('Фонарик поддерживается')
-    // Логируем информацию о камерах после успешной проверки
-    logCameraInfo(devices.value, lastUsedMethod.value)
   } else {
     console.warn('Фонарик не поддерживается на этом устройстве')
-    // Логируем информацию о камерах даже если фонарик не поддерживается
-    logCameraInfo(devices.value, null)
   }
 
-  await requestMicrophonePermission()
+  // Логируем информацию о камерах после проверки фонарика
+  logCameraInfo(devices.value, lastUsedMethod.value)
+
+  // Создаем объект с функциями логирования для передачи в useAudio
+  const loggingCallbacks = {
+    logMicrophonePermission,
+    logAudioSettings,
+    logFirstSoundSignal
+  }
+
+  await requestMicrophonePermission(loggingCallbacks)
 }
 
 onMounted(() => {
