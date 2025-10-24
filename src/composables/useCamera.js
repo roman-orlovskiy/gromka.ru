@@ -14,6 +14,7 @@ export const useCamera = () => {
   const isInitialized = ref(false) // Флаг инициализации
   const backCameras = ref([]) // Предзагруженные back камеры
   const allCameras = ref([]) // Предзагруженные все камеры
+  const lastUsedMethod = ref(null) // Последний использованный метод включения камеры
 
   // Инициализация - предзагрузка устройств
   const initialize = async () => {
@@ -117,6 +118,7 @@ export const useCamera = () => {
         if (results[i].status === 'fulfilled' && results[i].value) {
           const methodNames = ['environment', 'back', 'any']
           cachedMethod.value = methodNames[i]
+          lastUsedMethod.value = methodNames[i]
           isFlashlightOn.value = true
           return
         }
@@ -356,6 +358,7 @@ export const useCamera = () => {
     error,
     isProcessing,
     isInitialized,
+    lastUsedMethod,
     initialize,
     getDevices,
     toggleFlashlight,

@@ -82,6 +82,7 @@ import ButtonComp from '@/components/ButtonComp.vue'
 import { useAudio } from '@/composables/useAudio'
 import { useCamera } from '@/composables/useCamera'
 import { useWakeLock } from '@/composables/useWakeLock'
+import { useLogging } from '@/composables/useLogging'
 import { useMainStore } from '@/stores/main'
 
 const isStarted = ref(false)
@@ -103,6 +104,8 @@ const {
   isFlashlightOn,
   isFlashlightSupported,
   error: cameraError,
+  devices,
+  lastUsedMethod,
   turnOnFlashlight,
   turnOffFlashlight,
   checkFlashlightSupport
@@ -113,6 +116,14 @@ const {
   requestWakeLock,
   releaseWakeLock
 } = useWakeLock()
+
+// Используем composable для логирования
+const {
+  enableLogging,
+  trackSoundChange,
+  trackFlashlightChange,
+  logCameraInfo
+} = useLogging()
 
 
 // Computed для классов звукового вида
@@ -131,6 +142,9 @@ const soundViewClasses = computed(() => {
 watch(isLightOn, async (newValue) => {
   if (newValue === null) return
 
+  // Логируем изменение звука
+  trackSoundChange(newValue)
+
   // Если фонарик не поддерживается, не пытаемся его включать
   if (isFlashlightSupported.value === false) return
 
@@ -138,9 +152,11 @@ watch(isLightOn, async (newValue) => {
     if (newValue) {
       // Включаем фонарик при белом свете
       await turnOnFlashlight()
+      trackFlashlightChange(true, lastUsedMethod.value)
     } else {
       // Выключаем фонарик при черном свете
       await turnOffFlashlight()
+      trackFlashlightChange(false, lastUsedMethod.value)
     }
   } catch (error) {
     console.warn('Ошибка управления фонариком:', error)
@@ -152,6 +168,9 @@ watch(isLightOn, async (newValue) => {
 const handleStart = async () => {
   isStarted.value = true
 
+  // Включаем логирование
+  enableLogging()
+
   // Активируем Wake Lock для предотвращения засыпания экрана
   await requestWakeLock()
 
@@ -159,8 +178,12 @@ const handleStart = async () => {
   const hasFlashlight = await checkFlashlightSupport()
   if (hasFlashlight) {
     console.log('Фонарик поддерживается')
+    // Логируем информацию о камерах после успешной проверки
+    logCameraInfo(devices.value, lastUsedMethod.value)
   } else {
     console.warn('Фонарик не поддерживается на этом устройстве')
+    // Логируем информацию о камерах даже если фонарик не поддерживается
+    logCameraInfo(devices.value, null)
   }
 
   await requestMicrophonePermission()
