@@ -156,6 +156,129 @@ export function useLogging() {
     })
   }
 
+  // Логирование информации об устройстве
+  const logDeviceInfo = () => {
+    if (!isLoggingEnabled.value) return
+
+    // Парсим User Agent для определения устройства
+    const userAgent = navigator.userAgent
+    const platform = navigator.platform
+    const language = navigator.language
+    const languages = navigator.languages?.join(',') || ''
+
+    // Определяем тип устройства
+    let deviceType = 'unknown'
+    let deviceBrand = 'unknown'
+    let deviceModel = 'unknown'
+    let osName = 'unknown'
+    let osVersion = 'unknown'
+    let browserName = 'unknown'
+    let browserVersion = 'unknown'
+
+    // Определяем браузер
+    if (userAgent.includes('Chrome')) {
+      browserName = 'Chrome'
+      const match = userAgent.match(/Chrome\/(\d+\.\d+)/)
+      browserVersion = match ? match[1] : 'unknown'
+    } else if (userAgent.includes('Firefox')) {
+      browserName = 'Firefox'
+      const match = userAgent.match(/Firefox\/(\d+\.\d+)/)
+      browserVersion = match ? match[1] : 'unknown'
+    } else if (userAgent.includes('Safari') && !userAgent.includes('Chrome')) {
+      browserName = 'Safari'
+      const match = userAgent.match(/Version\/(\d+\.\d+)/)
+      browserVersion = match ? match[1] : 'unknown'
+    } else if (userAgent.includes('Edge')) {
+      browserName = 'Edge'
+      const match = userAgent.match(/Edge\/(\d+\.\d+)/)
+      browserVersion = match ? match[1] : 'unknown'
+    }
+
+    // Определяем ОС и устройство
+    if (userAgent.includes('Windows')) {
+      osName = 'Windows'
+      if (userAgent.includes('Windows NT 10.0')) osVersion = '10/11'
+      else if (userAgent.includes('Windows NT 6.3')) osVersion = '8.1'
+      else if (userAgent.includes('Windows NT 6.1')) osVersion = '7'
+
+      deviceType = 'desktop'
+      if (userAgent.includes('Mobile')) deviceType = 'mobile'
+    } else if (userAgent.includes('Mac OS X')) {
+      osName = 'macOS'
+      const match = userAgent.match(/Mac OS X (\d+[._]\d+)/)
+      osVersion = match ? match[1].replace('_', '.') : 'unknown'
+
+      deviceType = 'desktop'
+      if (userAgent.includes('iPhone')) {
+        deviceType = 'mobile'
+        deviceBrand = 'Apple'
+        deviceModel = 'iPhone'
+      } else if (userAgent.includes('iPad')) {
+        deviceType = 'tablet'
+        deviceBrand = 'Apple'
+        deviceModel = 'iPad'
+      } else {
+        deviceBrand = 'Apple'
+        deviceModel = 'Mac'
+      }
+    } else if (userAgent.includes('Android')) {
+      osName = 'Android'
+      const match = userAgent.match(/Android (\d+\.\d+)/)
+      osVersion = match ? match[1] : 'unknown'
+
+      deviceType = 'mobile'
+      if (userAgent.includes('Tablet')) deviceType = 'tablet'
+
+      // Попытка определить производителя Android
+      if (userAgent.includes('Samsung')) {
+        deviceBrand = 'Samsung'
+        const match = userAgent.match(/Samsung[^;]*([A-Z0-9-]+)/)
+        deviceModel = match ? match[1] : 'Galaxy'
+      } else if (userAgent.includes('Huawei')) {
+        deviceBrand = 'Huawei'
+        deviceModel = 'Huawei'
+      } else if (userAgent.includes('Xiaomi')) {
+        deviceBrand = 'Xiaomi'
+        deviceModel = 'Xiaomi'
+      } else if (userAgent.includes('OnePlus')) {
+        deviceBrand = 'OnePlus'
+        deviceModel = 'OnePlus'
+      } else if (userAgent.includes('Google')) {
+        deviceBrand = 'Google'
+        deviceModel = 'Pixel'
+      }
+    } else if (userAgent.includes('Linux')) {
+      osName = 'Linux'
+      deviceType = 'desktop'
+    }
+
+    // Дополнительная информация об устройстве
+    const deviceInfo = {
+      userAgent,
+      platform,
+      language,
+      languages,
+      deviceType,
+      deviceBrand,
+      deviceModel,
+      osName,
+      osVersion,
+      browserName,
+      browserVersion,
+      screenWidth: screen.width,
+      screenHeight: screen.height,
+      screenColorDepth: screen.colorDepth,
+      pixelRatio: window.devicePixelRatio || 1,
+      touchSupport: 'ontouchstart' in window,
+      maxTouchPoints: navigator.maxTouchPoints || 0,
+      hardwareConcurrency: navigator.hardwareConcurrency || 'unknown',
+      memory: navigator.deviceMemory || 'unknown',
+      timestamp: Date.now()
+    }
+
+    addLog('device_info', deviceInfo)
+  }
+
   // Отправка логов на сервер
   const sendLogs = async () => {
     if (!deviceId.value || logs.value.length === 0) return
@@ -220,6 +343,7 @@ export function useLogging() {
     logAudioSettings,
     logFirstSoundSignal,
     logFlashlightSupport,
+    logDeviceInfo,
     sendLogs,
     clearLogs
   }

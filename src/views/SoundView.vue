@@ -126,7 +126,8 @@ const {
   logMicrophonePermission,
   logAudioSettings,
   logFirstSoundSignal,
-  logFlashlightSupport
+  logFlashlightSupport,
+  logDeviceInfo
 } = useLogging()
 
 
@@ -174,6 +175,9 @@ const handleStart = async () => {
 
   // Включаем логирование
   enableLogging()
+
+  // Логируем информацию об устройстве
+  logDeviceInfo()
 
   // Активируем Wake Lock для предотвращения засыпания экрана
   await requestWakeLock()
