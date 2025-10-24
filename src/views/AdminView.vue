@@ -1,11 +1,8 @@
 <template>
   <div class="admin">
     <div class="admin__buttons">
-      <ButtonComp @click="onBroadcastClick(0)">0%</ButtonComp>
-      <ButtonComp @click="onBroadcastClick(40)">40%</ButtonComp>
-      <ButtonComp @click="onBroadcastClick(70)">70%</ButtonComp>
-      <ButtonComp @click="onBroadcastClick(100)">100%</ButtonComp>
-      <ButtonComp @click="onBroadcastClick('flicker')">Мерцание</ButtonComp>
+      <ButtonComp @click="onBroadcastClick('on')">Вкл</ButtonComp>
+      <ButtonComp @click="onBroadcastClick('off')">Выкл</ButtonComp>
     </div>
 
     <!-- Плашка с последними данными -->
@@ -92,7 +89,7 @@ const isLoading = ref(false)
 const showSuccess = ref(false)
 const lastResult = ref(null)
 
-const onBroadcastClick = async (percentage) => {
+const onBroadcastClick = async (action) => {
   try {
     // Создаем AudioContext для генерации ультразвуковых сигналов
     const ctx = new (window.AudioContext || window.webkitAudioContext)()
@@ -119,8 +116,8 @@ const onBroadcastClick = async (percentage) => {
       console.log(`Передан флаг ${flag} (${frequency} Гц)`)
     }
 
-    // Определяем флаг на основе процента
-    const flag = percentage > 50 ? 1 : 0
+    // Определяем флаг на основе действия
+    const flag = action === 'on' ? 1 : 0
 
     // Отправляем сигнал
     sendFlag(flag)
@@ -128,7 +125,7 @@ const onBroadcastClick = async (percentage) => {
     // Обновляем статус
     lastResult.value = {
       timestamp: new Date(),
-      percentage,
+      percentage: action === 'on' ? 'Вкл' : 'Выкл',
       type: 'ultrasonic',
       flag: flag,
       frequency: flag === 1 ? '19000 Гц' : '18000 Гц',
@@ -146,7 +143,7 @@ const onBroadcastClick = async (percentage) => {
     // Показываем ошибку пользователю
     lastResult.value = {
       timestamp: new Date(),
-      percentage,
+      percentage: action,
       error: error.message,
       message: 'Ошибка при передаче сигнала'
     }
