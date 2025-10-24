@@ -30,8 +30,17 @@
       </div>
     </div>
 
+    <!-- Сообщение о неподдерживаемом фонарике -->
+    <div v-if="isStarted && isFlashlightSupported === false" class="sound-view__flashlight-message">
+      <div class="flashlight-message">
+        <div class="flashlight-message__icon">📱</div>
+        <div class="flashlight-message__title">Фонарик не поддерживается</div>
+        <div class="flashlight-message__subtitle">Поверните экран к сцене</div>
+      </div>
+    </div>
+
     <!-- Статус панель -->
-    <div v-if="isStarted" class="sound-view__status">
+    <div v-if="isStarted && isFlashlightSupported !== false" class="sound-view__status">
       <div class="status-indicator">
         <div class="status-indicator__light" :class="{
           'status-indicator__light--white': isLightOn,
@@ -310,6 +319,55 @@ onUnmounted(async () => {
   justify-content: center;
 }
 
+.sound-view__flashlight-message {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1001;
+}
+
+.flashlight-message {
+  text-align: center;
+  max-width: 500px;
+  padding: 2rem;
+}
+
+.flashlight-message__icon {
+  font-size: 8rem;
+  margin-bottom: 2rem;
+  animation: pulse 2s infinite;
+}
+
+.flashlight-message__title {
+  font-size: 2.6rem;
+  font-weight: 700;
+  color: $color-gray-700;
+  margin-bottom: 1rem;
+  line-height: 1.2;
+}
+
+.flashlight-message__subtitle {
+  font-size: 3rem;
+  color: $color-gray-600;
+  line-height: 1.4;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.8;
+  }
+}
+
 .sound-view__status {
   position: absolute;
   top: 2rem;
@@ -491,6 +549,25 @@ onUnmounted(async () => {
 
   .frequency-display__value {
     font-size: 1.5rem;
+  }
+
+  .flashlight-message {
+    padding: 1rem;
+    max-width: 100%;
+  }
+
+  .flashlight-message__icon {
+    font-size: 6rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .flashlight-message__title {
+    font-size: 2.5rem;
+    margin-bottom: 0.8rem;
+  }
+
+  .flashlight-message__subtitle {
+    font-size: 1.4rem;
   }
 }
 </style>
