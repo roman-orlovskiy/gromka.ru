@@ -72,6 +72,32 @@ export const saveParinn = async (itemId) => {
   }
 }
 
+export const getGromkaLogs = async () => {
+  try {
+    const response = await api.get('/gromka-logs')
+    return response.data
+  } catch (error) {
+    console.error('Error fetching gromka-logs:', error)
+    throw error
+  }
+}
+
+export const saveGromkaLogs = async (id, logs) => {
+  try {
+    const response = await api.post('/gromka-logs', { id, logs })
+    return response.data
+  } catch (error) {
+    console.error('Error saving gromka-logs:', {
+      message: error.message,
+      status: error.response?.status,
+      statusText: error.response?.statusText,
+      headers: error.response?.headers,
+      data: error.response?.data
+    })
+    throw error
+  }
+}
+
 export const vkPost = async (data) => {
   try {
     const response = await api.post('/vkpost', data)
