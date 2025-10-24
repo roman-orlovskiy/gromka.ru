@@ -72,6 +72,21 @@ paths:
         table_name: parinn
         service_account_id: aje7rv6fp17nfo1o1h15
         key: '{"id": "{itemId}"}'
+  /api/gromka-logs:
+    post:
+      x-yc-apigateway-integration:
+        database: /ru-central1/b1gl9td94vo809chfkpg/etn03t7e35bf32dhtqoh
+        action: PutItem
+        type: cloud_ydb
+        table_name: gromka-logs
+        service_account_id: aje7rv6fp17nfo1o1h15
+    get:
+      x-yc-apigateway-integration:
+        database: /ru-central1/b1gl9td94vo809chfkpg/etn03t7e35bf32dhtqoh
+        action: Scan
+        type: cloud_ydb
+        table_name: gromka-logs
+        service_account_id: aje7rv6fp17nfo1o1h15
   /api/vkpost:
     post:
       x-yc-apigateway-integration:
