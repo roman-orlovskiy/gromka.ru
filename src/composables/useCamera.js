@@ -21,9 +21,26 @@ export const useCamera = () => {
     if (isInitialized.value) return
 
     try {
+      // 1. СНАЧАЛА получаем разрешение на камеру
+      let tempStream
+      try {
+        tempStream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: 'environment' } // пробуем заднюю камеру
+        })
+      } catch {
+        // Если не получилось с environment, пробуем любую камеру
+        tempStream = await navigator.mediaDevices.getUserMedia({
+          video: true
+        })
+      }
+
+      // 2. ТЕПЕРЬ перечисляем устройства (deviceId и label будут заполнены)
       devices.value = await navigator.mediaDevices.enumerateDevices()
 
-      // Предзагружаем back камеры
+      // 3. Останавливаем временный поток
+      tempStream.getTracks().forEach(track => track.stop())
+
+      // 4. Фильтруем back камеры с РЕАЛЬНЫМИ labels
       backCameras.value = devices.value.filter(device => {
         const label = device.label.toLowerCase()
         return device.kind === 'videoinput' && (
@@ -40,6 +57,7 @@ export const useCamera = () => {
       isInitialized.value = true
     } catch (err) {
       error.value = `Ошибка инициализации устройств: ${err.message}`
+      throw err // пробрасываем ошибку дальше
     }
   }
 
