@@ -321,7 +321,6 @@
     <!-- Team Section -->
     <section class="performance__section performance__section--primary">
       <div class="performance__container">
-        <h2 class="performance__section-title">{{ t('performance.team.title') }}</h2>
         <div class="performance__team">
           <div class="performance__team-item">
             <div class="performance__team-photo">
@@ -330,15 +329,8 @@
             <h3>{{ t('performance.team.roman.name') }}</h3>
             <p>{{ t('performance.team.roman.role') }}</p>
           </div>
-          <div class="performance__team-item">
-            <div class="performance__team-photo">
-              <img src="@/assets/images/home/team/anton-zyuzin.webp" :alt="t('performance.team.anton.name')" />
-            </div>
-            <h3>{{ t('performance.team.anton.name') }}</h3>
-            <p>{{ t('performance.team.anton.role') }}</p>
-          </div>
         </div>
-    </div>
+      </div>
     </section>
 
     <!-- CTA Section -->
@@ -1511,14 +1503,13 @@ const handleScroll = () => {
 
   /* Team */
   &__team {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    display: flex;
+    justify-content: center;
     gap: 3rem;
     max-width: 80rem;
     margin: 0 auto;
 
     @include layout-aspect-mobile {
-      grid-template-columns: 1fr;
       gap: 2rem;
     }
   }
@@ -1529,6 +1520,8 @@ const handleScroll = () => {
     padding: 3rem;
     text-align: center;
     box-shadow: 0 0.5rem 2rem rgba($color-black, 0.1);
+    max-width: 40rem;
+    width: 100%;
 
     h3 {
       font-size: 2rem;
