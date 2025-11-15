@@ -149,7 +149,7 @@ export default {
     }
   },
   demoPerf: {
-    title: 'Support the Club<br />and participate<br />in the prize draw',
+    title: 'For demonstration<br />enter any<br />row/seat/sector',
     placeholders: {
       row: 'Row',
       seat: 'Seat',
