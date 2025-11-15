@@ -1,16 +1,19 @@
 <template>
   <div class="performance">
+    <!-- Language Switcher -->
+    <LanguageSwitcher />
+
     <!-- Hero Section -->
     <section class="performance__hero">
-      <h1 class="performance__title">Gromka  – платформа для перформансов</h1>
-      <p class="performance__subtitle">Рисуйте динамические картины с&nbsp;помощью&nbsp;экранов<br>или <b>фонариков</b> телефонов</p>
+      <h1 class="performance__title">{{ t('performance.title') }}</h1>
+      <p class="performance__subtitle" v-html="subtitleHtml"></p>
       <div class="performance__hero-video">
         <video class="performance__video" autoplay loop muted src="/videos/gromka.mp4" type="video/mp4">
-        Ваш браузер не поддерживает видео.
+        {{ t('performance.videoNotSupported') }}
       </video>
     </div>
       <button @click="scrollToProject" class="performance__cta-link">
-        <ButtonComp mod="secondary">Что это за проект</ButtonComp>
+        <ButtonComp mod="secondary">{{ t('performance.ctaButton') }}</ButtonComp>
       </button>
     </section>
 
@@ -19,17 +22,17 @@
       <div class="performance__container">
         <div class="performance__content">
           <div class="performance__text">
-            <p>Платформа для создания интерактивных световых перформансов с помощью мобильных устройств зрителей. Каждый телефон становится частью единого визуального шоу, формируя динамичные световые картины.</p>
+            <p>{{ t('performance.whatIsProject.description') }}</p>
             <ul class="performance__list">
-              <li>● <strong>Разноцветные картины</strong> на всём стадионе</li>
-              <li>● <strong>Динамичные эффекты</strong> с помощью экранов или фонариков</li>
-              <li>● <strong>Синхронные волны</strong> света по всему залу или стадиону</li>
+              <li>● <strong>{{ t('performance.whatIsProject.features.colorful') }}</strong></li>
+              <li>● <strong>{{ t('performance.whatIsProject.features.dynamic') }}</strong></li>
+              <li>● <strong>{{ t('performance.whatIsProject.features.waves') }}</strong></li>
             </ul>
           </div>
           <div class="performance__image-container">
             <img
               src="@/assets/images/home/1.webp"
-              alt="Световое шоу на стадионе с экранами телефонов"
+              :alt="t('performance.whatIsProject.description')"
               class="performance__image"
             />
           </div>
@@ -40,9 +43,9 @@
     <!-- Demo Section -->
     <section class="performance__section performance__section--demo">
       <div class="performance__container">
-        <h2 class="performance__section-title">Демо</h2>
+        <h2 class="performance__section-title">{{ t('performance.demo.title') }}</h2>
         <p class="performance__demo-description">
-          Пример, как зритель подключается к перформансу
+          {{ t('performance.demo.description') }}
         </p>
       </div>
       <div class="performance__video-block">
@@ -57,24 +60,24 @@
             @pause="onVideoPause2"
             @ended="onVideoEnded2"
           >
-            Ваш браузер не поддерживает видео.
+            {{ t('performance.videoNotSupported') }}
           </video>
           <button
             v-if="!isVideoPlaying2"
             class="performance__play-button"
           >
-            {{ videoStarted2 ? '▶ Продолжить' : '▶ Презентация' }}
+            {{ videoStarted2 ? t('performance.demo.continue') : t('performance.demo.play') }}
           </button>
           <button
             v-else
             class="performance__pause-button"
           >
-            ⏸ Пауза
+            {{ t('performance.demo.pause') }}
           </button>
           <button
             class="performance__fullscreen-button"
             @click.stop="toggleFullscreen2"
-            title="Полноэкранный режим"
+            :title="t('performance.demo.fullscreen')"
           >
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M8 3H5a2 2 0 0 0-2 2v3m13-5h3a2 2 0 0 1 2 2v3m-5 13h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -83,14 +86,14 @@
         </div>
       </div>
       <button @click="openDemoModal" class="performance__demo-link">
-        <ButtonComp>Демонстрация</ButtonComp>
+        <ButtonComp>{{ t('performance.demo.button') }}</ButtonComp>
       </button>
     </section>
 
     <!-- Stadium Photo Section -->
     <section class="performance__section performance__section--stadium">
       <div class="performance__container">
-        <h2 class="performance__section-title">Запуски на матчах Спартака</h2>
+        <h2 class="performance__section-title">{{ t('performance.stadium.title') }}</h2>
         <div class="performance__stadium-block">
           <div class="performance__stadium-preview">
             <div class="performance__image-container performance__image-container--large performance__image-container--clickable" @click="openSpartakGallery(0)">
@@ -112,7 +115,7 @@
             </div>
           </div>
           <div class="performance__stadium-info">
-            <p>Даже при неполной посадке можно создавать визуальные волны или&nbsp;мерцания на стадионе.</p>
+            <p>{{ t('performance.stadium.description') }}</p>
           </div>
         </div>
         <div class="performance__video-block">
@@ -127,24 +130,24 @@
               @pause="onVideoPause"
               @ended="onVideoEnded"
             >
-              Ваш браузер не поддерживает видео.
+              {{ t('performance.videoNotSupported') }}
             </video>
             <button
               v-if="!isVideoPlaying"
               class="performance__play-button"
             >
-              {{ videoStarted ? '▶ Продолжить' : '▶ Реальные кейсы' }}
+              {{ videoStarted ? t('performance.stadium.continue') : t('performance.stadium.play') }}
             </button>
             <button
               v-else
               class="performance__pause-button"
             >
-              ⏸ Пауза
+              {{ t('performance.stadium.pause') }}
             </button>
             <button
               class="performance__fullscreen-button"
               @click.stop="toggleFullscreen"
-              title="Полноэкранный режим"
+              :title="t('performance.stadium.fullscreen')"
             >
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M8 3H5a2 2 0 0 0-2 2v3m13-5h3a2 2 0 0 1 2 2v3m-5 13h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -158,37 +161,37 @@
 <!-- Advantages Section -->
     <section class="performance__section performance__section--gradient-2">
       <div class="performance__container">
-        <h2 class="performance__section-title">Преимущества</h2>
+        <h2 class="performance__section-title">{{ t('performance.advantages.title') }}</h2>
         <div class="performance__grid">
           <div class="performance__card">
             <div class="performance__card-icon">▲</div>
-            <h3 class="performance__card-title">Масштабируемость</h3>
-            <p>От небольших залов до стадионов</p>
+            <h3 class="performance__card-title">{{ t('performance.advantages.scalability.title') }}</h3>
+            <p>{{ t('performance.advantages.scalability.description') }}</p>
           </div>
           <div class="performance__card">
             <div class="performance__card-icon">◆</div>
-            <h3 class="performance__card-title">Простота участия</h3>
-            <p>Переход по ссылке и ввод номера места/геолокации</p>
+            <h3 class="performance__card-title">{{ t('performance.advantages.simplicity.title') }}</h3>
+            <p>{{ t('performance.advantages.simplicity.description') }}</p>
           </div>
           <div class="performance__card">
             <div class="performance__card-icon">★</div>
-            <h3 class="performance__card-title">Визуальный эффект</h3>
-            <p>Тысячи экранов создают синхронное световое шоу</p>
+            <h3 class="performance__card-title">{{ t('performance.advantages.visual.title') }}</h3>
+            <p>{{ t('performance.advantages.visual.description') }}</p>
           </div>
           <div class="performance__card">
             <div class="performance__card-icon">◉</div>
-            <h3 class="performance__card-title">Гибкость</h3>
-            <p>Адаптация под концерты, спектакли, митинги, спортивные мероприятия</p>
+            <h3 class="performance__card-title">{{ t('performance.advantages.flexibility.title') }}</h3>
+            <p>{{ t('performance.advantages.flexibility.description') }}</p>
           </div>
           <div class="performance__card performance__card--highlighted performance__card--clickable" @click="scrollToMonetization">
             <div class="performance__card-icon">■</div>
-            <h3 class="performance__card-title">Монетизация</h3>
-            <p>Через рекламу и брендированные активности</p>
+            <h3 class="performance__card-title">{{ t('performance.advantages.monetization.title') }}</h3>
+            <p>{{ t('performance.advantages.monetization.description') }}</p>
           </div>
           <div class="performance__card">
             <div class="performance__card-icon">●</div>
-            <h3 class="performance__card-title">Взаимодействие</h3>
-            <p>Через браузер или ТГ бот с последующей монетизацией</p>
+            <h3 class="performance__card-title">{{ t('performance.advantages.interaction.title') }}</h3>
+            <p>{{ t('performance.advantages.interaction.description') }}</p>
           </div>
         </div>
       </div>
@@ -197,27 +200,27 @@
     <!-- Monetization Section -->
     <section id="monetization" class="performance__section performance__section--success">
       <div class="performance__container">
-        <h2 class="performance__section-title">Монетизация</h2>
+        <h2 class="performance__section-title">{{ t('performance.monetization.title') }}</h2>
         <div class="performance__grid performance__grid--four-cols">
           <div class="performance__monetization-card">
             <div class="performance__monetization-icon">◆</div>
-            <h3>Спецпроекты</h3>
-            <p>Уникальные под заказчика</p>
+            <h3>{{ t('performance.monetization.specialProjects.title') }}</h3>
+            <p>{{ t('performance.monetization.specialProjects.description') }}</p>
           </div>
           <div class="performance__monetization-card">
             <div class="performance__monetization-icon">◉</div>
-            <h3>Рекламные интеграции</h3>
-            <p>Брендированные активности</p>
+            <h3>{{ t('performance.monetization.advertising.title') }}</h3>
+            <p>{{ t('performance.monetization.advertising.description') }}</p>
           </div>
           <div class="performance__monetization-card">
             <div class="performance__monetization-icon">■</div>
-            <h3>Сувениры и реклама</h3>
-            <p>Продажа через платформу</p>
+            <h3>{{ t('performance.monetization.souvenirs.title') }}</h3>
+            <p>{{ t('performance.monetization.souvenirs.description') }}</p>
           </div>
           <div class="performance__monetization-card">
             <div class="performance__monetization-icon">▲</div>
-            <h3>Фрибеты и ставки</h3>
-            <p>На текущее мероприятие</p>
+            <h3>{{ t('performance.monetization.bets.title') }}</h3>
+            <p>{{ t('performance.monetization.bets.description') }}</p>
           </div>
         </div>
       </div>
@@ -226,37 +229,37 @@
     <!-- Target Audience Section -->
     <section class="performance__section performance__section--gradient-3">
       <div class="performance__container">
-        <h2 class="performance__section-title">Для кого этот проект?</h2>
+        <h2 class="performance__section-title">{{ t('performance.targetAudience.title') }}</h2>
         <div class="performance__grid performance__grid--two-cols">
           <div class="performance__target-card">
             <div class="performance__target-icon">♪</div>
-            <h3>Организаторы концертов и фестивалей</h3>
-            <p>Создание уникального светового опыта для зрителей</p>
+            <h3>{{ t('performance.targetAudience.concerts.title') }}</h3>
+            <p>{{ t('performance.targetAudience.concerts.description') }}</p>
           </div>
           <div class="performance__target-card">
             <div class="performance__target-icon">◈</div>
-            <h3>Спортивные клубы и стадионы</h3>
-            <p>Усиление атмосферы на матчах и спортивных мероприятиях</p>
+            <h3>{{ t('performance.targetAudience.sports.title') }}</h3>
+            <p>{{ t('performance.targetAudience.sports.description') }}</p>
           </div>
           <div class="performance__target-card">
             <div class="performance__target-icon">◐</div>
-            <h3>Театральные постановки</h3>
-            <p>Интеграция зрителей в спектакль</p>
+            <h3>{{ t('performance.targetAudience.theater.title') }}</h3>
+            <p>{{ t('performance.targetAudience.theater.description') }}</p>
           </div>
           <div class="performance__target-card">
             <div class="performance__target-icon">▶</div>
-            <h3>Маркетологи и бренды</h3>
-            <p>Нестандартные рекламные форматы</p>
+            <h3>{{ t('performance.targetAudience.marketing.title') }}</h3>
+            <p>{{ t('performance.targetAudience.marketing.description') }}</p>
           </div>
           <div class="performance__target-card">
             <div class="performance__target-icon">◆</div>
-            <h3>Политические организации</h3>
-            <p>Флешмобы и митинги с массовым участием</p>
+            <h3>{{ t('performance.targetAudience.political.title') }}</h3>
+            <p>{{ t('performance.targetAudience.political.description') }}</p>
           </div>
           <div class="performance__target-card">
             <div class="performance__target-icon">◉</div>
-            <h3>Общественные мероприятия</h3>
-            <p>Создание запоминающихся визуальных эффектов</p>
+            <h3>{{ t('performance.targetAudience.public.title') }}</h3>
+            <p>{{ t('performance.targetAudience.public.description') }}</p>
           </div>
         </div>
       </div>
@@ -265,40 +268,40 @@
     <!-- What is it like Section -->
     <section class="performance__section performance__section--gradient-4">
       <div class="performance__container">
-        <h2 class="performance__section-title">На что это может быть похоже?</h2>
+        <h2 class="performance__section-title">{{ t('performance.comparison.title') }}</h2>
         <div class="performance__comparison">
           <div class="performance__comparison-item">
             <div class="performance__image-container performance__image-container--clickable" @click="openGallery(0)">
               <img
                 src="@/assets/images/home/refs/img1.webp"
-                alt="Xylobands на концертах Coldplay"
+                :alt="t('performance.comparison.lightShows.description')"
                 class="performance__image"
               />
             </div>
-            <h3>Световые шоу на стадионах</h3>
-            <p>Браслеты Xylobands на концертах Coldplay</p>
+            <h3>{{ t('performance.comparison.lightShows.title') }}</h3>
+            <p>{{ t('performance.comparison.lightShows.description') }}</p>
           </div>
           <div class="performance__comparison-item">
             <div class="performance__image-container performance__image-container--clickable" @click="openGallery(1)">
               <img
                 src="@/assets/images/home/refs/img2.webp"
-                alt="Дрон-шоу в небе"
+                :alt="t('performance.comparison.drones.description')"
                 class="performance__image"
               />
             </div>
-            <h3>Дроны-шоу</h3>
-            <p>Но с использованием мобильных устройств зрителей</p>
+            <h3>{{ t('performance.comparison.drones.title') }}</h3>
+            <p>{{ t('performance.comparison.drones.description') }}</p>
           </div>
           <div class="performance__comparison-item">
             <div class="performance__image-container performance__image-container--clickable" @click="openGallery(2)">
               <img
                 src="@/assets/images/home/refs/img3.webp"
-                alt="Интерактивный перформанс"
+                :alt="t('performance.comparison.interactive.description')"
                 class="performance__image performance__image--shifted-up"
               />
             </div>
-            <h3>Интерактивные перформансы</h3>
-            <p>С активным участием зрителей</p>
+            <h3>{{ t('performance.comparison.interactive.title') }}</h3>
+            <p>{{ t('performance.comparison.interactive.description') }}</p>
           </div>
         </div>
       </div>
@@ -307,11 +310,10 @@
     <!-- Goal Section -->
     <section class="performance__section performance__section--accent">
       <div class="performance__container">
-        <h2 class="performance__section-title">Наша цель</h2>
+        <h2 class="performance__section-title">{{ t('performance.goal.title') }}</h2>
         <div class="performance__goal">
           <p class="performance__goal-text">
-            Создать инновационный инструмент для организации массовых интерактивных шоу,
-            увеличивая вовлеченность зрителей и открывая новые возможности для рекламы и брендирования.
+            {{ t('performance.goal.text') }}
           </p>
         </div>
       </div>
@@ -320,21 +322,21 @@
     <!-- Team Section -->
     <section class="performance__section performance__section--primary">
       <div class="performance__container">
-        <h2 class="performance__section-title">Команда проекта</h2>
+        <h2 class="performance__section-title">{{ t('performance.team.title') }}</h2>
         <div class="performance__team">
           <div class="performance__team-item">
             <div class="performance__team-photo">
-              <img src="@/assets/images/home/team/roman-orlovskiy.webp" alt="Роман Орловский" />
+              <img src="@/assets/images/home/team/roman-orlovskiy.webp" :alt="t('performance.team.roman.name')" />
             </div>
-            <h3>CEO Роман Орловский</h3>
-            <p>Стратегия и развитие продукта</p>
+            <h3>{{ t('performance.team.roman.name') }}</h3>
+            <p>{{ t('performance.team.roman.role') }}</p>
           </div>
           <div class="performance__team-item">
             <div class="performance__team-photo">
-              <img src="@/assets/images/home/team/anton-zyuzin.webp" alt="Антон Зюзин" />
+              <img src="@/assets/images/home/team/anton-zyuzin.webp" :alt="t('performance.team.anton.name')" />
             </div>
-            <h3>CMO Антон Зюзин</h3>
-            <p>Маркетинг, пиар, продвижение проекта</p>
+            <h3>{{ t('performance.team.anton.name') }}</h3>
+            <p>{{ t('performance.team.anton.role') }}</p>
           </div>
         </div>
     </div>
@@ -343,10 +345,10 @@
     <!-- CTA Section -->
     <section class="performance__cta">
       <div class="performance__container">
-        <h2 class="performance__cta-title">Готовы создать незабываемое шоу?</h2>
-        <p class="performance__cta-text">Напишите нам и мы сделаем перформанс под вашу площадку</p>
+        <h2 class="performance__cta-title">{{ t('performance.cta.title') }}</h2>
+        <p class="performance__cta-text">{{ t('performance.cta.text') }}</p>
         <a href="https://t.me/orlovskiy_rl" target="_blank" class="performance__cta-link">
-          <ButtonComp>Написать в Telegram</ButtonComp>
+          <ButtonComp>{{ t('performance.cta.button') }}</ButtonComp>
         </a>
       </div>
     </section>
@@ -374,7 +376,7 @@
         target="_blank"
         class="performance__sticky-cta"
         v-show="showStickyButton"
-        title="Написать в Telegram"
+        :title="t('performance.cta.stickyButton')"
       >
         <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" fill="currentColor"/>
@@ -385,39 +387,52 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import ButtonComp from '@/components/ButtonComp.vue'
 import ImageGallery from '@/components/ImageGallery.vue'
+import LanguageSwitcher from '@/components/LanguageSwitcher.vue'
 import { useMainStore } from '@/stores/main'
+import { useI18n } from '@/composables/useI18n'
 
 const mainStore = useMainStore()
+const { t } = useI18n()
+
+// Computed для subtitle с жирным текстом
+const subtitleHtml = computed(() => {
+  const subtitle = t('performance.subtitle')
+  const boldText = t('performance.subtitleBold')
+  return subtitle.replace('{{bold}}', `<b>${boldText}</b>`)
+})
 
 // Галерея изображений для Спартака
 const isSpartakGalleryOpen = ref(false)
 const spartakSlideIndex = ref(0)
 
-const spartakGalleryImages = [
-  {
-    src: new URL('@/assets/images/home/spartak-2.webp', import.meta.url).href,
-    alt: 'Матч Спартак — Ростов',
-    caption: 'Матч Спартак — Ростов'
-  },
-  {
-    src: new URL('@/assets/images/home/spartak.webp', import.meta.url).href,
-    alt: 'Матч Спартак — Ростов',
-    caption: 'Матч Спартак — Ростов'
-  },
-  {
-    src: new URL('@/assets/images/home/spartak-1.webp', import.meta.url).href,
-    alt: 'Матч Спартак — Ростов',
-    caption: 'Матч Спартак — Ростов'
-  },
-  {
-    src: new URL('@/assets/images/home/spartak-3.webp', import.meta.url).href,
-    alt: 'ЖФК Спартак — ЖФК ЦСКА',
-    caption: 'ЖФК Спартак — ЖФК ЦСКА'
-  }
-]
+const spartakGalleryImages = computed(() => {
+  // Зависимость от currentLang для реактивности через вызовы t()
+  return [
+    {
+      src: new URL('@/assets/images/home/spartak-2.webp', import.meta.url).href,
+      alt: t('performance.stadium.images.spartakRostov'),
+      caption: t('performance.stadium.images.spartakRostov')
+    },
+    {
+      src: new URL('@/assets/images/home/spartak.webp', import.meta.url).href,
+      alt: t('performance.stadium.images.spartakRostov'),
+      caption: t('performance.stadium.images.spartakRostov')
+    },
+    {
+      src: new URL('@/assets/images/home/spartak-1.webp', import.meta.url).href,
+      alt: t('performance.stadium.images.spartakRostov'),
+      caption: t('performance.stadium.images.spartakRostov')
+    },
+    {
+      src: new URL('@/assets/images/home/spartak-3.webp', import.meta.url).href,
+      alt: t('performance.stadium.images.zfkSpartak'),
+      caption: t('performance.stadium.images.zfkSpartak')
+    }
+  ]
+})
 
 const openSpartakGallery = (index = 0) => {
   spartakSlideIndex.value = index
@@ -442,23 +457,26 @@ const prevSpartakPhoto = (e) => {
 const isGalleryOpen = ref(false)
 const currentSlide = ref(0)
 
-const galleryImages = [
-  {
-    src: new URL('@/assets/images/home/refs/img1.webp', import.meta.url).href,
-    alt: 'Xylobands на концертах Coldplay',
-    caption: 'Световые шоу на стадионах - Браслеты Xylobands на концертах Coldplay'
-  },
-  {
-    src: new URL('@/assets/images/home/refs/img2.webp', import.meta.url).href,
-    alt: 'Дрон-шоу в небе',
-    caption: 'Дроны-шоу с использованием мобильных устройств зрителей'
-  },
-  {
-    src: new URL('@/assets/images/home/refs/img3.webp', import.meta.url).href,
-    alt: 'Интерактивный перформанс',
-    caption: 'Интерактивные перформансы с активным участием зрителей'
-  }
-]
+const galleryImages = computed(() => {
+  // Зависимость от currentLang для реактивности через вызовы t()
+  return [
+    {
+      src: new URL('@/assets/images/home/refs/img1.webp', import.meta.url).href,
+      alt: t('performance.comparison.lightShows.description'),
+      caption: t('performance.comparison.lightShows.title') + ' - ' + t('performance.comparison.lightShows.description')
+    },
+    {
+      src: new URL('@/assets/images/home/refs/img2.webp', import.meta.url).href,
+      alt: t('performance.comparison.drones.description'),
+      caption: t('performance.comparison.drones.description')
+    },
+    {
+      src: new URL('@/assets/images/home/refs/img3.webp', import.meta.url).href,
+      alt: t('performance.comparison.interactive.description'),
+      caption: t('performance.comparison.interactive.description')
+    }
+  ]
+})
 
 const openGallery = (index) => {
   currentSlide.value = index
@@ -563,9 +581,6 @@ const handleFullscreenChange = () => {
   }
 }
 
-// Добавляем обработчик при монтировании компонента
-import { onMounted, onUnmounted } from 'vue'
-
 onMounted(() => {
   document.addEventListener('fullscreenchange', handleFullscreenChange)
   document.addEventListener('webkitfullscreenchange', handleFullscreenChange)
@@ -644,6 +659,7 @@ const handleScroll = () => {
   display: flex;
   flex-direction: column;
   width: 100%;
+  position: relative;
 
   /* Hero Section */
   &__hero {
