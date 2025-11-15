@@ -147,6 +147,25 @@ export default {
     language: {
       switch: 'Переключить язык'
     }
+  },
+  demoPerf: {
+    title: 'Поддержи Клуб<br />и участвуй<br />в розыгрыше призов',
+    placeholders: {
+      row: 'Ряд',
+      seat: 'Место',
+      sector: 'Сектор'
+    },
+    instructions: {
+      step1: 'Включи на телефоне <b>яркость&nbsp;на&nbsp;максимум</b>',
+      step2: 'Нажми "Начать" и <b>разверни&nbsp;экран&nbsp;к&nbsp;полю</b>',
+      step2Layer: '<b>Разверни&nbsp;экран&nbsp;к&nbsp;полю</b>'
+    },
+    button: 'Начать',
+    errors: {
+      row: 'Введите ряд',
+      seat: 'Введите место',
+      sector: 'Выберите сектор'
+    }
   }
 }
 

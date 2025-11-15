@@ -1,14 +1,10 @@
 <template>
   <div class="demo">
     <div class="demo__content">
-      <div class="demo__title">
-        Поддержи Клуб<br />
-        и участвуй<br />
-        в розыгрыше призов
-      </div>
+      <div class="demo__title" v-html="t('demoPerf.title')"></div>
       <div class="demo__inputs-row">
         <InputComp
-          placeholder="Ряд"
+          :placeholder="t('demoPerf.placeholders.row')"
           :value="rowValue"
           @handleInput="handleRowInput"
           :error="errors.row"
@@ -16,7 +12,7 @@
           type="number"
         />
         <InputComp
-          placeholder="Место"
+          :placeholder="t('demoPerf.placeholders.seat')"
           :value="seatValue"
           @handleInput="handleSeatInput"
           :error="errors.seat"
@@ -27,7 +23,7 @@
       <SelectComp
         :options="sectorOptions"
         :value="selectedSector"
-        placeholder="Сектор"
+        :placeholder="t('demoPerf.placeholders.sector')"
         @handleChange="handleSectorChange"
         :error="errors.sector"
         :show-shake="shakeFields.sector"
@@ -37,22 +33,18 @@
           <div>
             <div class="demo__instruction-number">1</div>
           </div>
-          <div class="demo__instruction-text">
-            Включи на телефоне <b>яркость&nbsp;на&nbsp;максимум</b>
-          </div>
+          <div class="demo__instruction-text" v-html="t('demoPerf.instructions.step1')"></div>
         </div>
         <div class="demo__instruction-item">
           <div>
             <div class="demo__instruction-number">2</div>
           </div>
-          <div class="demo__instruction-text">
-            Нажми "Начать" и <b>разверни&nbsp;экран&nbsp;к&nbsp;полю</b>
-          </div>
+          <div class="demo__instruction-text" v-html="t('demoPerf.instructions.step2')"></div>
         </div>
       </div>
 
       <div class="demo__button">
-        <ButtonComp mod="gradient-5" @click="handleStart">Начать</ButtonComp>
+        <ButtonComp mod="gradient-5" @click="handleStart">{{ t('demoPerf.button') }}</ButtonComp>
       </div>
     </div>
 
@@ -68,17 +60,13 @@
               <div>
                 <div class="demo__instruction-number">1</div>
               </div>
-              <div class="demo__instruction-text">
-                Включи на телефоне <b>яркость&nbsp;на&nbsp;максимум</b>
-              </div>
+              <div class="demo__instruction-text" v-html="t('demoPerf.instructions.step1')"></div>
             </div>
             <div class="demo__instruction-item">
               <div>
                 <div class="demo__instruction-number">2</div>
               </div>
-              <div class="demo__instruction-text">
-                <b>Разверни&nbsp;экран&nbsp;к&nbsp;полю</b>
-              </div>
+              <div class="demo__instruction-text" v-html="t('demoPerf.instructions.step2Layer')"></div>
             </div>
           </div>
         </transition>
@@ -94,6 +82,9 @@ import ButtonComp from '@/components/ButtonComp.vue'
 import CloseIcon from '@/components/icons/CloseIcon.vue'
 import { ref } from 'vue'
 import { saveParinn } from '@/services/api'
+import { useI18n } from '@/composables/useI18n'
+
+const { t } = useI18n()
 
 const rowValue = ref('')
 const seatValue = ref('')
@@ -148,19 +139,19 @@ const validateFields = () => {
   }
 
   if (!rowValue.value.trim()) {
-    errors.value.row = 'Введите ряд'
+    errors.value.row = t('demoPerf.errors.row')
     shakeFields.value.row = true
     isValid = false
   }
 
   if (!seatValue.value.trim()) {
-    errors.value.seat = 'Введите место'
+    errors.value.seat = t('demoPerf.errors.seat')
     shakeFields.value.seat = true
     isValid = false
   }
 
   if (!selectedSector.value) {
-    errors.value.sector = 'Выберите сектор'
+    errors.value.sector = t('demoPerf.errors.sector')
     shakeFields.value.sector = true
     isValid = false
   }

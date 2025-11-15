@@ -147,6 +147,25 @@ export default {
     language: {
       switch: 'Switch language'
     }
+  },
+  demoPerf: {
+    title: 'Support the Club<br />and participate<br />in the prize draw',
+    placeholders: {
+      row: 'Row',
+      seat: 'Seat',
+      sector: 'Sector'
+    },
+    instructions: {
+      step1: 'Turn your phone <b>brightness&nbsp;to&nbsp;maximum</b>',
+      step2: 'Press "Start" and <b>turn&nbsp;the&nbsp;screen&nbsp;towards&nbsp;the&nbsp;field</b>',
+      step2Layer: '<b>Turn&nbsp;the&nbsp;screen&nbsp;towards&nbsp;the&nbsp;field</b>'
+    },
+    button: 'Start',
+    errors: {
+      row: 'Enter row',
+      seat: 'Enter seat',
+      sector: 'Select sector'
+    }
   }
 }
 
