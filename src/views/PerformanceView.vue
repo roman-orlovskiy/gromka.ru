@@ -1,10 +1,9 @@
 <template>
   <div class="performance">
-    <!-- Language Switcher -->
-    <LanguageSwitcher />
-
     <!-- Hero Section -->
     <section class="performance__hero">
+      <LanguageSwitcher />
+
       <h1 class="performance__title">{{ t('performance.title') }}</h1>
       <p class="performance__subtitle" v-html="subtitleHtml"></p>
       <div class="performance__hero-video">
@@ -388,14 +387,16 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { useRoute } from 'vue-router'
 import ButtonComp from '@/components/ButtonComp.vue'
 import ImageGallery from '@/components/ImageGallery.vue'
 import LanguageSwitcher from '@/components/LanguageSwitcher.vue'
 import { useMainStore } from '@/stores/main'
 import { useI18n } from '@/composables/useI18n'
 
+const route = useRoute()
 const mainStore = useMainStore()
-const { t } = useI18n()
+const { t, setLanguage } = useI18n()
 
 // Computed для subtitle с жирным текстом
 const subtitleHtml = computed(() => {
@@ -587,6 +588,23 @@ onMounted(() => {
   document.addEventListener('msfullscreenchange', handleFullscreenChange)
   window.addEventListener('scroll', handleScroll)
   handleScroll() // Проверяем сразу при загрузке
+
+  // Проверяем query параметры для автоматического открытия демо и установки языка
+  const demoParam = route.query.demo
+  const langParam = route.query.lang
+
+  // Устанавливаем язык, если указан в query
+  if (langParam === 'ru' || langParam === 'en') {
+    setLanguage(langParam)
+  }
+
+  // Открываем модальное окно демо, если demo=true
+  if (demoParam === 'true') {
+    // Небольшая задержка для корректной инициализации компонента
+    setTimeout(() => {
+      openDemoModal()
+    }, 100)
+  }
 })
 
 onUnmounted(() => {
