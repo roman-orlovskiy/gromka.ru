@@ -100,8 +100,8 @@ export default {
         description: 'Non-standard advertising formats'
       },
       political: {
-        title: 'Political organizations',
-        description: 'Flash mobs and rallies with mass participation'
+        title: 'Corporate events',
+        description: 'Joint activities with giveaways'
       },
       public: {
         title: 'Public events',
