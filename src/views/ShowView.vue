@@ -207,7 +207,7 @@ const handleCloseLayer = () => {
     left: 0;
     bottom: 0;
     right: 0;
-    background-color: $color-pary;
+    background-color: $color-black;
     animation: colorShift 1.5s infinite;
     z-index: 1000;
     color: $color-white;
@@ -257,13 +257,13 @@ const handleCloseLayer = () => {
 
 @keyframes colorShift {
   0% {
-    background-color: $color-pary;
+    background-color: $color-black;
   }
   50% {
-    background-color: $color-primary;
+    background-color: $color-white;
   }
   100% {
-    background-color: $color-pary;
+    background-color: $color-black;
   }
 }
 </style>

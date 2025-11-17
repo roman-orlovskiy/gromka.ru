@@ -38,7 +38,7 @@ export const useCamera = () => {
       devices.value = await navigator.mediaDevices.enumerateDevices()
 
       // 3. Останавливаем временный поток
-      tempStream.getTracks().forEach(track => track.stop())
+      stopStream(tempStream)
 
       // 4. Фильтруем back камеры с РЕАЛЬНЫМИ labels
       backCameras.value = devices.value.filter(device => {
@@ -65,6 +65,43 @@ export const useCamera = () => {
     if (!isInitialized.value) {
       await initialize()
     }
+  }
+
+  // Утилита: остановка стрима
+  const stopStream = (stream) => {
+    if (stream && stream.getTracks) {
+      stream.getTracks().forEach(track => track.stop())
+    }
+  }
+
+  // Утилита: проверка и применение torch к стриму
+  const applyTorchToStream = async (stream) => {
+    const videoTrack = stream.getVideoTracks()[0]
+    if (videoTrack && videoTrack.getCapabilities && videoTrack.getCapabilities().torch) {
+      await videoTrack.applyConstraints({ advanced: [{ torch: true }] })
+      camera.value = stream
+      return true
+    }
+    return false
+  }
+
+  // Утилита: создание video constraints
+  const getVideoConstraints = (deviceId = null) => {
+    const baseConstraints = {
+      torch: true,
+      width: { ideal: 320 },
+      height: { ideal: 240 },
+      frameRate: { ideal: 15 }
+    }
+
+    if (deviceId) {
+      return {
+        deviceId: { exact: deviceId },
+        ...baseConstraints
+      }
+    }
+
+    return baseConstraints
   }
 
   // Универсальный метод для включения/выключения фонарика
@@ -160,7 +197,7 @@ export const useCamera = () => {
       // Минимальные операции - только выключение torch
       if (camera.value && camera.value.getTracks) {
         const videoTrack = camera.value.getVideoTracks()[0]
-        if (videoTrack && videoTrack.getCapabilities && videoTrack.getCapabilities().torch) {
+        if (videoTrack?.getCapabilities?.()?.torch) {
           await videoTrack.applyConstraints({ advanced: [{ torch: false }] })
         }
       }
@@ -204,10 +241,7 @@ export const useCamera = () => {
         stream = await navigator.mediaDevices.getUserMedia({
           video: {
             facingMode: 'environment',
-            torch: true,
-            width: { ideal: 320 },
-            height: { ideal: 240 },
-            frameRate: { ideal: 15 }
+            ...getVideoConstraints()
           }
         })
 
@@ -217,16 +251,13 @@ export const useCamera = () => {
         }
       }
 
-      const videoTrack = stream.getVideoTracks()[0]
-      if (videoTrack && videoTrack.getCapabilities && videoTrack.getCapabilities().torch) {
-        await videoTrack.applyConstraints({ advanced: [{ torch: true }] })
-        camera.value = stream
+      if (await applyTorchToStream(stream)) {
         return true
       }
 
       // Если torch не поддерживается, останавливаем поток
       if (!useCache) {
-        stream.getTracks().forEach(track => track.stop())
+        stopStream(stream)
       }
       return false
     } catch {
@@ -252,13 +283,7 @@ export const useCamera = () => {
         const backCamera = backCameras.value[0]
 
         stream = await navigator.mediaDevices.getUserMedia({
-          video: {
-            deviceId: { exact: backCamera.deviceId },
-            torch: true,
-            width: { ideal: 320 },
-            height: { ideal: 240 },
-            frameRate: { ideal: 15 }
-          }
+          video: getVideoConstraints(backCamera.deviceId)
         })
 
         // Кэшируем стрим только если он новый
@@ -267,15 +292,12 @@ export const useCamera = () => {
         }
       }
 
-      const videoTrack = stream.getVideoTracks()[0]
-      if (videoTrack && videoTrack.getCapabilities && videoTrack.getCapabilities().torch) {
-        await videoTrack.applyConstraints({ advanced: [{ torch: true }] })
-        camera.value = stream
+      if (await applyTorchToStream(stream)) {
         return true
       }
 
       if (!useCache) {
-        stream.getTracks().forEach(track => track.stop())
+        stopStream(stream)
       }
       return false
     } catch {
@@ -296,13 +318,7 @@ export const useCamera = () => {
         for (const device of allCameras.value) {
           try {
             stream = await navigator.mediaDevices.getUserMedia({
-              video: {
-                deviceId: { exact: device.deviceId },
-                torch: true,
-                width: { ideal: 320 },
-                height: { ideal: 240 },
-                frameRate: { ideal: 15 }
-              }
+              video: getVideoConstraints(device.deviceId)
             })
 
             // Кэшируем стрим только если он новый
@@ -321,15 +337,12 @@ export const useCamera = () => {
         }
       }
 
-      const videoTrack = stream.getVideoTracks()[0]
-      if (videoTrack && videoTrack.getCapabilities && videoTrack.getCapabilities().torch) {
-        await videoTrack.applyConstraints({ advanced: [{ torch: true }] })
-        camera.value = stream
+      if (await applyTorchToStream(stream)) {
         return true
       }
 
       if (!useCache) {
-        stream.getTracks().forEach(track => track.stop())
+        stopStream(stream)
       }
       return false
     } catch {
@@ -371,7 +384,7 @@ export const useCamera = () => {
   const clearCache = () => {
     cachedMethod.value = null
     if (cachedStream.value) {
-      cachedStream.value.getTracks().forEach(track => track.stop())
+      stopStream(cachedStream.value)
       cachedStream.value = null
     }
     isFlashlightSupported.value = null
