@@ -7,16 +7,16 @@
       <div class="show__inputs-row">
         <InputComp
           placeholder="Ряд"
-          :value="rowValue"
-          @handleInput="handleRowInput"
+          :value="values.row"
+          @handleInput="(e) => handleFieldChange('row', e.target.value)"
           :error="errors.row"
           :show-shake="shakeFields.row"
           type="number"
         />
         <InputComp
           placeholder="Место"
-          :value="seatValue"
-          @handleInput="handleSeatInput"
+          :value="values.seat"
+          @handleInput="(e) => handleFieldChange('seat', e.target.value)"
           :error="errors.seat"
           :show-shake="shakeFields.seat"
           type="number"
@@ -81,129 +81,48 @@
 import InputComp from '@/components/InputComp.vue'
 import ButtonComp from '@/components/ButtonComp.vue'
 import CloseIcon from '@/components/icons/CloseIcon.vue'
-import { ref } from 'vue'
+import { useWakeLock } from '@/composables/useWakeLock'
+import { useFullscreen } from '@/composables/useFullscreen'
+import { useFormValidation } from '@/composables/useFormValidation'
+import { useInstructionLayer } from '@/composables/useInstructionLayer'
 
-const rowValue = ref('')
-const seatValue = ref('')
-const isLayerVisible = ref(false)
-const isInstructionVisible = ref(true)
-let wakeLock = null
-
-const shakeFields = ref({
-  row: false,
-  seat: false,
-})
-const errors = ref({
-  row: '',
-  seat: '',
+// Управление формой
+const { values, errors, shakeFields, validate, handleFieldChange } = useFormValidation({
+  row: { initialValue: '' },
+  seat: { initialValue: '' },
 })
 
-const requestWakeLock = async () => {
-  try {
-    if ('wakeLock' in navigator) {
-      wakeLock = await navigator.wakeLock.request('screen')
-    }
-  } catch (err) {
-    console.error('Ошибка при запросе Wake Lock:', err)
-  }
+// Управление Wake Lock
+const { requestWakeLock, releaseWakeLock } = useWakeLock()
+
+// Управление Fullscreen
+const { enterFullscreen, exitFullscreen } = useFullscreen()
+
+// Управление слоем с инструкциями
+const { isLayerVisible, isInstructionVisible, showLayer, hideLayer } = useInstructionLayer(4000)
+
+// Правила валидации
+const validationRules = {
+  row: {
+    required: true,
+    requiredMessage: 'Введите ряд',
+  },
+  seat: {
+    required: true,
+    requiredMessage: 'Введите место',
+  },
 }
-
-const releaseWakeLock = async () => {
-  if (wakeLock) {
-    try {
-      await wakeLock.release()
-      wakeLock = null
-    } catch (err) {
-      console.error('Ошибка при освобождении Wake Lock:', err)
-    }
-  }
-}
-
-const validateFields = () => {
-  let isValid = true
-  errors.value = {
-    row: '',
-    seat: '',
-  }
-  shakeFields.value = {
-    row: false,
-    seat: false,
-  }
-
-  if (!rowValue.value.trim()) {
-    errors.value.row = 'Введите ряд'
-    shakeFields.value.row = true
-    isValid = false
-  }
-
-  if (!seatValue.value.trim()) {
-    errors.value.seat = 'Введите место'
-    shakeFields.value.seat = true
-    isValid = false
-  }
-
-  if (!isValid) {
-    setTimeout(() => {
-      shakeFields.value = {
-        row: false,
-        seat: false,
-      }
-    }, 500)
-  }
-
-  return isValid
-}
-
-const handleRowInput = (event) => {
-  rowValue.value = event.target.value
-  errors.value.row = ''
-}
-
-const handleSeatInput = (event) => {
-  seatValue.value = event.target.value
-  errors.value.seat = ''
-}
-
-let instructionTimeout = null
 
 const handleStart = () => {
-  if (validateFields()) {
-    isLayerVisible.value = true
-    isInstructionVisible.value = true
+  if (validate(validationRules)) {
+    showLayer()
     enterFullscreen()
     requestWakeLock()
-
-    clearTimeout(instructionTimeout)
-    instructionTimeout = setTimeout(() => {
-      isInstructionVisible.value = false
-    }, 4000)
-  }
-}
-
-const enterFullscreen = () => {
-  const element = document.documentElement
-  if (element.requestFullscreen) {
-    element.requestFullscreen()
-  } else if (element.webkitRequestFullscreen) {
-    element.webkitRequestFullscreen()
-  } else if (element.msRequestFullscreen) {
-    element.msRequestFullscreen()
-  }
-}
-
-const exitFullscreen = () => {
-  if (document.exitFullscreen) {
-    document.exitFullscreen()
-  } else if (document.webkitExitFullscreen) {
-    document.webkitExitFullscreen()
-  } else if (document.msExitFullscreen) {
-    document.msExitFullscreen()
   }
 }
 
 const handleCloseLayer = () => {
-  isLayerVisible.value = false
-  clearTimeout(instructionTimeout)
+  hideLayer()
   exitFullscreen()
   releaseWakeLock()
 }
