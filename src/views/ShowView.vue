@@ -47,7 +47,7 @@
     </div>
 
     <transition name="fade">
-      <div class="show__layer" v-if="isLayerVisible">
+      <div class="show__layer" v-if="isLayerVisible" :class="{ 'show__layer--white': isWhiteBackground }">
         <div class="show__close-button" @click="handleCloseLayer">
           <CloseIcon />
         </div>
@@ -85,6 +85,8 @@ import { useWakeLock } from '@/composables/useWakeLock'
 import { useFullscreen } from '@/composables/useFullscreen'
 import { useFormValidation } from '@/composables/useFormValidation'
 import { useInstructionLayer } from '@/composables/useInstructionLayer'
+import { usePerformanceSequence } from '@/composables/usePerformanceSequence'
+import { ref } from 'vue'
 
 // Управление формой
 const { values, errors, shakeFields, validate, handleFieldChange } = useFormValidation({
@@ -101,6 +103,10 @@ const { enterFullscreen, exitFullscreen } = useFullscreen()
 // Управление слоем с инструкциями
 const { isLayerVisible, isInstructionVisible, showLayer, hideLayer } = useInstructionLayer(4000)
 
+// Управление последовательностью перформанса
+const isWhiteBackground = ref(false)
+const { startSequence, stopSequence } = usePerformanceSequence()
+
 // Правила валидации
 const validationRules = {
   row: {
@@ -113,18 +119,33 @@ const validationRules = {
   },
 }
 
+const handleColorChange = (color) => {
+  isWhiteBackground.value = color === 1
+}
+
+const handleSequenceComplete = () => {
+  handleCloseLayer()
+}
+
 const handleStart = () => {
   if (validate(validationRules)) {
     showLayer()
     enterFullscreen()
     requestWakeLock()
+
+    // Запускаем последовательность после небольшой задержки
+    setTimeout(() => {
+      startSequence(handleColorChange, handleSequenceComplete)
+    }, 4000) // После скрытия инструкций
   }
 }
 
 const handleCloseLayer = () => {
+  stopSequence()
   hideLayer()
   exitFullscreen()
   releaseWakeLock()
+  isWhiteBackground.value = false
 }
 </script>
 
@@ -208,7 +229,6 @@ const handleCloseLayer = () => {
     bottom: 0;
     right: 0;
     background-color: $color-black;
-    animation: colorShift 1.5s infinite;
     z-index: 1000;
     color: $color-white;
     display: flex;
@@ -216,6 +236,20 @@ const handleCloseLayer = () => {
     align-items: center;
     justify-content: center;
     padding: 2rem;
+    transition: background-color 0.1s ease;
+
+    &--white {
+      background-color: $color-white;
+      color: $color-black;
+
+      & .show__instruction-text {
+        color: $color-primary;
+      }
+
+      & .show__close-button svg {
+        fill: rgba($color-black, 0.5);
+      }
+    }
 
     & .show__instruction-text {
       color: $color-white;
@@ -252,18 +286,6 @@ const handleCloseLayer = () => {
 
   &__button {
     margin-top: 2rem;
-  }
-}
-
-@keyframes colorShift {
-  0% {
-    background-color: $color-black;
-  }
-  50% {
-    background-color: $color-white;
-  }
-  100% {
-    background-color: $color-black;
   }
 }
 </style>
