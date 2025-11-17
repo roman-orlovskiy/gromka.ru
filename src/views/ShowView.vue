@@ -109,7 +109,7 @@ const isWhiteBackground = ref(false)
 const { startSequence, stopSequence } = usePerformanceSequence()
 
 // Управление камерой и фонариком
-const { turnOnFlashlight, turnOffFlashlight } = useCamera()
+const { turnOnFlashlight, turnOffFlashlight, initialize } = useCamera()
 
 // Правила валидации
 const validationRules = {
@@ -142,11 +142,19 @@ const handleSequenceComplete = () => {
   handleCloseLayer()
 }
 
-const handleStart = () => {
+const handleStart = async () => {
   if (validate(validationRules)) {
     showLayer()
     enterFullscreen()
     requestWakeLock()
+
+    // Инициализируем камеру сразу при нажатии "Начать"
+    try {
+      await initialize()
+    } catch (err) {
+      console.error('Ошибка инициализации камеры:', err)
+      // Продолжаем работу даже если камера не инициализировалась
+    }
 
     // Запускаем последовательность после небольшой задержки
     setTimeout(() => {
