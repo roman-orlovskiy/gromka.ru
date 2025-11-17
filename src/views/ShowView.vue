@@ -86,6 +86,7 @@ import { useFullscreen } from '@/composables/useFullscreen'
 import { useFormValidation } from '@/composables/useFormValidation'
 import { useInstructionLayer } from '@/composables/useInstructionLayer'
 import { usePerformanceSequence } from '@/composables/usePerformanceSequence'
+import { useCamera } from '@/composables/useCamera'
 import { ref } from 'vue'
 
 // Управление формой
@@ -107,6 +108,9 @@ const { isLayerVisible, isInstructionVisible, showLayer, hideLayer } = useInstru
 const isWhiteBackground = ref(false)
 const { startSequence, stopSequence } = usePerformanceSequence()
 
+// Управление камерой и фонариком
+const { turnOnFlashlight, turnOffFlashlight } = useCamera()
+
 // Правила валидации
 const validationRules = {
   row: {
@@ -119,8 +123,19 @@ const validationRules = {
   },
 }
 
-const handleColorChange = (color) => {
+const handleColorChange = async (color) => {
   isWhiteBackground.value = color === 1
+
+  // Управление фонариком: 0 - выключен, 1 - включен
+  try {
+    if (color === 1) {
+      await turnOnFlashlight()
+    } else {
+      await turnOffFlashlight()
+    }
+  } catch (err) {
+    console.error('Ошибка управления фонариком:', err)
+  }
 }
 
 const handleSequenceComplete = () => {
@@ -140,8 +155,16 @@ const handleStart = () => {
   }
 }
 
-const handleCloseLayer = () => {
+const handleCloseLayer = async () => {
   stopSequence()
+
+  // Выключаем фонарик при закрытии
+  try {
+    await turnOffFlashlight()
+  } catch (err) {
+    console.error('Ошибка выключения фонарика:', err)
+  }
+
   hideLayer()
   exitFullscreen()
   releaseWakeLock()
