@@ -359,6 +359,8 @@ onUnmounted(async () => {
   font-size: 3rem;
   color: $color-gray-600;
   line-height: 1.4;
+  top: -26rem;
+  position: relative;
 }
 
 @keyframes pulse {
