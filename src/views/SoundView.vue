@@ -79,9 +79,9 @@ const {
 
 // Используем composable для камеры/фонарика
 const {
+  cameraMethod,
   isFlashlightSupported,
   devices,
-  lastUsedMethod,
   turnOnFlashlight,
   turnOffFlashlight,
   checkFlashlightSupport
@@ -155,14 +155,16 @@ watch(isLightOn, async (newValue) => {
     if (newValue) {
       // Включаем фонарик при белом свете
       await turnOnFlashlight()
-      trackFlashlightChange(true, lastUsedMethod.value)
+      trackFlashlightChange(true, cameraMethod.value)
     } else {
       // Выключаем фонарик при черном свете
       await turnOffFlashlight()
-      trackFlashlightChange(false, lastUsedMethod.value)
+      trackFlashlightChange(false, cameraMethod.value)
     }
   } catch (error) {
     console.warn('Ошибка управления фонариком:', error)
+    // Логируем ошибку включения/выключения фонарика
+    logFlashlightSupport(false, cameraMethod.value, error)
   }
 }, { immediate: false })
 
@@ -180,19 +182,22 @@ const handleStart = async () => {
   // Активируем Wake Lock для предотвращения засыпания экрана
   await requestWakeLock()
 
-  // Проверяем поддержку фонарика с логированием
-  const hasFlashlight = await checkFlashlightSupport({
-    logFlashlightSupport
-  })
+  // Включаем фонарик и проверяем поддержку
+  let hasFlashlight = false
 
-  if (hasFlashlight) {
-    console.log('Фонарик поддерживается')
-  } else {
-    console.warn('Фонарик не поддерживается на этом устройстве')
+  try {
+    hasFlashlight = await checkFlashlightSupport()
+    if (hasFlashlight) {
+      logFlashlightSupport(true, cameraMethod.value)
+    } else {
+      logFlashlightSupport(false, null)
+    }
+  } catch (error) {
+    logFlashlightSupport(false, null, error)
   }
 
-  // Логируем информацию о камерах после проверки фонарика
-  logCameraInfo(devices.value, lastUsedMethod.value)
+  // Логируем информацию о камерах
+  logCameraInfo(devices.value, cameraMethod.value)
 
   // Создаем объект с функциями логирования для передачи в useAudio
   const loggingCallbacks = {
