@@ -110,7 +110,7 @@ const handlePlacesInput = (event) => {
   font-size: 3.6rem;
   font-weight: $font-weight-bold;
   color: $color-gray-700;
-  margin-bottom: 2rem;
+  margin-bottom: 4rem;
   text-align: center;
 }
 
