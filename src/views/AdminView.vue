@@ -99,8 +99,8 @@ const SIGNAL_FRAME = {
   payloadDuration: 0.2,
   silenceGap: 0.05,
   gains: {
-    preamble: 0.8,
-    payload: 0.6
+    preamble: 1,
+    payload: 1
   },
   envelope: {
     attack: 0.015,
