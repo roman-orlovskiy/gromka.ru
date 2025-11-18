@@ -2,30 +2,32 @@
   <div class="input-comp">
     <div class="input-comp__wrapper">
       <div class="input-comp__input-wrapper">
-        <span v-if="mask" class="input-comp__mask">{{ mask }}</span>
+        <span v-if="mask" class="input-comp__mask" :class="{ 'input-comp__mask--black': mod === 'black' }">{{ mask }}</span>
         <input
           class="input-comp__item"
           :class="{
             'input-comp__item--error': error,
             'input-comp__item--shake': showShake,
             'input-comp__item--mask': mask,
+            'input-comp__item--black': mod === 'black',
           }"
           :type="type"
           :placeholder="placeholder"
           :value="value"
+          :maxlength="maxlength"
           @input="handleInput"
           :disabled="disabled"
         />
         <div v-if="disabled" class="input-comp__overlay"></div>
       </div>
       <div v-if="error" class="input-comp__error">{{ error }}</div>
-      <div v-if="value" class="input-comp__placeholder">{{ placeholder }}</div>
+      <div v-if="value" class="input-comp__placeholder" :class="{ 'input-comp__placeholder--black': mod === 'black' }">{{ placeholder }}</div>
     </div>
   </div>
 </template>
 
 <script setup>
-defineProps({
+const props = defineProps({
   placeholder: {
     type: String,
     default: '',
@@ -54,11 +56,50 @@ defineProps({
     type: String,
     default: 'text',
   },
+  mod: {
+    type: String,
+    default: '',
+  },
+  maxlength: {
+    type: [String, Number],
+    default: null,
+  },
+  max: {
+    type: [String, Number],
+    default: null,
+  },
 })
 
 const emit = defineEmits(['handleInput'])
 
 const handleInput = (event) => {
+  let inputValue = event.target.value
+
+  // Для числовых инпутов применяем валидацию
+  if (props.type === 'number') {
+    // Ограничиваем по maxlength
+    if (props.maxlength && inputValue.length > props.maxlength) {
+      inputValue = inputValue.slice(0, props.maxlength)
+      event.target.value = inputValue
+    }
+
+    // Ограничиваем по максимальному значению
+    if (props.max !== null) {
+      const maxValue = typeof props.max === 'string' ? parseInt(props.max, 10) : props.max
+      const numValue = parseInt(inputValue, 10)
+      if (!isNaN(numValue) && numValue > maxValue) {
+        inputValue = String(maxValue)
+        event.target.value = inputValue
+      }
+    }
+  } else {
+    // Для текстовых инпутов ограничиваем только по maxlength
+    if (props.maxlength && inputValue.length > props.maxlength) {
+      inputValue = inputValue.slice(0, props.maxlength)
+      event.target.value = inputValue
+    }
+  }
+
   emit('handleInput', event)
 }
 </script>
@@ -131,6 +172,16 @@ const handleInput = (event) => {
         padding-left: 6rem;
       }
     }
+
+    &--black {
+      border-color: $color-black;
+      color: $color-black;
+
+      &::placeholder {
+        color: $color-black;
+        opacity: 0.5;
+      }
+    }
   }
 
   &__placeholder {
@@ -144,6 +195,16 @@ const handleInput = (event) => {
     @include layout-aspect-mobile {
       font-size: 1.2rem;
       left: 1.6rem;
+    }
+
+    &--black {
+      color: $color-black;
+    }
+  }
+
+  &__mask {
+    &--black {
+      color: $color-black;
     }
   }
 
