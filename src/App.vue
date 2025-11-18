@@ -34,12 +34,7 @@ const isParyPage = true;
 
   & > div:first-child {
     flex: 1;
-    background: linear-gradient(135deg,
-    $color-vibrant-blue 0%,
-    $color-vibrant-purple 35%,
-    $color-vibrant-pink 65%,
-    $color-vibrant-orange 100%
-  );
+    background: $color-white;
   }
 
   @include layout-aspect-mobile {
@@ -58,6 +53,7 @@ body {
   font-family: $font-default !important;
   font-weight: $font-weight-medium;
   color: $color-black;
+  background: $color-white;
   -moz-osx-font-smoothing: grayscale;
   -webkit-font-smoothing: antialiased;
   -ms-text-size-adjust: 100%;

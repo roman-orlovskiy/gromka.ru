@@ -3,29 +3,32 @@
     <!-- Кнопка запуска -->
     <div v-if="!isStarted" class="sound-view__start">
       <div class="sound-view__content">
-        <div class="sound-view__title">Световой перформанс</div>
+        <div class="sound-view__title">Gromka перформанс</div>
 
         <div class="sound-view__instructions">
           <div class="sound-view__instruction-item">
-            <div>
-              <div class="sound-view__instruction-number">1</div>
-            </div>
             <div class="sound-view__instruction-text">
-              Разреши доступ к <b>микрофону и камере</b>
+              1. Поделитесь QR-кодом с коллегами
             </div>
           </div>
+
           <div class="sound-view__instruction-item">
-            <div>
-              <div class="sound-view__instruction-number">2</div>
-            </div>
             <div class="sound-view__instruction-text">
-              Нажми "Начать"
+              2. Нажмите "Начать"
             </div>
           </div>
         </div>
 
+        <div class="sound-view__qr">
+          <img
+            src="/images/sound-qr.webp"
+            alt="QR-код для перформанса"
+            class="sound-view__qr-image"
+          >
+        </div>
+
         <div class="sound-view__button">
-          <ButtonComp mod="spartak" @click="handleStart">Начать</ButtonComp>
+          <ButtonComp mod="outline" @click="handleStart">Начать</ButtonComp>
         </div>
       </div>
     </div>
@@ -33,52 +36,20 @@
     <!-- Сообщение о неподдерживаемом фонарике -->
     <div v-if="isStarted && isFlashlightSupported === false" class="sound-view__flashlight-message">
       <div class="flashlight-message">
-        <div class="flashlight-message__icon">📱</div>
-        <div class="flashlight-message__title">Фонарик не поддерживается</div>
-        <div class="flashlight-message__subtitle">Поверните экран к сцене</div>
+        <div class="flashlight-message__subtitle">Фонарик не поддерживается<br>Поверните экран к сцене</div>
       </div>
     </div>
 
-    <!-- Статус панель -->
-    <div v-if="isStarted && isFlashlightSupported !== false" class="sound-view__status">
-      <div class="status-indicator">
-        <div class="status-indicator__light" :class="{
-          'status-indicator__light--white': isLightOn,
-          'status-indicator__light--black': !isLightOn,
-          'status-indicator__light--off': false
-        }"></div>
-        <div class="status-indicator__text">
-          <div v-if="isListening" class="listening-text">Прослушивание...</div>
-          <div v-else-if="!hasPermission" class="permission-text">Нет разрешения на микрофон</div>
-          <div v-else-if="lastSignal" class="signal-text">
-            Последний сигнал: {{ lastSignal.flag }} ({{ lastSignal.frequency }} Гц)
-          </div>
-          <div v-else class="waiting-text">Ожидание сигнала</div>
-        </div>
-      </div>
-
-      <div class="frequency-display">
-        <div class="frequency-display__label">Текущая частота:</div>
-        <div class="frequency-display__value">{{ currentFrequency }} Гц</div>
-      </div>
-
-      <div class="flashlight-status">
-        <div class="flashlight-status__label">Фонарик:</div>
-        <div v-if="isFlashlightSupported === null" class="flashlight-status__value flashlight-status__value--checking">
-          Проверка поддержки...
-        </div>
-        <div v-else-if="isFlashlightSupported === false" class="flashlight-status__value flashlight-status__value--unsupported">
-          Не поддерживается
-        </div>
-        <div v-else class="flashlight-status__value" :class="{
-          'flashlight-status__value--on': isFlashlightOn,
-          'flashlight-status__value--off': !isFlashlightOn
-        }">
-          {{ isFlashlightOn ? 'Включен' : 'Выключен' }}
-        </div>
-        <div v-if="cameraError" class="flashlight-status__error">
-          {{ cameraError }}
-        </div>
+    <!-- Анимация перформанса -->
+    <div
+      v-if="isStarted && isFlashlightSupported !== false"
+      class="sound-view__performance"
+    >
+      <div
+        class="sound-square"
+        :class="soundSquareClass"
+      >
+        <div class="sound-square__label">Gromka</div>
       </div>
     </div>
   </div>
@@ -95,24 +66,20 @@ import { useLogging } from '@/composables/useLogging'
 import { useMainStore } from '@/stores/main'
 
 const isStarted = ref(false)
+const isSquareBursting = ref(false)
+let squareBurstTimeout = null
 const mainStore = useMainStore()
 const { isLightOn } = storeToRefs(mainStore)
 
 // Используем composable для аудио
 const {
-  isListening,
-  hasPermission,
-  currentFrequency,
-  lastSignal,
   requestMicrophonePermission,
   cleanup
 } = useAudio()
 
 // Используем composable для камеры/фонарика
 const {
-  isFlashlightOn,
   isFlashlightSupported,
-  error: cameraError,
   devices,
   lastUsedMethod,
   turnOnFlashlight,
@@ -152,12 +119,34 @@ const soundViewClasses = computed(() => {
   }
 })
 
+const soundSquareClass = computed(() => {
+  if (isLightOn.value === null) {
+    return {}
+  }
+
+  return {
+    'sound-square--dark': isLightOn.value,
+    'sound-square--light': !isLightOn.value,
+    'sound-square--burst': isSquareBursting.value
+  }
+})
+
 // Управление фонариком на основе isLightOn
 watch(isLightOn, async (newValue) => {
   if (newValue === null) return
 
   // Логируем изменение звука
   trackSoundChange(newValue)
+
+  if (squareBurstTimeout) {
+    clearTimeout(squareBurstTimeout)
+  }
+
+  isSquareBursting.value = true
+  squareBurstTimeout = setTimeout(() => {
+    isSquareBursting.value = false
+    squareBurstTimeout = null
+  }, 400)
 
   // Если фонарик не поддерживается, не пытаемся его включать
   if (isFlashlightSupported.value === false) return
@@ -231,6 +220,10 @@ onUnmounted(async () => {
   await releaseWakeLock()
 
   cleanup()
+
+  if (squareBurstTimeout) {
+    clearTimeout(squareBurstTimeout)
+  }
 })
 </script>
 
@@ -243,7 +236,7 @@ onUnmounted(async () => {
   left: 0;
   width: 100vw;
   height: 100vh;
-  background: $color-gray-100;
+  background: $color-white;
   transition: background-color 0.3s ease;
   display: flex;
   align-items: center;
@@ -274,7 +267,7 @@ onUnmounted(async () => {
 }
 
 .sound-view__title {
-  font-size: 3rem;
+  font-size: 3.6rem;
   font-weight: 700;
   color: $color-gray-700;
   margin-bottom: 3rem;
@@ -288,22 +281,14 @@ onUnmounted(async () => {
 .sound-view__instruction-item {
   display: flex;
   align-items: flex-start;
-  gap: 1.5rem;
-  margin-bottom: 2rem;
+  margin-bottom: 1rem;
   text-align: left;
 }
 
 .sound-view__instruction-number {
-  width: 3rem;
-  height: 3rem;
-  background: $color-primary;
-  color: $color-white;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.5rem;
+  font-size: 1.8rem;
   font-weight: 700;
+  color: $color-black;
   flex-shrink: 0;
 }
 
@@ -311,12 +296,26 @@ onUnmounted(async () => {
   font-size: 1.6rem;
   color: $color-gray-700;
   line-height: 1.4;
-  padding-top: 0.5rem;
+  padding-top: 0;
 }
 
 .sound-view__button {
   display: flex;
   justify-content: center;
+  margin-bottom: 3rem;
+}
+
+.sound-view__qr {
+  margin-bottom: 3rem;
+  display: flex;
+  justify-content: center;
+}
+
+.sound-view__qr-image {
+  width: 25rem;
+  max-width: 60vw;
+  border-radius: 1.2rem;
+  box-shadow: 0 1.2rem 3rem rgba($color-black, 0.1);
 }
 
 .sound-view__flashlight-message {
@@ -360,154 +359,85 @@ onUnmounted(async () => {
 @keyframes pulse {
   0%, 100% {
     transform: scale(1);
-    opacity: 1;
   }
   50% {
     transform: scale(1.1);
-    opacity: 0.8;
   }
 }
 
-.sound-view__status {
+.sound-view__performance {
   position: absolute;
-  top: 2rem;
-  left: 2rem;
-  z-index: 1001;
-  background: rgba(0, 0, 0, 0.8);
-  color: $color-white;
-  padding: 1.5rem;
-  border-radius: 1rem;
-  min-width: 300px;
-}
-
-.status-indicator {
+  inset: 0;
   display: flex;
   align-items: center;
-  gap: 1rem;
-  margin-bottom: 1rem;
+  justify-content: center;
+  pointer-events: none;
 }
 
-.status-indicator__light {
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: $color-gray-500;
-  transition: background-color 0.3s ease;
-
-  &--white {
-    background: $color-white;
-    box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
-  }
-
-  &--black {
-    background: $color-black;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
-  }
-
-  &--off {
-    background: $color-gray-500;
-  }
-}
-
-.status-indicator__text {
-  font-size: 1.4rem;
-  font-weight: 500;
-}
-
-.listening-text {
-  color: $color-success;
-}
-
-.permission-text {
-  color: $color-error;
-}
-
-.signal-text {
-  color: $color-primary;
-}
-
-.waiting-text {
-  color: $color-gray-300;
-}
-
-.frequency-display {
+.sound-square {
+  width: min(40vw, 240px);
+  aspect-ratio: 1 / 1;
+  border-radius: 1.2rem;
   display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
+  align-items: center;
+  justify-content: center;
+  animation: square-pulse 1.4s ease-in-out infinite;
+
+  &--dark {
+    background: rgba($color-black, 0.85);
+  }
+
+  &--light {
+    background: rgba($color-white, 0.9);
+    box-shadow: inset 0 0 15px rgba($color-black, 0.2);
+  }
+
+  &--burst {
+    animation: square-burst 0.4s linear;
+    background: rgba($color-pink-stylish, 0.85);
+  }
 }
 
-.frequency-display__label {
-  font-size: 1.2rem;
-  color: $color-gray-300;
-}
-
-.frequency-display__value {
-  font-size: 1.8rem;
+.sound-square__label {
+  font-size: clamp(2rem, 6vw, 2.6rem);
   font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.2rem;
+}
+
+.sound-square--dark .sound-square__label {
   color: $color-white;
 }
 
-.flashlight-status {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  margin-top: 1rem;
+.sound-square--light .sound-square__label {
+  color: $color-black;
 }
 
-.flashlight-status__label {
-  font-size: 1.2rem;
-  color: $color-gray-300;
-}
-
-.flashlight-status__value {
-  font-size: 1.4rem;
-  font-weight: 600;
-
-  &--on {
-    color: $color-success;
+@keyframes square-pulse {
+  0% {
+    transform: scale(0.9);
   }
 
-  &--off {
-    color: $color-gray-400;
+  85% {
+    transform: scale(1);
   }
 
-  &--checking {
-    color: $color-primary;
-  }
-
-  &--unsupported {
-    color: $color-error;
+  100% {
+    transform: scale(0.9);
   }
 }
 
-.flashlight-status__error {
-  font-size: 1rem;
-  color: $color-error;
-  margin-top: 0.5rem;
-}
-
-.wake-lock-status {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  margin-top: 1rem;
-}
-
-.wake-lock-status__label {
-  font-size: 1.2rem;
-  color: $color-gray-300;
-}
-
-.wake-lock-status__value {
-  font-size: 1.4rem;
-  font-weight: 600;
-
-  &--active {
-    color: $color-success;
+@keyframes square-burst {
+  0% {
+    transform: scale(1);
   }
 
-  &--inactive {
-    color: $color-gray-400;
+  60% {
+    transform: scale(1.65);
+  }
+
+  100% {
+    transform: scale(1);
   }
 }
 
@@ -531,24 +461,6 @@ onUnmounted(async () => {
     width: 2.5rem;
     height: 2.5rem;
     font-size: 1.3rem;
-  }
-
-  .sound-view__status {
-    top: 1rem;
-    left: 1rem;
-    right: 1rem;
-    min-width: auto;
-    padding: 1rem;
-  }
-
-  .status-indicator {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.5rem;
-  }
-
-  .frequency-display__value {
-    font-size: 1.5rem;
   }
 
   .flashlight-message {

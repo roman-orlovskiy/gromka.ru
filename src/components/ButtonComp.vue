@@ -11,7 +11,18 @@ const props = defineProps({
   mod: {
     type: String,
     default: 'secondary',
-    oneOf: ['secondary', 'gradient-1', 'gradient-2', 'gradient-3', 'gradient-4', 'gradient-5', 'gradient-6', 'gradient-7', 'spartak'],
+    oneOf: [
+      'secondary',
+      'gradient-1',
+      'gradient-2',
+      'gradient-3',
+      'gradient-4',
+      'gradient-5',
+      'gradient-6',
+      'gradient-7',
+      'spartak',
+      'outline'
+    ],
   },
 })
 
@@ -75,6 +86,13 @@ const buttonClass = computed(() => {
   &--mod-spartak {
     background-color: $color-spartak;
     box-shadow: 0 0 10px 0 rgba($color-spartak, 0.5);
+  }
+
+  &--mod-outline {
+    background-color: $color-white;
+    color: $color-black;
+    border: 0.2rem solid $color-black;
+    box-shadow: none;
   }
 
   &:hover {
