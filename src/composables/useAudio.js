@@ -18,6 +18,101 @@ export function useAudio() {
   let animationId = null
   let signalHistory = [] // История последних сигналов для проверки кода
 
+  const SIGNAL_CONSTANTS = {
+    PREAMBLE_FREQ: 19500,
+    PAYLOAD_FREQ_ON: 19000,
+    PAYLOAD_FREQ_OFF: 18000,
+    PREAMBLE_TOLERANCE: 150,
+    PAYLOAD_TOLERANCE: 160,
+    PREAMBLE_THRESHOLD: 110,
+    BIT_LOW_THRESHOLD: 55,
+    PAYLOAD_MIN_RATIO: 0.25,
+    PAYLOAD_WINDOW_MS: 280,
+    STABLE_SAMPLE_COUNT: 5,
+    BAND_CONFIDENCE_THRESHOLD: 0.7
+  }
+
+  const payloadWindow = {
+    isOpen: false,
+    samples: [],
+    deadline: 0,
+    referenceAmplitude: 0
+  }
+
+  const getNowMs = () => (typeof performance !== 'undefined' && performance.now ? performance.now() : Date.now())
+
+  const resetPayloadWindow = () => {
+    payloadWindow.isOpen = false
+    payloadWindow.samples = []
+    payloadWindow.deadline = 0
+    payloadWindow.referenceAmplitude = 0
+  }
+
+  const openPayloadWindow = (currentTimestamp, referenceAmplitude) => {
+    payloadWindow.isOpen = true
+    payloadWindow.samples = []
+    payloadWindow.deadline = currentTimestamp + SIGNAL_CONSTANTS.PAYLOAD_WINDOW_MS
+    payloadWindow.referenceAmplitude = referenceAmplitude
+  }
+
+  const isWithinRange = (value, target, tolerance) => Math.abs(value - target) <= tolerance
+
+  const isPreambleHit = (frequency, amplitude) =>
+    isWithinRange(frequency, SIGNAL_CONSTANTS.PREAMBLE_FREQ, SIGNAL_CONSTANTS.PREAMBLE_TOLERANCE) &&
+    amplitude >= SIGNAL_CONSTANTS.PREAMBLE_THRESHOLD
+
+  const getPayloadBand = (frequency) => {
+    if (isWithinRange(frequency, SIGNAL_CONSTANTS.PAYLOAD_FREQ_ON, SIGNAL_CONSTANTS.PAYLOAD_TOLERANCE)) {
+      return 'on'
+    }
+
+    if (isWithinRange(frequency, SIGNAL_CONSTANTS.PAYLOAD_FREQ_OFF, SIGNAL_CONSTANTS.PAYLOAD_TOLERANCE)) {
+      return 'off'
+    }
+
+    return null
+  }
+
+  const isPayloadAmplitudeValid = (amplitude) => {
+    if (amplitude < SIGNAL_CONSTANTS.BIT_LOW_THRESHOLD) return false
+    if (!payloadWindow.referenceAmplitude) return true
+
+    const ratio = amplitude / payloadWindow.referenceAmplitude
+    return ratio >= SIGNAL_CONSTANTS.PAYLOAD_MIN_RATIO
+  }
+
+  const classifyFlagByBand = () => {
+    const totalSamples = payloadWindow.samples.length
+    if (totalSamples === 0) return null
+
+    const stats = payloadWindow.samples.reduce(
+      (acc, sample) => {
+        acc[sample.band] = (acc[sample.band] || 0) + 1
+        return acc
+      },
+      { on: 0, off: 0 }
+    )
+
+    const onShare = stats.on / totalSamples
+    const offShare = stats.off / totalSamples
+
+    if (onShare >= SIGNAL_CONSTANTS.BAND_CONFIDENCE_THRESHOLD) {
+      return 1
+    }
+
+    if (offShare >= SIGNAL_CONSTANTS.BAND_CONFIDENCE_THRESHOLD) {
+      return 0
+    }
+
+    return null
+  }
+
+  const getAverageFromSamples = (selector) => {
+    if (!payloadWindow.samples.length) return 0
+    const sum = payloadWindow.samples.reduce((acc, sample) => acc + selector(sample), 0)
+    return sum / payloadWindow.samples.length
+  }
+
   // Функция для запроса разрешения на микрофон
   const requestMicrophonePermission = async (loggingCallback = null, signalCallback = null) => {
     const audioSettings = {
@@ -83,14 +178,13 @@ export function useAudio() {
       bufferLength
     )
     const frequencyResolution = audioContext.sampleRate / analyser.fftSize
-    const AMPLITUDE_THRESHOLD = 50 // более чувствительный порог
 
     isListening.value = true
-    startListening(minIndex, maxIndex, frequencyResolution, AMPLITUDE_THRESHOLD, loggingCallback, signalCallback)
+    startListening(minIndex, maxIndex, frequencyResolution, loggingCallback, signalCallback)
   }
 
   // Начало прослушивания с предвычисленными константами
-  const startListening = (minIndex, maxIndex, frequencyResolution, amplitudeThreshold, loggingCallback = null, signalCallback = null) => {
+  const startListening = (minIndex, maxIndex, frequencyResolution, loggingCallback = null, signalCallback = null) => {
     const detectFrequency = () => {
       if (!analyser) return
 
@@ -108,17 +202,52 @@ export function useAudio() {
         }
       }
 
+      const nowTimestamp = getNowMs()
+
+      if (payloadWindow.isOpen && nowTimestamp > payloadWindow.deadline) {
+        resetPayloadWindow()
+      }
+
+      if (maxValue === 0) {
+        currentFrequency.value = 0
+        animationId = requestAnimationFrame(detectFrequency)
+        return
+      }
+
       // Быстрое вычисление частоты с предвычисленным разрешением
       const frequency = maxValueIndex * frequencyResolution
 
-      // Обновляем currentFrequency только если есть значимый сигнал
-      if (maxValue > 0) {
-        currentFrequency.value = frequency | 0 // быстрое целочисленное округление
-        // Определяем сигнал на основе частоты
-        detectSignal(frequency, maxValue, amplitudeThreshold, loggingCallback, signalCallback)
-      } else {
-        // Если нет сигнала в ультразвуковом диапазоне, сбрасываем частоту
-        currentFrequency.value = 0
+      currentFrequency.value = frequency | 0 // быстрое целочисленное округление
+
+      if (!payloadWindow.isOpen && isPreambleHit(frequency, maxValue)) {
+        openPayloadWindow(nowTimestamp, maxValue)
+      } else if (payloadWindow.isOpen) {
+        const payloadBand = getPayloadBand(frequency)
+
+        if (payloadBand && isPayloadAmplitudeValid(maxValue)) {
+          payloadWindow.samples.push({
+            band: payloadBand,
+            frequency,
+            amplitude: maxValue
+          })
+
+          if (payloadWindow.samples.length >= SIGNAL_CONSTANTS.STABLE_SAMPLE_COUNT) {
+            const flag = classifyFlagByBand()
+
+            if (flag !== null) {
+              const avgFrequency = getAverageFromSamples((sample) => sample.frequency)
+              const avgAmplitude = getAverageFromSamples((sample) => sample.amplitude)
+
+              commitSignal(flag, avgFrequency, avgAmplitude, loggingCallback, signalCallback)
+            } else {
+              console.warn('Частота полезного сигнала не распознана, кадр отброшен', {
+                samples: payloadWindow.samples
+              })
+            }
+
+            resetPayloadWindow()
+          }
+        }
       }
 
       animationId = requestAnimationFrame(detectFrequency)
@@ -127,58 +256,39 @@ export function useAudio() {
     detectFrequency()
   }
 
-  // Оптимизированное определение сигнала по частоте
-  const detectSignal = (frequency, amplitude, amplitudeThreshold, loggingCallback = null, signalCallback = null) => {
-    if (amplitude < amplitudeThreshold) return
-
-    // Упрощенная логика определения флага
-    let flag
-    if (frequency >= 18800 && frequency <= 19200) {
-      flag = 1  // 19000 Гц = флаг 1 (белый)
-    } else if (frequency >= 17800 && frequency <= 18200) {
-      flag = 0  // 18000 Гц = флаг 0 (черный)
-    } else {
-      return // Не распознан как валидный сигнал
-    }
-
-    // Добавляем сигнал в историю и ограничиваем до 3 элементов
+  // Фиксируем декодированный сигнал после успешной проверки амплитуды
+  const commitSignal = (flag, frequency, amplitude, loggingCallback = null, signalCallback = null) => {
     signalHistory.push(flag)
-    signalHistory = signalHistory.slice(-3)
+    signalHistory = signalHistory.slice(-5)
 
-    // Проверяем, все ли последние 3 сигнала одинаковые
-    if (signalHistory.length === 3 &&
-        signalHistory[0] === signalHistory[1] &&
-        signalHistory[1] === signalHistory[2]) {
-      // Все 3 бита совпадают - меняем состояние
-      isLightOn.value = flag === 1
+    isLightOn.value = flag === 1
 
-      // Вызываем коллбэк при приеме аудиосигнала с флагом
-      if (signalCallback) {
-        signalCallback(flag)
-      }
+    if (signalCallback) {
+      signalCallback(flag)
     }
 
-    // Быстрое округление частоты один раз
     const roundedFreq = frequency | 0
+    const roundedAmplitude = Math.round(amplitude)
 
-    // Сохраняем последний сигнал с оптимизированным timestamp
     lastSignal.value = {
       flag,
       frequency: roundedFreq,
-      timestamp: Date.now() // быстрее чем new Date()
+      amplitude: roundedAmplitude,
+      timestamp: Date.now()
     }
 
-    // Логируем первый звуковой сигнал
     if (isFirstSignal.value && loggingCallback) {
       loggingCallback.logFirstSoundSignal({
         frequency: roundedFreq,
-        amplitude,
+        amplitude: roundedAmplitude,
         flag
       })
       isFirstSignal.value = false
     }
 
-    console.log(`Сигнал: флаг ${flag}, ${roundedFreq} Гц, ${amplitude}, история: [${signalHistory.join(',')}]`)
+    console.log(
+      `Сигнал подтвержден: флаг ${flag}, ${roundedFreq} Гц, амплитуда ${roundedAmplitude}, история: [${signalHistory.join(',')}]`
+    )
   }
 
   // Очистка ресурсов
@@ -200,6 +310,7 @@ export function useAudio() {
 
     // Очищаем историю сигналов
     signalHistory = []
+    resetPayloadWindow()
 
     isListening.value = false
   }

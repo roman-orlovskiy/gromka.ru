@@ -181,17 +181,18 @@ const handleSequenceComplete = () => {
 
 // Обработчик аудиосигнала - управление последовательностью
 const handleAudioSignal = (flag) => {
-  // Игнорируем, если не начали или последовательность активна или идет инициализация
-  if (!isStarted.value || isActive.value || isInitializing.value) return
+  // Игнорируем, если не начали или идет инициализация
+  if (!isStarted.value || isInitializing.value) return
 
-  // Сигнал 1 - запускаем последовательность
   if (flag === 1) {
+    // Если последовательность уже запущена, повторный запуск не нужен
+    if (isActive.value) return
     startSequence(handleColorChange, handleSequenceComplete)
+    return
   }
-  // Сигнал 0 - останавливаем последовательность
-  else if (flag === 0) {
+
+  if (flag === 0) {
     stopSequence()
-    // Выключаем фонарик и устанавливаем черный экран
     handleColorChange(0)
   }
 }

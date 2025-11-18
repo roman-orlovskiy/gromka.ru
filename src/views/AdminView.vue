@@ -89,54 +89,72 @@ const isLoading = ref(false)
 const showSuccess = ref(false)
 const lastResult = ref(null)
 
+const SIGNAL_FRAME = {
+  preambleFrequency: 19500,
+  payloadFrequencies: {
+    on: 19000,
+    off: 18000
+  },
+  preambleDuration: 0.08,
+  payloadDuration: 0.2,
+  silenceGap: 0.05,
+  gains: {
+    preamble: 1,
+    payload: 0.9
+  }
+}
+
 const onBroadcastClick = async (action) => {
   try {
-    // Создаем AudioContext для генерации ультразвуковых сигналов
     const ctx = new (window.AudioContext || window.webkitAudioContext)()
 
-    // Функция для отправки ультразвукового сигнала
-    const sendFlag = (flag, startTime) => {
+    const emitTone = ({ frequency, gain, startTime, duration }) => {
       const oscillator = ctx.createOscillator()
       const gainNode = ctx.createGain()
-
-      // Частота для 1 и 0
-      const frequency = flag === 1 ? 19000 : 18000
 
       oscillator.frequency.value = frequency
       oscillator.connect(gainNode)
       gainNode.connect(ctx.destination)
 
-      // Максимальная громкость для ультразвука (безопасно)
-      gainNode.gain.setValueAtTime(1.0, startTime)
-
-      // Запускаем и останавливаем осциллятор
+      gainNode.gain.setValueAtTime(gain, startTime)
       oscillator.start(startTime)
-      oscillator.stop(startTime + 0.15) // длительность 150 мс
-
-      console.log(`Передан флаг ${flag} (${frequency} Гц)`)
+      oscillator.stop(startTime + duration)
     }
 
-    // Определяем флаг на основе действия
     const flag = action === 'on' ? 1 : 0
+    const payloadFrequency =
+      flag === 1 ? SIGNAL_FRAME.payloadFrequencies.on : SIGNAL_FRAME.payloadFrequencies.off
+    const startTime = ctx.currentTime
 
-    // Отправляем 3 одинаковых сигнала подряд с задержкой 250мс между ними
-    const signalDuration = 0.15 // длительность одного сигнала в секундах
-    const delayBetweenSignals = 0.25 // задержка между сигналами в секундах
-    const currentTime = ctx.currentTime
+    emitTone({
+      frequency: SIGNAL_FRAME.preambleFrequency,
+      gain: SIGNAL_FRAME.gains.preamble,
+      startTime,
+      duration: SIGNAL_FRAME.preambleDuration
+    })
 
-    for (let i = 0; i < 3; i++) {
-      const startTime = currentTime + i * (signalDuration + delayBetweenSignals)
-      sendFlag(flag, startTime)
-    }
+    emitTone({
+      frequency: payloadFrequency,
+      gain: SIGNAL_FRAME.gains.payload,
+      startTime: startTime + SIGNAL_FRAME.preambleDuration + SIGNAL_FRAME.silenceGap,
+      duration: SIGNAL_FRAME.payloadDuration
+    })
 
-    // Обновляем статус
+    const totalDuration =
+      SIGNAL_FRAME.preambleDuration + SIGNAL_FRAME.silenceGap + SIGNAL_FRAME.payloadDuration
+    setTimeout(() => ctx.close(), (totalDuration + 0.1) * 1000)
+
+    console.log(
+      `Передан одиночный кадр: флаг ${flag}, преамбула ${SIGNAL_FRAME.preambleFrequency} Гц, полезная часть ${payloadFrequency} Гц`
+    )
+
     lastResult.value = {
       timestamp: new Date(),
       percentage: action === 'on' ? 'Вкл' : 'Выкл',
       type: 'ultrasonic',
-      flag: flag,
-      frequency: flag === 1 ? '19000 Гц' : '18000 Гц',
-      message: `Передана последовательность из 3 битов: ${flag}-${flag}-${flag}`
+      flag,
+      frequency: `${payloadFrequency} Гц`,
+      message: `Одиночный кадр: частота ${payloadFrequency} Гц`
     }
 
     // Показываем состояние успеха
