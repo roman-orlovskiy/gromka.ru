@@ -99,8 +99,12 @@ const SIGNAL_FRAME = {
   payloadDuration: 0.2,
   silenceGap: 0.05,
   gains: {
-    preamble: 1,
-    payload: 0.9
+    preamble: 0.8,
+    payload: 0.6
+  },
+  envelope: {
+    attack: 0.015,
+    release: 0.02
   }
 }
 
@@ -116,7 +120,19 @@ const onBroadcastClick = async (action) => {
       oscillator.connect(gainNode)
       gainNode.connect(ctx.destination)
 
-      gainNode.gain.setValueAtTime(gain, startTime)
+      const {
+        attack,
+        release
+      } = SIGNAL_FRAME.envelope
+      const effectiveAttack = Math.min(attack, duration / 3)
+      const effectiveRelease = Math.min(release, duration / 3)
+      const epsilon = 0.000001
+
+      gainNode.gain.setValueAtTime(epsilon, startTime)
+      gainNode.gain.linearRampToValueAtTime(gain, startTime + effectiveAttack)
+      gainNode.gain.setValueAtTime(gain, startTime + duration - effectiveRelease)
+      gainNode.gain.linearRampToValueAtTime(epsilon, startTime + duration)
+
       oscillator.start(startTime)
       oscillator.stop(startTime + duration)
     }
