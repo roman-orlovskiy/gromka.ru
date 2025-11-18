@@ -42,7 +42,7 @@
 
     <!-- Анимация перформанса -->
     <div
-      v-if="isStarted && isFlashlightSupported !== false"
+      v-if="isStarted"
       class="sound-view__performance"
     >
       <div
@@ -382,6 +382,8 @@ onUnmounted(async () => {
   align-items: center;
   justify-content: center;
   animation: square-pulse 1.4s ease-in-out infinite;
+  background: rgba($color-black, 0.85);
+  color: $color-white;
 
   &--dark {
     background: rgba($color-black, 0.85);
@@ -480,6 +482,8 @@ onUnmounted(async () => {
 
   .flashlight-message__subtitle {
     font-size: 1.4rem;
+    position: relative;
+    top: -12rem;
   }
 }
 </style>
