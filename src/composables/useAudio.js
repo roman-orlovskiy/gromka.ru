@@ -19,7 +19,7 @@ export function useAudio() {
   let signalHistory = [] // История последних сигналов для проверки кода
 
   // Функция для запроса разрешения на микрофон
-  const requestMicrophonePermission = async (loggingCallback = null) => {
+  const requestMicrophonePermission = async (loggingCallback = null, signalCallback = null) => {
     const audioSettings = {
       sampleRate: 44100,
       channelCount: 1,
@@ -41,7 +41,7 @@ export function useAudio() {
         loggingCallback.logAudioSettings(audioSettings)
       }
 
-      setupAudioAnalysis(stream, loggingCallback)
+      setupAudioAnalysis(stream, loggingCallback, signalCallback)
       return stream
     } catch (error) {
       console.error('Ошибка доступа к микрофону:', error)
@@ -55,7 +55,7 @@ export function useAudio() {
   }
 
   // Настройка анализа аудио
-  const setupAudioAnalysis = (stream, loggingCallback = null) => {
+  const setupAudioAnalysis = (stream, loggingCallback = null, signalCallback = null) => {
     audioContext = new (window.AudioContext || window.webkitAudioContext)()
     analyser = audioContext.createAnalyser()
     microphone = audioContext.createMediaStreamSource(stream)
@@ -86,11 +86,11 @@ export function useAudio() {
     const AMPLITUDE_THRESHOLD = 50 // более чувствительный порог
 
     isListening.value = true
-    startListening(minIndex, maxIndex, frequencyResolution, AMPLITUDE_THRESHOLD, loggingCallback)
+    startListening(minIndex, maxIndex, frequencyResolution, AMPLITUDE_THRESHOLD, loggingCallback, signalCallback)
   }
 
   // Начало прослушивания с предвычисленными константами
-  const startListening = (minIndex, maxIndex, frequencyResolution, amplitudeThreshold, loggingCallback = null) => {
+  const startListening = (minIndex, maxIndex, frequencyResolution, amplitudeThreshold, loggingCallback = null, signalCallback = null) => {
     const detectFrequency = () => {
       if (!analyser) return
 
@@ -115,7 +115,7 @@ export function useAudio() {
       if (maxValue > 0) {
         currentFrequency.value = frequency | 0 // быстрое целочисленное округление
         // Определяем сигнал на основе частоты
-        detectSignal(frequency, maxValue, amplitudeThreshold, loggingCallback)
+        detectSignal(frequency, maxValue, amplitudeThreshold, loggingCallback, signalCallback)
       } else {
         // Если нет сигнала в ультразвуковом диапазоне, сбрасываем частоту
         currentFrequency.value = 0
@@ -128,7 +128,7 @@ export function useAudio() {
   }
 
   // Оптимизированное определение сигнала по частоте
-  const detectSignal = (frequency, amplitude, amplitudeThreshold, loggingCallback = null) => {
+  const detectSignal = (frequency, amplitude, amplitudeThreshold, loggingCallback = null, signalCallback = null) => {
     if (amplitude < amplitudeThreshold) return
 
     // Упрощенная логика определения флага
@@ -146,11 +146,16 @@ export function useAudio() {
     signalHistory = signalHistory.slice(-3)
 
     // Проверяем, все ли последние 3 сигнала одинаковые
-    if (signalHistory.length === 3 && 
-        signalHistory[0] === signalHistory[1] && 
+    if (signalHistory.length === 3 &&
+        signalHistory[0] === signalHistory[1] &&
         signalHistory[1] === signalHistory[2]) {
       // Все 3 бита совпадают - меняем состояние
       isLightOn.value = flag === 1
+
+      // Вызываем коллбэк при приеме аудиосигнала с флагом
+      if (signalCallback) {
+        signalCallback(flag)
+      }
     }
 
     // Быстрое округление частоты один раз

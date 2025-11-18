@@ -56,17 +56,19 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { storeToRefs } from 'pinia'
 import ButtonComp from '@/components/ButtonComp.vue'
 import { useAudio } from '@/composables/useAudio'
 import { useCamera } from '@/composables/useCamera'
 import { useWakeLock } from '@/composables/useWakeLock'
 import { useLogging } from '@/composables/useLogging'
+import { usePerformanceSequence } from '@/composables/usePerformanceSequence'
 import { useMainStore } from '@/stores/main'
 
 const isStarted = ref(false)
 const isSquareBursting = ref(false)
+const isInitializing = ref(false) // Флаг начальной инициализации
 let squareBurstTimeout = null
 const mainStore = useMainStore()
 const { isLightOn } = storeToRefs(mainStore)
@@ -92,6 +94,9 @@ const {
   requestWakeLock,
   releaseWakeLock
 } = useWakeLock()
+
+// Используем composable для последовательности перформанса
+const { startSequence, stopSequence, isActive } = usePerformanceSequence()
 
 // Используем composable для логирования
 const {
@@ -131,17 +136,19 @@ const soundSquareClass = computed(() => {
   }
 })
 
-// Управление фонариком на основе isLightOn
-watch(isLightOn, async (newValue) => {
-  if (newValue === null) return
+// Управление цветом экрана и фонариком по скрипту
+const handleColorChange = async (color) => {
+  // color: 0 - черный, 1 - белый
+  const isWhite = color === 1
+  mainStore.isLightOn = isWhite
 
   // Логируем изменение звука
-  trackSoundChange(newValue)
+  trackSoundChange(isWhite)
 
+  // Анимация квадрата
   if (squareBurstTimeout) {
     clearTimeout(squareBurstTimeout)
   }
-
   isSquareBursting.value = true
   squareBurstTimeout = setTimeout(() => {
     isSquareBursting.value = false
@@ -151,22 +158,43 @@ watch(isLightOn, async (newValue) => {
   // Если фонарик не поддерживается, не пытаемся его включать
   if (isFlashlightSupported.value === false) return
 
+  // Управление фонариком
   try {
-    if (newValue) {
-      // Включаем фонарик при белом свете
+    if (isWhite) {
       await turnOnFlashlight()
       trackFlashlightChange(true, cameraMethod.value)
     } else {
-      // Выключаем фонарик при черном свете
       await turnOffFlashlight()
       trackFlashlightChange(false, cameraMethod.value)
     }
   } catch (error) {
     console.warn('Ошибка управления фонариком:', error)
-    // Логируем ошибку включения/выключения фонарика
     logFlashlightSupport(false, cameraMethod.value, error)
   }
-}, { immediate: false })
+}
+
+// Обработчик завершения последовательности - оставляем последний цвет последовательности
+const handleSequenceComplete = () => {
+  // Последний цвет последовательности уже применен, ничего не меняем
+  // Готовы ждать нового сигнала включения
+}
+
+// Обработчик аудиосигнала - управление последовательностью
+const handleAudioSignal = (flag) => {
+  // Игнорируем, если не начали или последовательность активна или идет инициализация
+  if (!isStarted.value || isActive.value || isInitializing.value) return
+
+  // Сигнал 1 - запускаем последовательность
+  if (flag === 1) {
+    startSequence(handleColorChange, handleSequenceComplete)
+  }
+  // Сигнал 0 - останавливаем последовательность
+  else if (flag === 0) {
+    stopSequence()
+    // Выключаем фонарик и устанавливаем черный экран
+    handleColorChange(0)
+  }
+}
 
 
 // Обработчик нажатия кнопки "Начать"
@@ -196,6 +224,24 @@ const handleStart = async () => {
     logFlashlightSupport(false, null, error)
   }
 
+  // Устанавливаем начальное состояние - белый экран и включенный фонарик
+  // Используем флаг, чтобы не запустить последовательность при начальной установке
+  isInitializing.value = true
+  mainStore.isLightOn = true
+
+  // Включаем фонарик, если поддерживается
+  if (hasFlashlight && isFlashlightSupported.value !== false) {
+    try {
+      await turnOnFlashlight()
+      trackFlashlightChange(true, cameraMethod.value)
+    } catch (error) {
+      console.warn('Ошибка включения фонарика при старте:', error)
+    }
+  }
+
+  // Снимаем флаг инициализации после установки начального состояния
+  isInitializing.value = false
+
   // Логируем информацию о камерах
   logCameraInfo(devices.value, cameraMethod.value)
 
@@ -206,7 +252,7 @@ const handleStart = async () => {
     logFirstSoundSignal
   }
 
-  await requestMicrophonePermission(loggingCallbacks)
+  await requestMicrophonePermission(loggingCallbacks, handleAudioSignal)
 }
 
 onMounted(() => {
@@ -214,6 +260,9 @@ onMounted(() => {
 })
 
 onUnmounted(async () => {
+  // Останавливаем последовательность
+  stopSequence()
+
   // Выключаем фонарик при размонтировании
   try {
     await turnOffFlashlight()

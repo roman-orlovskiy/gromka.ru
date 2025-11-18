@@ -35,6 +35,7 @@ export function usePerformanceSequence() {
       // Если последовательность закончилась
       if (currentIndex.value >= sequence.value.length) {
         stopSequence()
+        // Последний цвет уже применен, просто вызываем onComplete
         if (onComplete) {
           onComplete()
         }
