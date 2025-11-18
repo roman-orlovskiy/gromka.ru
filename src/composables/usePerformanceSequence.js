@@ -5,7 +5,7 @@ import { ref, onBeforeUnmount } from 'vue'
  * Управляет переключением цветов по заданной последовательности
  */
 export function usePerformanceSequence() {
-  const sequence = ref([0, 1, 0, 0, 1, 1, 0, 1])
+  const sequence = ref([0, 1, 0, 0, 1, 1, 0, 1, 1, 0, 1, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 1, 0, 0, 1, 1, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 1])
   const currentIndex = ref(0)
   const isActive = ref(false)
   const currentColor = ref(0) // 0 - черный, 1 - белый
@@ -49,7 +49,7 @@ export function usePerformanceSequence() {
       if (onColorChange) {
         onColorChange(currentColor.value)
       }
-    }, 1000) // Раз в секунду
+    }, 150) // Раз в секунду
   }
 
   /**
