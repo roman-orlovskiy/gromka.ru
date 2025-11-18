@@ -95,7 +95,7 @@ const onBroadcastClick = async (action) => {
     const ctx = new (window.AudioContext || window.webkitAudioContext)()
 
     // Функция для отправки ультразвукового сигнала
-    const sendFlag = (flag) => {
+    const sendFlag = (flag, startTime) => {
       const oscillator = ctx.createOscillator()
       const gainNode = ctx.createGain()
 
@@ -107,11 +107,11 @@ const onBroadcastClick = async (action) => {
       gainNode.connect(ctx.destination)
 
       // Максимальная громкость для ультразвука (безопасно)
-      gainNode.gain.setValueAtTime(1.0, ctx.currentTime)
+      gainNode.gain.setValueAtTime(1.0, startTime)
 
       // Запускаем и останавливаем осциллятор
-      oscillator.start()
-      oscillator.stop(ctx.currentTime + 0.15) // длительность 300 мс
+      oscillator.start(startTime)
+      oscillator.stop(startTime + 0.15) // длительность 150 мс
 
       console.log(`Передан флаг ${flag} (${frequency} Гц)`)
     }
@@ -119,8 +119,15 @@ const onBroadcastClick = async (action) => {
     // Определяем флаг на основе действия
     const flag = action === 'on' ? 1 : 0
 
-    // Отправляем сигнал
-    sendFlag(flag)
+    // Отправляем 3 одинаковых сигнала подряд с задержкой 250мс между ними
+    const signalDuration = 0.15 // длительность одного сигнала в секундах
+    const delayBetweenSignals = 0.25 // задержка между сигналами в секундах
+    const currentTime = ctx.currentTime
+
+    for (let i = 0; i < 3; i++) {
+      const startTime = currentTime + i * (signalDuration + delayBetweenSignals)
+      sendFlag(flag, startTime)
+    }
 
     // Обновляем статус
     lastResult.value = {
@@ -129,7 +136,7 @@ const onBroadcastClick = async (action) => {
       type: 'ultrasonic',
       flag: flag,
       frequency: flag === 1 ? '19000 Гц' : '18000 Гц',
-      message: `Передан флаг ${flag}`
+      message: `Передана последовательность из 3 битов: ${flag}-${flag}-${flag}`
     }
 
     // Показываем состояние успеха

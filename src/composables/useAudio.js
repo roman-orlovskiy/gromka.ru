@@ -16,6 +16,7 @@ export function useAudio() {
   let microphone = null
   let dataArray = null
   let animationId = null
+  let signalHistory = [] // История последних сигналов для проверки кода
 
   // Функция для запроса разрешения на микрофон
   const requestMicrophonePermission = async (loggingCallback = null) => {
@@ -134,10 +135,22 @@ export function useAudio() {
     let flag
     if (frequency >= 18800 && frequency <= 19200) {
       flag = 1  // 19000 Гц = флаг 1 (белый)
-      isLightOn.value = true
     } else if (frequency >= 17800 && frequency <= 18200) {
       flag = 0  // 18000 Гц = флаг 0 (черный)
-      isLightOn.value = false
+    } else {
+      return // Не распознан как валидный сигнал
+    }
+
+    // Добавляем сигнал в историю и ограничиваем до 3 элементов
+    signalHistory.push(flag)
+    signalHistory = signalHistory.slice(-3)
+
+    // Проверяем, все ли последние 3 сигнала одинаковые
+    if (signalHistory.length === 3 && 
+        signalHistory[0] === signalHistory[1] && 
+        signalHistory[1] === signalHistory[2]) {
+      // Все 3 бита совпадают - меняем состояние
+      isLightOn.value = flag === 1
     }
 
     // Быстрое округление частоты один раз
@@ -160,7 +173,7 @@ export function useAudio() {
       isFirstSignal.value = false
     }
 
-    console.log(`Сигнал: флаг ${flag}, ${roundedFreq} Гц, ${amplitude}`)
+    console.log(`Сигнал: флаг ${flag}, ${roundedFreq} Гц, ${amplitude}, история: [${signalHistory.join(',')}]`)
   }
 
   // Очистка ресурсов
@@ -179,6 +192,9 @@ export function useAudio() {
       audioContext.close()
       audioContext = null
     }
+
+    // Очищаем историю сигналов
+    signalHistory = []
 
     isListening.value = false
   }
