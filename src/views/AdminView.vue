@@ -1,8 +1,8 @@
 <template>
   <div class="admin">
     <div class="admin__buttons">
-      <ButtonComp @click="onBroadcastClick('on')">Вкл</ButtonComp>
-      <ButtonComp @click="onBroadcastClick('off')">Выкл</ButtonComp>
+      <ButtonComp mod="outline" @click="onBroadcastClick('on')">Вкл</ButtonComp>
+      <ButtonComp mod="black" @click="onBroadcastClick('off')">Выкл</ButtonComp>
     </div>
 
     <!-- Плашка с последними данными -->
