@@ -1,5 +1,12 @@
 <template>
-  <div class="sound-view" :class="soundViewClasses">
+  <div class="sound-view">
+    <!-- Слой мерцания -->
+    <div
+      v-if="isStarted"
+      class="sound-view__flicker"
+      :class="flickerLayerClasses"
+    />
+
     <!-- Кнопка запуска -->
     <div v-if="!isStarted" class="sound-view__start">
       <div class="sound-view__content">
@@ -112,15 +119,14 @@ const {
 } = useLogging()
 
 
-// Computed для классов звукового вида
-const soundViewClasses = computed(() => {
+// Computed для классов слоя мерцания
+const flickerLayerClasses = computed(() => {
   if (isLightOn.value === null) {
-    return {
-    }
+    return {}
   }
   return {
-    'sound-view--white': isLightOn.value,
-    'sound-view--black': !isLightOn.value
+    'sound-view__flicker--white': isLightOn.value,
+    'sound-view__flicker--black': !isLightOn.value
   }
 })
 
@@ -298,13 +304,23 @@ onUnmounted(async () => {
   align-items: center;
   justify-content: center;
   z-index: 1000;
+}
+
+.sound-view__flicker {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1000;
+  pointer-events: none;
 
   &--white {
-    background: $color-white !important;
+    background: $color-white;
   }
 
   &--black {
-    background: $color-black !important;
+    background: $color-black;
   }
 }
 
@@ -383,7 +399,7 @@ onUnmounted(async () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1001;
+  z-index: 1002;
 }
 
 .flashlight-message {
@@ -430,6 +446,7 @@ onUnmounted(async () => {
   align-items: center;
   justify-content: center;
   pointer-events: none;
+  z-index: 1001;
 }
 
 .sound-square {
