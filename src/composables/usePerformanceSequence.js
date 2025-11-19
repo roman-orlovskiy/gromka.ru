@@ -89,8 +89,16 @@ export function usePerformanceSequence(scenarioKey = DEFAULT_SCENARIO_KEY) {
 
       // Если последовательность закончилась
       if (currentIndex.value >= sequence.value.length) {
+        const hasEndlessFlicker = sequence.value[sequence.value.length - 1] === -1 && flickerIntervalId
+
+        if (hasEndlessFlicker) {
+          clearInterval(intervalId)
+          intervalId = null
+          return
+        }
+
         stopSequence()
-        // Последний цвет уже применен, просто вызываем onComplete
+
         if (onComplete) {
           onComplete()
         }
