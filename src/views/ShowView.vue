@@ -368,6 +368,7 @@ onUnmounted(async () => {
   align-items: center;
   justify-content: center;
   z-index: 1000;
+  overflow-y: auto;
 }
 
 .show-view__flicker {
