@@ -30,19 +30,23 @@
 
       <div class="editor__grid-wrapper">
         <div class="editor__grid-container">
-          <div
-            v-for="(row, rowIndex) in gridRows"
-            :key="`row-${rowIndex}`"
-            class="editor__row-wrapper"
-          >
+          <div class="editor__buttons-column editor__buttons-column--left">
             <button
+              v-for="(row, rowIndex) in gridRows"
+              :key="`left-button-${rowIndex}`"
               class="editor__add-button"
               @click="addPlaceToRow(rowIndex)"
               type="button"
             >
               +
             </button>
-            <div class="editor__row">
+          </div>
+          <div class="editor__dots-container">
+            <div
+              v-for="(row, rowIndex) in gridRows"
+              :key="`row-${rowIndex}`"
+              class="editor__row"
+            >
               <div
                 v-for="(place, placeIndex) in row"
                 :key="`place-${rowIndex}-${placeIndex}`"
@@ -60,6 +64,17 @@
                 </Transition>
               </div>
             </div>
+          </div>
+          <div class="editor__buttons-column editor__buttons-column--right">
+            <button
+              v-for="(row, rowIndex) in gridRows"
+              :key="`right-button-${rowIndex}`"
+              class="editor__add-button"
+              @click="addPlaceToRowEnd(rowIndex)"
+              type="button"
+            >
+              +
+            </button>
           </div>
         </div>
       </div>
@@ -126,6 +141,13 @@ const gridRows = computed(() => {
 const addPlaceToRow = (rowIndex) => {
   if (rowIndex >= 0 && rowIndex < gridRowsData.value.length) {
     gridRowsData.value[rowIndex].unshift(null)
+    saveToLocalStorage()
+  }
+}
+
+const addPlaceToRowEnd = (rowIndex) => {
+  if (rowIndex >= 0 && rowIndex < gridRowsData.value.length) {
+    gridRowsData.value[rowIndex].push(null)
     saveToLocalStorage()
   }
 }
@@ -251,23 +273,31 @@ onMounted(() => {
 
 .editor__grid-container {
   display: flex;
-  flex-direction: column;
-  gap: 1rem;
+  justify-content: space-between;
+  gap: 2rem;
   width: 100%;
 }
 
-.editor__row-wrapper {
+.editor__buttons-column {
   display: flex;
-  align-items: center;
-  position: relative;
-  padding-left: 4rem;
-  width: 100%;
+  flex-direction: column;
+  gap: 1rem;
+  flex-shrink: 0;
+  justify-content: flex-start;
+  padding-top: 0.25rem;
+}
+
+.editor__dots-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
 }
 
 .editor__row {
   display: flex;
   gap: 1rem;
   justify-content: flex-end;
+  align-items: center;
   width: 100%;
 }
 
@@ -286,16 +316,12 @@ onMounted(() => {
   justify-content: center;
   transition: all 0.2s ease;
   flex-shrink: 0;
-  position: absolute;
-  left: 0;
-  top: 50%;
-  transform: translateY(-50%);
 
   @include hover {
     &:hover {
       color: $color-primary-dark;
       border-color: $color-primary-dark;
-      transform: translateY(-50%) scale(1.1);
+      transform: scale(1.1);
     }
   }
 }
@@ -382,8 +408,16 @@ onMounted(() => {
     padding: 3rem 1.5rem;
   }
 
-  .editor__row-wrapper {
-    padding-left: 3rem;
+  .editor__grid-container {
+    gap: 1rem;
+  }
+
+  .editor__buttons-column {
+    gap: 0.75rem;
+  }
+
+  .editor__dots-container {
+    gap: 0.75rem;
   }
 
   .editor__row {
@@ -399,8 +433,6 @@ onMounted(() => {
     width: 2rem;
     height: 2rem;
     font-size: 1.6rem;
-    left: 0;
-    transform: translateY(-50%);
   }
 
   .editor__tooltip {
