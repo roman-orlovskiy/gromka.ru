@@ -297,20 +297,23 @@ const timelineCode = computed({
 })
 
 const timelineExportData = computed(() => {
-  const frames = Array.from({ length: timelineCount.value }, (_, frameIndex) => {
-    const seats = {}
+  const seats = {}
 
-    Object.entries(seatStates.value).forEach(([seatKey, timelines]) => {
-      if (!Array.isArray(timelines)) return
+  Object.entries(seatStates.value).forEach(([seatKey, timelines]) => {
+    if (!Array.isArray(timelines)) return
+
+    const seatTimeline = Array.from({ length: timelineCount.value }, (_, frameIndex) => {
       const color = timelines[frameIndex]
-      if (color === undefined || color === COLOR_CLEAR) return
-      seats[seatKey] = color
+      if ([COLOR_BLACK, COLOR_WHITE, COLOR_SPECIAL, COLOR_CLEAR].includes(color)) {
+        return color
+      }
+      return COLOR_CLEAR
     })
 
-    return {
-      index: frameIndex,
-      seats
-    }
+    const hasColor = seatTimeline.some(color => color !== COLOR_CLEAR)
+    if (!hasColor) return
+
+    seats[seatKey] = seatTimeline
   })
 
   return {
@@ -320,7 +323,7 @@ const timelineExportData = computed(() => {
       timelineCount: timelineCount.value,
       grid: gridRowsData.value.map(row => row.length)
     },
-    frames
+    seats
   }
 })
 
