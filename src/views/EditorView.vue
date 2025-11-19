@@ -68,13 +68,16 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import InputComp from '@/components/InputComp.vue'
+
+const STORAGE_KEY = 'editor-config'
 
 const rowsInput = ref('6')
 const placesInput = ref('14')
 const hoveredDot = ref(null)
 const gridRowsData = ref([])
+const isLoaded = ref(false)
 
 const rows = computed(() => {
   const value = parseInt(rowsInput.value, 10)
@@ -123,6 +126,7 @@ const gridRows = computed(() => {
 const addPlaceToRow = (rowIndex) => {
   if (rowIndex >= 0 && rowIndex < gridRowsData.value.length) {
     gridRowsData.value[rowIndex].unshift(null)
+    saveToLocalStorage()
   }
 }
 
@@ -133,6 +137,65 @@ const handleRowsInput = (event) => {
 const handlePlacesInput = (event) => {
   placesInput.value = event.target.value
 }
+
+// Сохранение конфигурации в localStorage
+const saveToLocalStorage = () => {
+  if (!isLoaded.value) return // Не сохраняем до завершения загрузки
+
+  try {
+    const config = {
+      rows: rowsInput.value,
+      places: placesInput.value,
+      gridRowsData: gridRowsData.value.map(row => row.length)
+    }
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(config))
+  } catch (error) {
+    console.error('Ошибка при сохранении в localStorage:', error)
+  }
+}
+
+// Загрузка конфигурации из localStorage
+const loadFromLocalStorage = () => {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY)
+    if (saved) {
+      const config = JSON.parse(saved)
+
+      if (config.rows) {
+        rowsInput.value = config.rows
+      }
+
+      if (config.places) {
+        placesInput.value = config.places
+      }
+
+      if (config.gridRowsData && Array.isArray(config.gridRowsData)) {
+        // Восстанавливаем структуру рядов с сохраненным количеством мест
+        gridRowsData.value = config.gridRowsData.map(placesCount =>
+          Array.from({ length: placesCount }, () => null)
+        )
+      }
+    }
+    isLoaded.value = true
+  } catch (error) {
+    console.error('Ошибка при загрузке из localStorage:', error)
+    isLoaded.value = true
+  }
+}
+
+// Отслеживание изменений для автоматического сохранения
+watch([rowsInput, placesInput], () => {
+  saveToLocalStorage()
+}, { deep: true })
+
+watch(gridRowsData, () => {
+  saveToLocalStorage()
+}, { deep: true })
+
+// Загрузка при монтировании компонента
+onMounted(() => {
+  loadFromLocalStorage()
+})
 </script>
 
 <style lang="scss" scoped>
