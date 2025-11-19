@@ -155,8 +155,10 @@ const handleColorChange = async (color) => {
     squareBurstTimeout = null
   }, 400)
 
-  // Если фонарик не поддерживается, не пытаемся его включать
-  if (isFlashlightSupported.value === false) return
+  // Если фонарик не поддерживается, просто выходим без управления им
+  if (isFlashlightSupported.value === false) {
+    return
+  }
 
   // Управление фонариком
   try {
