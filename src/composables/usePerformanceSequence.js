@@ -1,5 +1,5 @@
 import { ref, onBeforeUnmount } from 'vue'
-import soundScenarios from '@/data/sound-demo.json'
+import soundScenarios from '@/assets/data/sound-demo.json'
 
 /**
  * Composable для управления последовательностью перформанса
