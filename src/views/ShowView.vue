@@ -106,7 +106,7 @@ const { isLayerVisible, isInstructionVisible, showLayer, hideLayer } = useInstru
 
 // Управление последовательностью перформанса
 const isWhiteBackground = ref(false)
-const { startSequence, stopSequence } = usePerformanceSequence()
+const { startSequence, stopSequence } = usePerformanceSequence('sound-demo')
 
 // Управление камерой и фонариком
 const { turnOnFlashlight, turnOffFlashlight, initialize } = useCamera()

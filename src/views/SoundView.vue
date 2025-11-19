@@ -96,7 +96,7 @@ const {
 } = useWakeLock()
 
 // Используем composable для последовательности перформанса
-const { startSequence, stopSequence, isActive } = usePerformanceSequence()
+const { startSequence, stopSequence, isActive } = usePerformanceSequence('sound-demo')
 
 // Используем composable для логирования
 const {

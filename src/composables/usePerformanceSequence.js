@@ -1,11 +1,35 @@
 import { ref, onBeforeUnmount } from 'vue'
+import soundScenarios from '@/data/sound-demo.json'
 
 /**
  * Composable для управления последовательностью перформанса
  * Управляет переключением цветов по заданной последовательности
  */
-export function usePerformanceSequence() {
-  const sequence = ref([0, 1, 0, 0, 1, 1, 0, 1, 1, 0, 1, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 1, 0, 0, 1, 1, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 1])
+const DEFAULT_SCENARIO_KEY = 'sound-demo'
+
+const resolveScenarioSequence = (scenarioKey) => {
+  if (typeof scenarioKey === 'string' && soundScenarios[scenarioKey]) {
+    return [...soundScenarios[scenarioKey]]
+  }
+
+  console.warn(`[usePerformanceSequence] Сценарий "${scenarioKey}" не найден`)
+  return []
+}
+
+const resolveSequenceInput = (value) => {
+  if (typeof value === 'string') {
+    return resolveScenarioSequence(value)
+  }
+
+  if (Array.isArray(value)) {
+    return [...value]
+  }
+
+  return []
+}
+
+export function usePerformanceSequence(scenarioKey = DEFAULT_SCENARIO_KEY) {
+  const sequence = ref(resolveScenarioSequence(scenarioKey))
   const currentIndex = ref(0)
   const isActive = ref(false)
   const currentColor = ref(0) // 0 - черный, 1 - белый
@@ -16,6 +40,11 @@ export function usePerformanceSequence() {
    */
   const startSequence = (onColorChange = null, onComplete = null) => {
     if (isActive.value) {
+      return
+    }
+
+    if (!sequence.value.length) {
+      console.warn('[usePerformanceSequence] Пустая последовательность, запуск невозможен')
       return
     }
 
@@ -49,7 +78,7 @@ export function usePerformanceSequence() {
       if (onColorChange) {
         onColorChange(currentColor.value)
       }
-    }, 150) // Раз в секунду
+    }, 1500)
   }
 
   /**
@@ -72,7 +101,7 @@ export function usePerformanceSequence() {
     if (isActive.value) {
       stopSequence()
     }
-    sequence.value = newSequence
+    sequence.value = resolveSequenceInput(newSequence)
   }
 
   // Автоматически очищаем интервал при размонтировании
