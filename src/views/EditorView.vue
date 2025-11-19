@@ -40,6 +40,13 @@
           @click="selectColor(COLOR_WHITE)"
         ></div>
         <div
+          class="editor__color-option editor__color-option--special"
+          :class="{ 'editor__color-option--active': selectedColor === COLOR_SPECIAL }"
+          @click="selectColor(COLOR_SPECIAL)"
+        >
+          ✧
+        </div>
+        <div
           class="editor__color-option editor__color-option--clear"
           :class="{ 'editor__color-option--active': selectedColor === COLOR_CLEAR }"
           @click="selectColor(COLOR_CLEAR)"
@@ -88,6 +95,7 @@
                     Ряд {{ rowIndex + 1 }}, Место {{ placeIndex + 1 }}
                   </div>
                 </Transition>
+                <span v-if="isSpecialDot(rowIndex, placeIndex)" class="editor__dot-symbol">✧</span>
               </div>
             </div>
           </div>
@@ -149,6 +157,7 @@ import InputComp from '@/components/InputComp.vue'
 const STORAGE_KEY = 'editor-config'
 const COLOR_BLACK = 0
 const COLOR_WHITE = 1
+const COLOR_SPECIAL = -1
 const COLOR_CLEAR = null
 
 const rowsInput = ref('6')
@@ -272,7 +281,7 @@ const timelineCode = computed({
       const updatedSeatStates = { ...seatStates.value }
 
       Object.entries(parsed).forEach(([seatKey, color]) => {
-        if (![COLOR_BLACK, COLOR_WHITE, COLOR_CLEAR].includes(color)) return
+        if (![COLOR_BLACK, COLOR_WHITE, COLOR_CLEAR, COLOR_SPECIAL].includes(color)) return
         setSeatTimelineValue(updatedSeatStates, seatKey, timelineKey, color)
       })
 
@@ -299,7 +308,15 @@ const getDotClass = (rowIndex, placeIndex) => {
   const color = currentTimelineSeats.value[key]
   if (color === undefined || color === COLOR_CLEAR) return null
 
-  return color === COLOR_BLACK ? 'editor__dot--black' : 'editor__dot--white'
+  if (color === COLOR_BLACK) return 'editor__dot--black'
+  if (color === COLOR_WHITE) return 'editor__dot--white'
+  if (color === COLOR_SPECIAL) return 'editor__dot--special'
+  return null
+}
+
+const isSpecialDot = (rowIndex, placeIndex) => {
+  const key = getSeatKey(rowIndex, placeIndex)
+  return currentTimelineSeats.value[key] === COLOR_SPECIAL
 }
 
 const handleRowsInput = (event) => {
@@ -410,7 +427,7 @@ const loadFromLocalStorage = () => {
         timelineIndex.value = config.timelineIndex
       }
 
-      if ([COLOR_BLACK, COLOR_WHITE, COLOR_CLEAR].includes(config.selectedColor)) {
+      if ([COLOR_BLACK, COLOR_WHITE, COLOR_CLEAR, COLOR_SPECIAL].includes(config.selectedColor)) {
         selectedColor.value = config.selectedColor
       }
 
@@ -619,6 +636,15 @@ onMounted(() => {
     border: 0.2rem solid $color-gray-300;
   }
 
+  &--special {
+    background: $color-gray-500;
+    color: $color-white;
+    font-size: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
   &--clear {
     background: $color-gray-200;
     position: relative;
@@ -741,6 +767,20 @@ onMounted(() => {
     background: $color-white;
     border: 0.1rem solid $color-gray-400;
   }
+
+  &--special {
+    background: $color-gray-500;
+    color: $color-white;
+  }
+}
+
+.editor__dot-symbol {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -52%);
+  font-size: 1.4rem;
+  color: inherit;
 }
 
 .editor__tooltip {
