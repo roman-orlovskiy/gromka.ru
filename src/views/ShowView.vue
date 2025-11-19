@@ -8,7 +8,7 @@
     />
 
     <!-- Кнопка запуска -->
-    <div v-if="!isStarted" class="show-view__start">
+    <div v-if="!isActive" class="show-view__start">
       <div class="show-view__content">
         <div class="show-view__title">ТЧК + GROMKA</div>
 
@@ -64,7 +64,10 @@
     <!-- Сообщение о неподдерживаемом фонарике -->
     <div v-if="isStarted && isFlashlightSupported === false" class="show-view__flashlight-message">
       <div class="flashlight-message">
-        <div class="flashlight-message__subtitle">Фонарик не поддерживается<br>Поверните экран к сцене</div>
+        <div class="flashlight-message__subtitle">
+          Фонарик не поддерживается<br>
+          <span class="flashlight-message__action">Поверните экран к сцене</span>
+        </div>
       </div>
     </div>
 
@@ -393,6 +396,10 @@ onUnmounted(async () => {
   min-height: 100vh;
   padding: 2rem 0;
   overflow-y: auto;
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 999;
 }
 
 .show-view__content {
@@ -495,9 +502,20 @@ onUnmounted(async () => {
 
 .flashlight-message__subtitle {
   font-size: 3rem;
-  color: $color-gray-600;
+  color: $color-black;
   line-height: 1.4;
   position: relative;
+}
+
+.flashlight-message__action {
+  display: inline-block;
+  padding: 0.8rem 1.6rem;
+  background: $color-black;
+  color: $color-white;
+  border: 0.2rem solid $color-black;
+  border-radius: 0.5rem;
+  margin-top: 2rem;
+  font-size: 3.2rem;
 }
 
 @keyframes pulse {
@@ -631,6 +649,12 @@ onUnmounted(async () => {
 
   .flashlight-message__subtitle {
     font-size: 2.1rem;
+  }
+
+  .flashlight-message__action {
+    padding: 0.6rem 1.2rem;
+    font-size: 2.4rem;
+    margin-top: 1.6rem;
   }
 }
 </style>
