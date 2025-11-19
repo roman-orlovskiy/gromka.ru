@@ -7,7 +7,7 @@ import tchkShowData from '@/assets/data/tchk-show.json'
  * Управляет переключением цветов по заданной последовательности
  */
 const DEFAULT_SCENARIO_KEY = 'sound-demo'
-const DEFAULT_STEP_TIMEOUT = 1200 // Таймаут шага в миллисекундах
+const DEFAULT_STEP_TIMEOUT = 2000 // Таймаут шага в миллисекундах
 
 const resolveScenarioSequence = (scenarioKey) => {
   if (typeof scenarioKey === 'string' && soundScenarios[scenarioKey]) {
@@ -23,12 +23,12 @@ const resolveTchkShowSequence = (row, seat) => {
     // Преобразуем в числа, чтобы убрать ведущие нули, затем в строки для формирования ключа
     const rowNum = Number(String(row).trim())
     const seatNum = Number(String(seat).trim())
-    
+
     if (isNaN(rowNum) || isNaN(seatNum)) {
       console.warn(`[usePerformanceSequence] Некорректные значения ряда или места: "${row}", "${seat}"`)
       return []
     }
-    
+
     const seatKey = `${rowNum}_${seatNum}`
     if (tchkShowData.seats && tchkShowData.seats[seatKey]) {
       return [...tchkShowData.seats[seatKey]]

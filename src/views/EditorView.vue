@@ -118,9 +118,9 @@
           <button class="editor__timeline-export" type="button" @click="downloadTimelineData">
             Выгрузить JSON
           </button>
-          <button 
-            class="editor__timeline-preview" 
-            type="button" 
+          <button
+            class="editor__timeline-preview"
+            type="button"
             :class="{ 'editor__timeline-preview--active': isPreviewActive }"
             @click="togglePreview"
           >
@@ -165,6 +165,7 @@
 import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
 import InputComp from '@/components/InputComp.vue'
 import { usePerformanceSequence } from '@/composables/usePerformanceSequence'
+import { useUltrasonicSignal } from '@/composables/useUltrasonicSignal'
 
 const STORAGE_KEY = 'editor-config'
 const COLOR_BLACK = 0
@@ -186,6 +187,9 @@ let previewIntervalId = null
 
 // Получаем таймаут шага из usePerformanceSequence
 const { stepTimeout } = usePerformanceSequence()
+
+// Получаем функцию отправки ультразвукового сигнала
+const { sendUltrasonicSignal } = useUltrasonicSignal()
 
 const rows = computed(() => {
   const value = parseInt(rowsInput.value, 10)
@@ -420,13 +424,20 @@ const selectTimeline = (index) => {
   }
 }
 
-const startPreview = () => {
+const startPreview = async () => {
   if (isPreviewActive.value || timelineCount.value === 0) {
     return
   }
 
   isPreviewActive.value = true
   timelineIndex.value = 0
+
+  // Отправляем сигнал "Вкл" при старте превью
+  try {
+    await sendUltrasonicSignal('on')
+  } catch (error) {
+    console.error('Ошибка при отправке ультразвукового сигнала:', error)
+  }
 
   previewIntervalId = setInterval(() => {
     timelineIndex.value++
