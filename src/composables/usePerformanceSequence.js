@@ -34,6 +34,39 @@ export function usePerformanceSequence(scenarioKey = DEFAULT_SCENARIO_KEY) {
   const isActive = ref(false)
   const currentColor = ref(0) // 0 - черный, 1 - белый
   let intervalId = null
+  let flickerIntervalId = null
+
+  const stopFlicker = () => {
+    if (flickerIntervalId) {
+      clearInterval(flickerIntervalId)
+      flickerIntervalId = null
+    }
+  }
+
+  const startFlicker = (onColorChange) => {
+    stopFlicker()
+    flickerIntervalId = setInterval(() => {
+      const randomColor = Math.random() > 0.5 ? 1 : 0
+      currentColor.value = randomColor
+      console.log('flicker', randomColor)
+      if (onColorChange) {
+        onColorChange(randomColor)
+      }
+    }, 150)
+  }
+
+  const handleStepValue = (value, onColorChange) => {
+    if (value === -1) {
+      startFlicker(onColorChange)
+      return
+    }
+
+    stopFlicker()
+    currentColor.value = value
+    if (onColorChange) {
+      onColorChange(currentColor.value)
+    }
+  }
 
   /**
    * Запускает последовательность перформанса
@@ -50,12 +83,7 @@ export function usePerformanceSequence(scenarioKey = DEFAULT_SCENARIO_KEY) {
 
     isActive.value = true
     currentIndex.value = 0
-    currentColor.value = sequence.value[0]
-
-    // Вызываем первый цвет сразу
-    if (onColorChange) {
-      onColorChange(currentColor.value)
-    }
+    handleStepValue(sequence.value[0], onColorChange)
 
     // Запускаем интервал
     intervalId = setInterval(() => {
@@ -71,14 +99,8 @@ export function usePerformanceSequence(scenarioKey = DEFAULT_SCENARIO_KEY) {
         return
       }
 
-      // Обновляем текущий цвет
-      currentColor.value = sequence.value[currentIndex.value]
-
-      // Вызываем callback с новым цветом
-      if (onColorChange) {
-        onColorChange(currentColor.value)
-      }
-    }, 1500)
+      handleStepValue(sequence.value[currentIndex.value], onColorChange)
+    }, 1200)
   }
 
   /**
@@ -89,6 +111,7 @@ export function usePerformanceSequence(scenarioKey = DEFAULT_SCENARIO_KEY) {
       clearInterval(intervalId)
       intervalId = null
     }
+    stopFlicker()
     isActive.value = false
     currentIndex.value = 0
     currentColor.value = 0
