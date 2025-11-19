@@ -159,7 +159,7 @@ const handleColorChange = async (color) => {
   squareBurstTimeout = setTimeout(() => {
     isSquareBursting.value = false
     squareBurstTimeout = null
-  }, 400)
+  }, 150)
 
   // Если фонарик не поддерживается, просто выходим без управления им
   if (isFlashlightSupported.value === false) {
@@ -456,22 +456,22 @@ onUnmounted(async () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  animation: square-pulse 1.4s ease-in-out infinite;
-  background: rgba($color-black, 0.85);
+  background: $color-black;
+  transition: transform 0.2s ease-in-out;
+  transform: scale(1);
   color: $color-white;
 
   &--dark {
-    background: rgba($color-black, 0.85);
+    background: $color-black;
   }
 
   &--light {
-    background: rgba($color-white, 0.9);
-    box-shadow: inset 0 0 15px rgba($color-black, 0.2);
+    background: $color-white;
   }
 
   &--burst {
-    animation: square-burst 0.4s linear;
-    background: rgba($color-pink-stylish, 0.85);
+    transform: scale(1.2);
+    background: $color-pink-stylish;
   }
 }
 
