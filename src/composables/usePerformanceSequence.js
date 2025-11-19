@@ -46,11 +46,9 @@ export function usePerformanceSequence(scenarioKey = DEFAULT_SCENARIO_KEY) {
   const startFlicker = (onColorChange) => {
     stopFlicker()
     flickerIntervalId = setInterval(() => {
-      const randomColor = Math.random() > 0.5 ? 1 : 0
-      currentColor.value = randomColor
-      console.log('flicker', randomColor)
+      currentColor.value = currentColor.value === 1 ? 0 : 1
       if (onColorChange) {
-        onColorChange(randomColor)
+        onColorChange(currentColor.value)
       }
     }, 150)
   }
