@@ -1,11 +1,13 @@
 import { ref, onBeforeUnmount } from 'vue'
 import soundScenarios from '@/assets/data/sound-demo.json'
+import tchkShowData from '@/assets/data/tchk-show.json'
 
 /**
  * Composable для управления последовательностью перформанса
  * Управляет переключением цветов по заданной последовательности
  */
 const DEFAULT_SCENARIO_KEY = 'sound-demo'
+const DEFAULT_STEP_TIMEOUT = 1200 // Таймаут шага в миллисекундах
 
 const resolveScenarioSequence = (scenarioKey) => {
   if (typeof scenarioKey === 'string' && soundScenarios[scenarioKey]) {
@@ -13,6 +15,27 @@ const resolveScenarioSequence = (scenarioKey) => {
   }
 
   console.warn(`[usePerformanceSequence] Сценарий "${scenarioKey}" не найден`)
+  return []
+}
+
+const resolveTchkShowSequence = (row, seat) => {
+  if (row && seat) {
+    // Преобразуем в числа, чтобы убрать ведущие нули, затем в строки для формирования ключа
+    const rowNum = Number(String(row).trim())
+    const seatNum = Number(String(seat).trim())
+    
+    if (isNaN(rowNum) || isNaN(seatNum)) {
+      console.warn(`[usePerformanceSequence] Некорректные значения ряда или места: "${row}", "${seat}"`)
+      return []
+    }
+    
+    const seatKey = `${rowNum}_${seatNum}`
+    if (tchkShowData.seats && tchkShowData.seats[seatKey]) {
+      return [...tchkShowData.seats[seatKey]]
+    }
+    console.warn(`[usePerformanceSequence] Место "${seatKey}" не найдено в tchk-show.json`)
+    return []
+  }
   return []
 }
 
@@ -28,8 +51,19 @@ const resolveSequenceInput = (value) => {
   return []
 }
 
-export function usePerformanceSequence(scenarioKey = DEFAULT_SCENARIO_KEY) {
-  const sequence = ref(resolveScenarioSequence(scenarioKey))
+export function usePerformanceSequence(scenarioKey = DEFAULT_SCENARIO_KEY, row = null, seat = null) {
+  // Если передан ряд и место, используем tchk-show
+  let initialSequence = []
+  if (row && seat) {
+    initialSequence = resolveTchkShowSequence(row, seat)
+  } else if (scenarioKey === 'tchk-show') {
+    // Если сценарий tchk-show, но ряд и место не переданы, возвращаем пустую последовательность
+    console.warn('[usePerformanceSequence] Для сценария "tchk-show" требуется ряд и место')
+  } else {
+    initialSequence = resolveScenarioSequence(scenarioKey)
+  }
+
+  const sequence = ref(initialSequence)
   const currentIndex = ref(0)
   const isActive = ref(false)
   const currentColor = ref(0) // 0 - черный, 1 - белый
@@ -106,7 +140,7 @@ export function usePerformanceSequence(scenarioKey = DEFAULT_SCENARIO_KEY) {
       }
 
       handleStepValue(sequence.value[currentIndex.value], onColorChange)
-    }, 1200)
+    }, DEFAULT_STEP_TIMEOUT)
   }
 
   /**
@@ -133,6 +167,16 @@ export function usePerformanceSequence(scenarioKey = DEFAULT_SCENARIO_KEY) {
     sequence.value = resolveSequenceInput(newSequence)
   }
 
+  /**
+   * Устанавливает новую последовательность по ряду и месту для tchk-show
+   */
+  const setSequenceBySeat = (newRow, newSeat) => {
+    if (isActive.value) {
+      stopSequence()
+    }
+    sequence.value = resolveTchkShowSequence(newRow, newSeat)
+  }
+
   // Автоматически очищаем интервал при размонтировании
   onBeforeUnmount(() => {
     stopSequence()
@@ -146,6 +190,8 @@ export function usePerformanceSequence(scenarioKey = DEFAULT_SCENARIO_KEY) {
     startSequence,
     stopSequence,
     setSequence,
+    setSequenceBySeat,
+    stepTimeout: DEFAULT_STEP_TIMEOUT,
   }
 }
 

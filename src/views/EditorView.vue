@@ -118,6 +118,14 @@
           <button class="editor__timeline-export" type="button" @click="downloadTimelineData">
             Выгрузить JSON
           </button>
+          <button 
+            class="editor__timeline-preview" 
+            type="button" 
+            :class="{ 'editor__timeline-preview--active': isPreviewActive }"
+            @click="togglePreview"
+          >
+            {{ isPreviewActive ? 'Остановить превью' : 'Превью' }}
+          </button>
           <InputComp
             class="editor__timeline-input"
             :value="timelineCountInput"
@@ -154,8 +162,9 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
 import InputComp from '@/components/InputComp.vue'
+import { usePerformanceSequence } from '@/composables/usePerformanceSequence'
 
 const STORAGE_KEY = 'editor-config'
 const COLOR_BLACK = 0
@@ -172,6 +181,11 @@ const selectedColor = ref(COLOR_BLACK)
 const timelineIndex = ref(0)
 const seatStates = ref({})
 const isLoaded = ref(false)
+const isPreviewActive = ref(false)
+let previewIntervalId = null
+
+// Получаем таймаут шага из usePerformanceSequence
+const { stepTimeout } = usePerformanceSequence()
 
 const rows = computed(() => {
   const value = parseInt(rowsInput.value, 10)
@@ -397,8 +411,47 @@ const handleTimelineCountInput = (event) => {
 
 const selectTimeline = (index) => {
   if (index >= 0 && index < timelineCount.value) {
+    // Останавливаем превью при ручном переключении
+    if (isPreviewActive.value) {
+      stopPreview()
+    }
     timelineIndex.value = index
     saveToLocalStorage()
+  }
+}
+
+const startPreview = () => {
+  if (isPreviewActive.value || timelineCount.value === 0) {
+    return
+  }
+
+  isPreviewActive.value = true
+  timelineIndex.value = 0
+
+  previewIntervalId = setInterval(() => {
+    timelineIndex.value++
+
+    if (timelineIndex.value >= timelineCount.value) {
+      // Устанавливаем индекс на последний слайд перед остановкой
+      timelineIndex.value = timelineCount.value - 1
+      stopPreview()
+    }
+  }, stepTimeout)
+}
+
+const stopPreview = () => {
+  if (previewIntervalId) {
+    clearInterval(previewIntervalId)
+    previewIntervalId = null
+  }
+  isPreviewActive.value = false
+}
+
+const togglePreview = () => {
+  if (isPreviewActive.value) {
+    stopPreview()
+  } else {
+    startPreview()
   }
 }
 
@@ -523,11 +576,20 @@ watch(timelineCount, (newCount) => {
   if (timelineIndex.value >= newCount) {
     timelineIndex.value = Math.max(0, newCount - 1)
   }
+  // Останавливаем превью, если количество таймлайнов изменилось
+  if (isPreviewActive.value) {
+    stopPreview()
+  }
 })
 
 // Загрузка при монтировании компонента
 onMounted(() => {
   loadFromLocalStorage()
+})
+
+// Остановка превью при размонтировании
+onBeforeUnmount(() => {
+  stopPreview()
 })
 </script>
 
@@ -629,6 +691,39 @@ onMounted(() => {
     &:hover {
       background: $color-primary-dark;
       transform: translateY(-0.1rem);
+    }
+  }
+}
+
+.editor__timeline-preview {
+  padding: 0.8rem 1.6rem;
+  background: $color-white;
+  color: $color-primary;
+  border: 0.2rem solid $color-primary;
+  border-radius: 0.5rem;
+  font-size: 1.4rem;
+  font-weight: $font-weight-medium;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease;
+
+  @include hover {
+    &:hover {
+      background: $color-primary;
+      color: $color-white;
+      transform: translateY(-0.1rem);
+    }
+  }
+
+  &--active {
+    background: $color-primary;
+    color: $color-white;
+    border-color: $color-primary;
+
+    @include hover {
+      &:hover {
+        background: $color-primary-dark;
+        border-color: $color-primary-dark;
+      }
     }
   }
 }
@@ -946,7 +1041,8 @@ onMounted(() => {
     gap: 1rem;
   }
 
-  .editor__timeline-export {
+  .editor__timeline-export,
+  .editor__timeline-preview {
     width: 100%;
     text-align: center;
   }

@@ -1,323 +1,636 @@
 <template>
-  <div class="show">
-    <div class="show__content">
-      <div class="show__title">
-        Введите ряд и место
-      </div>
-      <div class="show__inputs-row">
+  <div class="show-view">
+    <!-- Слой мерцания -->
+    <div
+      v-if="isStarted"
+      class="show-view__flicker"
+      :class="flickerLayerClasses"
+    />
+
+    <!-- Кнопка запуска -->
+    <div v-if="!isStarted" class="show-view__start">
+      <div class="show-view__content">
+        <div class="show-view__title">ТЧК + GROMKA</div>
+
+        <div class="show-view__instructions">
+          <div class="show-view__instruction-item">
+            <div class="show-view__instruction-text">
+              1. Введите ряд и место
+            </div>
+          </div>
+
+          <div class="show-view__instruction-item">
+            <div class="show-view__instruction-text">
+              2. Нажмите "Начать"
+            </div>
+          </div>
+        </div>
+
+        <div class="show-view__inputs-row">
         <InputComp
           placeholder="Ряд"
-          :value="values.row"
-          @handleInput="(e) => handleFieldChange('row', e.target.value)"
+            :value="rowValue"
+            @handleInput="handleRowInput"
           :error="errors.row"
           :show-shake="shakeFields.row"
           type="number"
+            mod="black"
         />
         <InputComp
           placeholder="Место"
-          :value="values.seat"
-          @handleInput="(e) => handleFieldChange('seat', e.target.value)"
+            :value="seatValue"
+            @handleInput="handleSeatInput"
           :error="errors.seat"
           :show-shake="shakeFields.seat"
           type="number"
-        />
-      </div>
-      <div class="show__instructions">
-        <div class="show__instruction-item">
-          <div>
-            <div class="show__instruction-number">1</div>
-          </div>
-          <div class="show__instruction-text">
-            Включи на телефоне <b>яркость&nbsp;на&nbsp;максимум</b>
-          </div>
+            mod="black"
+          />
         </div>
-        <div class="show__instruction-item">
-          <div>
-            <div class="show__instruction-number">2</div>
-          </div>
-          <div class="show__instruction-text">
-            Нажми "Начать" и <b>разверни&nbsp;экран&nbsp;к&nbsp;полю</b>
-          </div>
+
+        <div class="show-view__button">
+          <ButtonComp mod="outline" @click="handleStart">Начать</ButtonComp>
+        </div>
+
+        <div class="show-view__qr">
+            <img
+              src="/images/show-qr.webp"
+              alt="QR-код для перформанса"
+              class="show-view__qr-image"
+            >
+        </div>
         </div>
       </div>
 
-      <div class="show__button">
-        <ButtonComp mode="big" @click="handleStart">Начать</ButtonComp>
+    <!-- Сообщение о неподдерживаемом фонарике -->
+    <div v-if="isStarted && isFlashlightSupported === false" class="show-view__flashlight-message">
+      <div class="flashlight-message">
+        <div class="flashlight-message__subtitle">Фонарик не поддерживается<br>Поверните экран к сцене</div>
       </div>
     </div>
 
-    <transition name="fade">
-      <div class="show__layer" v-if="isLayerVisible" :class="{ 'show__layer--white': isWhiteBackground }">
-        <div class="show__close-button" @click="handleCloseLayer">
-          <CloseIcon />
-        </div>
-
-        <transition name="fade">
-          <div class="show__instructions" v-if="isInstructionVisible">
-            <div class="show__instruction-item">
-              <div>
-                <div class="show__instruction-number">1</div>
-              </div>
-              <div class="show__instruction-text">
-                Включи на телефоне <b>яркость&nbsp;на&nbsp;максимум</b>
-              </div>
-            </div>
-            <div class="show__instruction-item">
-              <div>
-                <div class="show__instruction-number">2</div>
-              </div>
-              <div class="show__instruction-text">
-                <b>Разверни&nbsp;экран&nbsp;к&nbsp;полю</b>
-              </div>
-            </div>
-          </div>
-        </transition>
-      </div>
-    </transition>
   </div>
 </template>
 
 <script setup>
-import InputComp from '@/components/InputComp.vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { storeToRefs } from 'pinia'
 import ButtonComp from '@/components/ButtonComp.vue'
-import CloseIcon from '@/components/icons/CloseIcon.vue'
-import { useWakeLock } from '@/composables/useWakeLock'
-import { useFullscreen } from '@/composables/useFullscreen'
-import { useFormValidation } from '@/composables/useFormValidation'
-import { useInstructionLayer } from '@/composables/useInstructionLayer'
-import { usePerformanceSequence } from '@/composables/usePerformanceSequence'
+import InputComp from '@/components/InputComp.vue'
+import { useAudio } from '@/composables/useAudio'
 import { useCamera } from '@/composables/useCamera'
-import { ref } from 'vue'
+import { useWakeLock } from '@/composables/useWakeLock'
+import { useLogging } from '@/composables/useLogging'
+import { usePerformanceSequence } from '@/composables/usePerformanceSequence'
+import { useMainStore } from '@/stores/main'
 
-// Управление формой
-const { values, errors, shakeFields, validate, handleFieldChange } = useFormValidation({
-  row: { initialValue: '' },
-  seat: { initialValue: '' },
+const isStarted = ref(false)
+const isSquareBursting = ref(false)
+const isInitializing = ref(false) // Флаг начальной инициализации
+let squareBurstTimeout = null
+const mainStore = useMainStore()
+const { isLightOn } = storeToRefs(mainStore)
+
+const rowValue = ref('')
+const seatValue = ref('')
+const shakeFields = ref({
+  row: false,
+  seat: false,
+})
+const errors = ref({
+  row: '',
+  seat: '',
 })
 
-// Управление Wake Lock
-const { requestWakeLock, releaseWakeLock } = useWakeLock()
+// Используем composable для аудио
+const {
+  requestMicrophonePermission,
+  cleanup
+} = useAudio()
 
-// Управление Fullscreen
-const { enterFullscreen, exitFullscreen } = useFullscreen()
+// Используем composable для камеры/фонарика
+const {
+  cameraMethod,
+  isFlashlightSupported,
+  devices,
+  turnOnFlashlight,
+  turnOffFlashlight,
+  checkFlashlightSupport
+} = useCamera()
 
-// Управление слоем с инструкциями
-const { isLayerVisible, isInstructionVisible, showLayer, hideLayer } = useInstructionLayer(4000)
+// Используем composable для предотвращения засыпания экрана
+const {
+  requestWakeLock,
+  releaseWakeLock
+} = useWakeLock()
 
-// Управление последовательностью перформанса
-const isWhiteBackground = ref(false)
-const { startSequence, stopSequence } = usePerformanceSequence('sound-demo')
+// Используем composable для последовательности перформанса
+const { startSequence, stopSequence, isActive, setSequenceBySeat } = usePerformanceSequence('tchk-show')
 
-// Управление камерой и фонариком
-const { turnOnFlashlight, turnOffFlashlight, initialize } = useCamera()
+// Используем composable для логирования
+const {
+  enableLogging,
+  trackSoundChange,
+  trackFlashlightChange,
+  logCameraInfo,
+  logMicrophonePermission,
+  logAudioSettings,
+  logFirstSoundSignal,
+  logFlashlightSupport,
+  logDeviceInfo
+} = useLogging()
 
-// Правила валидации
-const validationRules = {
-  row: {
-    required: true,
-    requiredMessage: 'Введите ряд',
-  },
-  seat: {
-    required: true,
-    requiredMessage: 'Введите место',
-  },
+
+// Computed для классов слоя мерцания
+const flickerLayerClasses = computed(() => {
+  if (isLightOn.value === null) {
+    return {}
+  }
+  return {
+    'show-view__flicker--white': isLightOn.value,
+    'show-view__flicker--black': !isLightOn.value
+  }
+})
+
+const validateFields = () => {
+  let isValid = true
+  errors.value = {
+    row: '',
+    seat: '',
+  }
+  shakeFields.value = {
+    row: false,
+    seat: false,
+  }
+
+  if (!rowValue.value.trim()) {
+    errors.value.row = 'Укажите ряд'
+    shakeFields.value.row = true
+    isValid = false
+  }
+
+  if (!seatValue.value.trim()) {
+    errors.value.seat = 'Укажите место'
+    shakeFields.value.seat = true
+    isValid = false
+  }
+
+  if (!isValid) {
+    setTimeout(() => {
+      shakeFields.value = {
+        row: false,
+        seat: false,
+      }
+    }, 500)
+  }
+
+  return isValid
 }
 
-const handleColorChange = async (color) => {
-  isWhiteBackground.value = color === 1
+const handleRowInput = (event) => {
+  rowValue.value = event.target.value
+  errors.value.row = ''
+}
 
-  // Управление фонариком: 0 - выключен, 1 - включен
+const handleSeatInput = (event) => {
+  seatValue.value = event.target.value
+  errors.value.seat = ''
+}
+
+// Управление цветом экрана и фонариком по скрипту
+const handleColorChange = async (color) => {
+  // color: 0 - черный, 1 - белый
+  const isWhite = color === 1
+  mainStore.isLightOn = isWhite
+
+  // Логируем изменение звука
+  trackSoundChange(isWhite)
+
+  // Анимация квадрата
+  if (squareBurstTimeout) {
+    clearTimeout(squareBurstTimeout)
+  }
+  isSquareBursting.value = true
+  squareBurstTimeout = setTimeout(() => {
+    isSquareBursting.value = false
+    squareBurstTimeout = null
+  }, 150)
+
+  // Если фонарик не поддерживается, просто выходим без управления им
+  if (isFlashlightSupported.value === false) {
+    return
+  }
+
+  // Управление фонариком
   try {
-    if (color === 1) {
+    if (isWhite) {
       await turnOnFlashlight()
+      trackFlashlightChange(true, cameraMethod.value)
     } else {
       await turnOffFlashlight()
+      trackFlashlightChange(false, cameraMethod.value)
     }
-  } catch (err) {
-    console.error('Ошибка управления фонариком:', err)
+  } catch (error) {
+    console.warn('Ошибка управления фонариком:', error)
+    logFlashlightSupport(false, cameraMethod.value, error)
   }
 }
 
+// Обработчик завершения последовательности - оставляем последний цвет последовательности
 const handleSequenceComplete = () => {
-  handleCloseLayer()
+  // Последний цвет последовательности уже применен, ничего не меняем
+  // Готовы ждать нового сигнала включения
 }
 
-const handleStart = async () => {
-  if (validate(validationRules)) {
-    showLayer()
-    enterFullscreen()
-    requestWakeLock()
+// Обработчик аудиосигнала - управление последовательностью
+const handleAudioSignal = (flag) => {
+  // Игнорируем, если не начали или идет инициализация
+  if (!isStarted.value || isInitializing.value) return
 
-    // Инициализируем камеру сразу при нажатии "Начать"
-    try {
-      await initialize()
-    } catch (err) {
-      console.error('Ошибка инициализации камеры:', err)
-      // Продолжаем работу даже если камера не инициализировалась
-    }
+  if (flag === 1) {
+    // Если последовательность уже запущена, повторный запуск не нужен
+    if (isActive.value) return
+    startSequence(handleColorChange, handleSequenceComplete)
+    return
+  }
 
-    // Запускаем последовательность после небольшой задержки
-    setTimeout(() => {
-      startSequence(handleColorChange, handleSequenceComplete)
-    }, 4000) // После скрытия инструкций
+  if (flag === 0) {
+    stopSequence()
+    handleColorChange(0)
   }
 }
 
-const handleCloseLayer = async () => {
+
+// Обработчик нажатия кнопки "Начать"
+const handleStart = async () => {
+  if (!validateFields()) {
+    return
+  }
+
+  isStarted.value = true
+
+  // Устанавливаем последовательность по ряду и месту
+  setSequenceBySeat(rowValue.value.trim(), seatValue.value.trim())
+
+  // Включаем логирование
+  enableLogging()
+
+  // Логируем информацию об устройстве
+  logDeviceInfo()
+
+  // Активируем Wake Lock для предотвращения засыпания экрана
+  await requestWakeLock()
+
+  // Включаем фонарик и проверяем поддержку
+  let hasFlashlight = false
+
+  try {
+    hasFlashlight = await checkFlashlightSupport()
+    if (hasFlashlight) {
+      logFlashlightSupport(true, cameraMethod.value)
+    } else {
+      logFlashlightSupport(false, null)
+    }
+  } catch (error) {
+    logFlashlightSupport(false, null, error)
+  }
+
+  // Устанавливаем начальное состояние - белый экран и включенный фонарик
+  // Используем флаг, чтобы не запустить последовательность при начальной установке
+  isInitializing.value = true
+  mainStore.isLightOn = true
+
+  // Включаем фонарик, если поддерживается
+  if (hasFlashlight && isFlashlightSupported.value !== false) {
+    try {
+      await turnOnFlashlight()
+      trackFlashlightChange(true, cameraMethod.value)
+    } catch (error) {
+      console.warn('Ошибка включения фонарика при старте:', error)
+    }
+  }
+
+  // Снимаем флаг инициализации после установки начального состояния
+  isInitializing.value = false
+
+  // Логируем информацию о камерах
+  logCameraInfo(devices.value, cameraMethod.value)
+
+  // Создаем объект с функциями логирования для передачи в useAudio
+  const loggingCallbacks = {
+    logMicrophonePermission,
+    logAudioSettings,
+    logFirstSoundSignal
+  }
+
+  await requestMicrophonePermission(loggingCallbacks, handleAudioSignal)
+}
+
+onMounted(() => {
+  // Не запускаем автоматически, ждем нажатия кнопки
+})
+
+onUnmounted(async () => {
+  // Останавливаем последовательность
   stopSequence()
 
-  // Выключаем фонарик при закрытии
+  // Выключаем фонарик при размонтировании
   try {
     await turnOffFlashlight()
-  } catch (err) {
-    console.error('Ошибка выключения фонарика:', err)
+  } catch (error) {
+    console.warn('Ошибка выключения фонарика при размонтировании:', error)
   }
 
-  hideLayer()
-  exitFullscreen()
-  releaseWakeLock()
-  isWhiteBackground.value = false
-}
+  // Деактивируем Wake Lock при размонтировании
+  await releaseWakeLock()
+
+  cleanup()
+
+  if (squareBurstTimeout) {
+    clearTimeout(squareBurstTimeout)
+  }
+})
 </script>
 
-<style scoped lang="scss">
-.show {
+<style lang="scss" scoped>
+@import '@/assets/scss/variables.scss';
+
+.show-view {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: $color-white;
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 1.5rem 2rem 6rem 2rem;
-  min-height: 100%;
+  z-index: 1000;
+}
 
-  &__title {
-    font-size: 2.3rem;
-    font-weight: $font-weight-bold;
-    color: $color-primary;
-    margin-bottom: 1rem;
-    width: 100%;
-    text-align: center;
+.show-view__flicker {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1000;
+  pointer-events: none;
+
+  &--white {
+    background: $color-white;
+  }
+
+  &--black {
+    background: $color-black;
+  }
+}
+
+.show-view__start {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 100vh;
+  padding: 2rem 0;
+  overflow-y: auto;
+}
+
+.show-view__content {
+  text-align: center;
+  max-width: 500px;
+  padding: 2rem;
+  width: 100%;
+}
+
+.show-view__title {
+  font-size: 3.6rem;
+  font-weight: 700;
+  color: $color-gray-700;
+  margin-bottom: 3rem;
     line-height: 1.2;
   }
 
-  &__content {
+.show-view__instructions {
+  margin-bottom: 3rem;
+}
+
+.show-view__instruction-item {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+  text-align: left;
+}
+
+.show-view__instruction-number {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: $color-black;
+  flex-shrink: 0;
+}
+
+.show-view__instruction-text {
+  font-size: 2rem;
+  color: $color-gray-700;
+  line-height: 1.4;
+  padding-top: 0;
+}
+
+.show-view__button {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 3rem;
+}
+
+.show-view__qr {
+  margin-bottom: 3rem;
     display: flex;
-    flex-direction: column;
+  justify-content: center;
+}
+
+.show-view__qr-image {
+  width: 25rem;
+  max-width: 60vw;
+  border-radius: 1.2rem;
+  box-shadow: 0 1.2rem 3rem rgba($color-black, 0.1);
+}
+
+.show-view__inputs-row {
+    display: flex;
+    gap: 1.5rem;
+    width: 100%;
+  margin-bottom: 3rem;
+}
+
+.show-view__flashlight-message {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+    display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1002;
+}
+
+.flashlight-message {
+  text-align: center;
+  max-width: 500px;
+  padding: 2rem;
+}
+
+.flashlight-message__icon {
+  font-size: 8rem;
+  margin-bottom: 2rem;
+  animation: pulse 2s infinite;
+}
+
+.flashlight-message__title {
+  font-size: 2.6rem;
+  font-weight: 700;
+  color: $color-gray-700;
+  margin-bottom: 1rem;
+  line-height: 1.2;
+}
+
+.flashlight-message__subtitle {
+  font-size: 3rem;
+  color: $color-gray-600;
+  line-height: 1.4;
+  position: relative;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+}
+
+.show-view__performance {
+  position: absolute;
+  inset: 0;
+    display: flex;
     align-items: center;
-    justify-content: flex-start;
-    gap: 1.5rem;
-    width: 100%;
-    max-width: 120rem;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 1001;
   }
 
-  &__inputs-row {
-    display: flex;
-    gap: 1.5rem;
-    width: 100%;
-    max-width: 40rem;
-  }
-
-  &__instructions {
-    display: flex;
-    flex-direction: column;
-    gap: 1.5rem;
-    margin-top: 2rem;
-    width: 100%;
-    max-width: 40rem;
-  }
-
-  &__instruction-item {
+.show-square {
+  width: min(40vw, 240px);
+  aspect-ratio: 1 / 1;
+  border-radius: 1.2rem;
     display: flex;
     align-items: center;
+    justify-content: center;
+  background: $color-black;
+  transition: transform 0.2s ease-in-out;
+  transform: scale(1);
+    color: $color-white;
+
+  &--dark {
+    background: $color-black;
+  }
+
+  &--light {
+    background: $color-white;
+  }
+
+  &--burst {
+    transform: scale(1.2);
+    background: $color-pink-stylish;
+  }
+}
+
+.show-square__label {
+  font-size: clamp(2rem, 6vw, 2.6rem);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.2rem;
+}
+
+.show-square--dark .show-square__label {
+    color: $color-white;
+}
+
+.show-square--light .show-square__label {
+      color: $color-black;
+}
+
+@keyframes square-pulse {
+  0% {
+    transform: scale(0.9);
+  }
+
+  85% {
+    transform: scale(1);
+  }
+
+  100% {
+    transform: scale(0.9);
+  }
+}
+
+@keyframes square-burst {
+  0% {
+    transform: scale(1);
+  }
+
+  60% {
+    transform: scale(1.65);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
+
+// Адаптивность для мобильных устройств
+@include layout-mobile {
+  .show-view__content {
+    padding: 1rem;
+    max-width: 100%;
+  }
+
+  .show-view__title {
+    font-size: 2.5rem;
+    margin-bottom: 2rem;
+  }
+
+  .show-view__instruction-text {
+    font-size: 1.8rem;
+  }
+
+  .show-view__instruction-number {
+    width: 2.5rem;
+    height: 2.5rem;
+    font-size: 1.3rem;
+  }
+
+  .show-view__inputs-row {
     gap: 1rem;
   }
 
-  &__instruction-number {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 3.4rem;
-    height: 3.4rem;
-    background-color: $color-primary;
-    color: $color-white;
-    border-radius: 50%;
-    font-weight: $font-weight-bold;
-    font-size: 1.6rem;
-  }
-
-  &__instruction-text {
-    font-size: 1.6rem;
-    color: $color-gray-700;
-
-    b {
-      font-weight: $font-weight-bold;
-    }
-  }
-
-  &__layer {
-    position: fixed;
-    top: 0;
-    left: 0;
-    bottom: 0;
-    right: 0;
-    background-color: $color-black;
-    z-index: 1000;
-    color: $color-white;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 2rem;
-    transition: background-color 0.1s ease;
-
-    &--white {
-      background-color: $color-white;
-      color: $color-black;
-
-      & .show__instruction-text {
-        color: $color-primary;
-      }
-
-      & .show__close-button svg {
-        fill: rgba($color-black, 0.5);
-      }
-    }
-
-    & .show__instruction-text {
-      color: $color-white;
-    }
-
-    & .show__instruction-item {
-      &:last-child {
-        & .show__instruction-text {
-          font-size: 2.5rem;
-        }
-      }
-    }
-  }
-
-  &__close-button {
-    position: absolute;
-    top: 1rem;
-    left: 50%;
-    transform: translateX(-50%);
-    background: none;
-    border: none;
-    cursor: pointer;
+  .flashlight-message {
     padding: 1rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    svg {
-      width: 3.2rem;
-      height: 3.2rem;
-      fill: rgba($color-white, 0.5);
-    }
+    max-width: 100%;
   }
 
-  &__button {
-    margin-top: 2rem;
+  .flashlight-message__icon {
+    font-size: 6rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .flashlight-message__title {
+    font-size: 2.5rem;
+    margin-bottom: 0.8rem;
+  }
+
+  .flashlight-message__subtitle {
+    font-size: 2.1rem;
   }
 }
 </style>
-
