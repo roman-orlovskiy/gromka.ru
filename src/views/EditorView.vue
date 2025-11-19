@@ -115,6 +115,9 @@
 
       <div class="editor__timeline">
         <div class="editor__timeline-controls">
+          <button class="editor__timeline-export" type="button" @click="downloadTimelineData">
+            Выгрузить JSON
+          </button>
           <InputComp
             class="editor__timeline-input"
             :value="timelineCountInput"
@@ -293,6 +296,34 @@ const timelineCode = computed({
   }
 })
 
+const timelineExportData = computed(() => {
+  const frames = Array.from({ length: timelineCount.value }, (_, frameIndex) => {
+    const seats = {}
+
+    Object.entries(seatStates.value).forEach(([seatKey, timelines]) => {
+      if (!Array.isArray(timelines)) return
+      const color = timelines[frameIndex]
+      if (color === undefined || color === COLOR_CLEAR) return
+      seats[seatKey] = color
+    })
+
+    return {
+      index: frameIndex,
+      seats
+    }
+  })
+
+  return {
+    meta: {
+      rows: rows.value,
+      places: places.value,
+      timelineCount: timelineCount.value,
+      grid: gridRowsData.value.map(row => row.length)
+    },
+    frames
+  }
+})
+
 const handleDotClick = (rowIndex, placeIndex) => {
   const key = getSeatKey(rowIndex, placeIndex)
   const timelineKey = timelineIndex.value
@@ -301,6 +332,36 @@ const handleDotClick = (rowIndex, placeIndex) => {
   setSeatTimelineValue(updatedSeatStates, key, timelineKey, selectedColor.value)
   seatStates.value = updatedSeatStates
   saveToLocalStorage()
+}
+
+const downloadTimelineData = () => {
+  if (typeof window === 'undefined') return
+
+  try {
+    const exportBase = timelineExportData.value
+    const payload = {
+      ...exportBase,
+      meta: {
+        ...exportBase.meta,
+        generatedAt: new Date().toISOString()
+      }
+    }
+
+    const fileContent = JSON.stringify(payload, null, 2)
+    const blob = new Blob([fileContent], { type: 'application/json' })
+    const url = window.URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-')
+
+    link.href = url
+    link.download = `scenes-export-${timestamp}.json`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    window.URL.revokeObjectURL(url)
+  } catch (error) {
+    console.error('Ошибка при выгрузке таймлайна:', error)
+  }
 }
 
 const getDotClass = (rowIndex, placeIndex) => {
@@ -538,12 +599,35 @@ onMounted(() => {
 
 .editor__timeline-controls {
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
 }
 
 .editor__timeline-input {
   max-width: 12rem;
   width: 100%;
+  flex: 1 1 12rem;
+}
+
+.editor__timeline-export {
+  padding: 0.8rem 1.6rem;
+  background: $color-primary;
+  color: $color-white;
+  border: none;
+  border-radius: 0.5rem;
+  font-size: 1.4rem;
+  font-weight: $font-weight-medium;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.2s ease;
+
+  @include hover {
+    &:hover {
+      background: $color-primary-dark;
+      transform: translateY(-0.1rem);
+    }
+  }
 }
 
 .editor__timeline-blocks {
@@ -851,6 +935,17 @@ onMounted(() => {
   .editor__timeline {
     margin-top: 1.5rem;
     padding: 1.5rem;
+  }
+
+  .editor__timeline-controls {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+  }
+
+  .editor__timeline-export {
+    width: 100%;
+    text-align: center;
   }
 
   .editor__timeline-blocks {
