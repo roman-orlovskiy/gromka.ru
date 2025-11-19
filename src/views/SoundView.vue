@@ -292,7 +292,6 @@ onUnmounted(async () => {
   width: 100vw;
   height: 100vh;
   background: $color-white;
-  transition: background-color 0.3s ease;
   display: flex;
   align-items: center;
   justify-content: center;
