@@ -95,11 +95,145 @@ export function sendUltrasonicSignal(action) {
 }
 
 /**
+ * Генерирует WAV файл с ультразвуковым сигналом
+ * @param {string} action - 'on' или 'off'
+ * @returns {Blob} WAV файл
+ */
+export function generateUltrasonicWav(action) {
+  const sampleRate = 44100
+  const flag = action === 'on' ? 1 : 0
+  const payloadFrequency = flag === 1 ? SIGNAL_FRAME.payloadFrequencies.on : SIGNAL_FRAME.payloadFrequencies.off
+
+  // Вычисляем длительности в сэмплах
+  const preambleSamples = Math.floor(SIGNAL_FRAME.preambleDuration * sampleRate)
+  const silenceSamples = Math.floor(SIGNAL_FRAME.silenceGap * sampleRate)
+  const payloadSamples = Math.floor(SIGNAL_FRAME.payloadDuration * sampleRate)
+  const totalSamples = preambleSamples + silenceSamples + payloadSamples
+
+  // Создаем массив сэмплов
+  const samples = new Float32Array(totalSamples)
+
+  // Генерируем тон
+  const generateTone = (frequency, startSample, durationSamples, gain, attackSamples, releaseSamples) => {
+    const twoPi = 2 * Math.PI
+    const phaseIncrement = (twoPi * frequency) / sampleRate
+    let phase = 0
+
+    for (let i = 0; i < durationSamples; i++) {
+      const sampleIndex = startSample + i
+
+      // Вычисляем envelope
+      let envelope = gain
+      if (i < attackSamples) {
+        envelope = gain * (i / attackSamples)
+      } else if (i >= durationSamples - releaseSamples) {
+        const releaseProgress = (i - (durationSamples - releaseSamples)) / releaseSamples
+        envelope = gain * (1 - releaseProgress)
+      }
+
+      samples[sampleIndex] = Math.sin(phase) * envelope
+      phase += phaseIncrement
+      
+      // Нормализуем фазу для избежания переполнения
+      if (phase >= twoPi) {
+        phase -= twoPi
+      }
+    }
+  }
+
+  const attackSamples = Math.floor(SIGNAL_FRAME.envelope.attack * sampleRate)
+  const releaseSamples = Math.floor(SIGNAL_FRAME.envelope.release * sampleRate)
+
+  // Преамбула
+  generateTone(
+    SIGNAL_FRAME.preambleFrequency,
+    0,
+    preambleSamples,
+    SIGNAL_FRAME.gains.preamble,
+    attackSamples,
+    releaseSamples
+  )
+
+  // Тишина (уже нули в массиве)
+
+  // Полезная часть
+  generateTone(
+    payloadFrequency,
+    preambleSamples + silenceSamples,
+    payloadSamples,
+    SIGNAL_FRAME.gains.payload,
+    attackSamples,
+    releaseSamples
+  )
+
+  // Конвертируем Float32Array в Int16Array для WAV
+  const int16Samples = new Int16Array(totalSamples)
+  for (let i = 0; i < totalSamples; i++) {
+    // Ограничиваем значение и конвертируем в 16-bit PCM
+    const sample = Math.max(-1, Math.min(1, samples[i]))
+    int16Samples[i] = Math.round(sample * 32767)
+  }
+
+  // Создаем WAV файл
+  const wavBuffer = new ArrayBuffer(44 + int16Samples.length * 2)
+  const view = new DataView(wavBuffer)
+
+  // WAV заголовок
+  const writeString = (offset, string) => {
+    for (let i = 0; i < string.length; i++) {
+      view.setUint8(offset + i, string.charCodeAt(i))
+    }
+  }
+
+  writeString(0, 'RIFF')
+  view.setUint32(4, 36 + int16Samples.length * 2, true)
+  writeString(8, 'WAVE')
+  writeString(12, 'fmt ')
+  view.setUint32(16, 16, true) // размер fmt chunk
+  view.setUint16(20, 1, true) // аудио формат (1 = PCM)
+  view.setUint16(22, 1, true) // количество каналов
+  view.setUint32(24, sampleRate, true) // sample rate
+  view.setUint32(28, sampleRate * 2, true) // byte rate
+  view.setUint16(32, 2, true) // block align
+  view.setUint16(34, 16, true) // bits per sample
+  writeString(36, 'data')
+  view.setUint32(40, int16Samples.length * 2, true) // размер данных
+
+  // Записываем сэмплы
+  const samplesView = new Int16Array(wavBuffer, 44)
+  samplesView.set(int16Samples)
+
+  return new Blob([wavBuffer], { type: 'audio/wav' })
+}
+
+/**
+ * Скачивает WAV файл с ультразвуковым сигналом
+ * @param {string} action - 'on' или 'off'
+ * @param {string} filename - имя файла (по умолчанию 'ultrasonic-on.wav' или 'ultrasonic-off.wav')
+ */
+export function downloadUltrasonicWav(action, filename = null) {
+  const blob = generateUltrasonicWav(action)
+  const defaultFilename = action === 'on' ? 'ultrasonic-on.wav' : 'ultrasonic-off.wav'
+  const finalFilename = filename || defaultFilename
+
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = finalFilename
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+  URL.revokeObjectURL(url)
+}
+
+/**
  * Composable для работы с ультразвуковыми сигналами
  */
 export function useUltrasonicSignal() {
   return {
-    sendUltrasonicSignal
+    sendUltrasonicSignal,
+    generateUltrasonicWav,
+    downloadUltrasonicWav
   }
 }
 

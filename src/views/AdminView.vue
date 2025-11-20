@@ -3,6 +3,7 @@
     <div class="admin__buttons">
       <ButtonComp mod="outline" @click="onBroadcastClick('on')">Вкл</ButtonComp>
       <ButtonComp mod="black" @click="onBroadcastClick('off')">Выкл</ButtonComp>
+      <ButtonComp mod="outline" @click="onDownloadClick">Скачать звук включения</ButtonComp>
     </div>
 
     <!-- Плашка с последними данными -->
@@ -90,7 +91,7 @@ const isLoading = ref(false)
 const showSuccess = ref(false)
 const lastResult = ref(null)
 
-const { sendUltrasonicSignal } = useUltrasonicSignal()
+const { sendUltrasonicSignal, downloadUltrasonicWav } = useUltrasonicSignal()
 
 const onBroadcastClick = async (action) => {
   try {
@@ -132,6 +133,14 @@ const formatTime = (timestamp) => {
     minute: '2-digit',
     second: '2-digit'
   })
+}
+
+const onDownloadClick = () => {
+  try {
+    downloadUltrasonicWav('on')
+  } catch (error) {
+    console.error('Ошибка при генерации файла:', error)
+  }
 }
 
 
