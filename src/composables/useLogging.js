@@ -156,8 +156,28 @@ export function useLogging() {
     })
   }
 
+  const getUserAgentHints = async () => {
+    const uaData = navigator.userAgentData
+    if (!uaData?.getHighEntropyValues) {
+      return null
+    }
+
+    try {
+      const hints = await uaData.getHighEntropyValues(['platform', 'platformVersion', 'model', 'fullVersionList'])
+      return {
+        hintPlatform: hints.platform || null,
+        hintPlatformVersion: hints.platformVersion || null,
+        hintModel: hints.model || null,
+        hintBrands: hints.fullVersionList?.map(entry => `${entry.brand} ${entry.version}`).join(', ') || null
+      }
+    } catch (error) {
+      console.warn('[Logging] Не удалось получить User-Agent Client Hints:', error)
+      return null
+    }
+  }
+
   // Логирование информации об устройстве
-  const logDeviceInfo = () => {
+  const logDeviceInfo = async () => {
     if (!isLoggingEnabled.value) return
 
     // Парсим User Agent для определения устройства
@@ -253,6 +273,8 @@ export function useLogging() {
     }
 
     // Дополнительная информация об устройстве
+    const hintData = await getUserAgentHints()
+
     const deviceInfo = {
       userAgent,
       platform,
@@ -273,7 +295,11 @@ export function useLogging() {
       maxTouchPoints: navigator.maxTouchPoints || 0,
       hardwareConcurrency: navigator.hardwareConcurrency || 'unknown',
       memory: navigator.deviceMemory || 'unknown',
-      timestamp: Date.now()
+      timestamp: Date.now(),
+      hintPlatform: hintData?.hintPlatform || null,
+      hintPlatformVersion: hintData?.hintPlatformVersion || null,
+      hintModel: hintData?.hintModel || null,
+      hintBrands: hintData?.hintBrands || null
     }
 
     addLog('device_info', deviceInfo)

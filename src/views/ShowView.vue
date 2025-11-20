@@ -277,9 +277,6 @@ const handleStart = async () => {
   // Включаем логирование
   enableLogging()
 
-  // Логируем информацию об устройстве
-  logDeviceInfo()
-
   // Активируем Wake Lock для предотвращения засыпания экрана
   await requestWakeLock()
 
@@ -329,7 +326,8 @@ const handleStart = async () => {
 }
 
 onMounted(() => {
-  // Не запускаем автоматически, ждем нажатия кнопки
+  enableLogging()
+  logDeviceInfo()
 })
 
 onUnmounted(async () => {
