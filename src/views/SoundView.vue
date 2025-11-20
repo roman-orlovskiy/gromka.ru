@@ -55,8 +55,15 @@
       <div
         class="sound-square"
         :class="soundSquareClass"
+        @click="copyDeviceId"
       >
         <div class="sound-square__label">Gromka</div>
+        <div
+          v-if="displayDeviceId"
+          class="sound-square__device-id"
+        >
+          {{ displayDeviceId }}
+        </div>
       </div>
     </div>
   </div>
@@ -107,6 +114,7 @@ const { startSequence, stopSequence, isActive } = usePerformanceSequence('sound-
 
 // Используем composable для логирования
 const {
+  deviceId,
   sendLogs,
   enableLogging,
   trackSoundChange,
@@ -142,6 +150,22 @@ const soundSquareClass = computed(() => {
     'sound-square--burst': isSquareBursting.value
   }
 })
+
+const displayDeviceId = computed(() => {
+  if (!deviceId.value) return null
+  return deviceId.value.replace(/^device_/, '')
+})
+
+const copyDeviceId = async () => {
+  if (!deviceId.value) return
+
+  try {
+    await navigator.clipboard.writeText(deviceId.value)
+    console.log('[SoundView] Device ID скопирован:', deviceId.value)
+  } catch (error) {
+    console.error('[SoundView] Ошибка копирования Device ID:', error)
+  }
+}
 
 // Управление цветом экрана и фонариком по скрипту
 const handleColorChange = async (color) => {
@@ -449,7 +473,7 @@ onUnmounted(async () => {
   align-items: center;
   justify-content: center;
   pointer-events: none;
-  z-index: 1001;
+  z-index: 1200;
 }
 
 .sound-square {
@@ -457,12 +481,14 @@ onUnmounted(async () => {
   aspect-ratio: 1 / 1;
   border-radius: 1.2rem;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   background: $color-black;
   transition: transform 0.2s ease-in-out;
   transform: scale(1);
   color: $color-white;
+  pointer-events: auto;
 
   &--dark {
     background: $color-black;
@@ -490,6 +516,29 @@ onUnmounted(async () => {
 }
 
 .sound-square--light .sound-square__label {
+  color: $color-black;
+}
+
+.sound-square__device-id {
+  font-size: 2rem;
+  font-weight: 400;
+  margin-top: 0.8rem;
+  opacity: 0.7;
+  cursor: pointer;
+  user-select: none;
+  pointer-events: auto;
+  transition: opacity 0.2s ease-in-out;
+
+  &:hover {
+    opacity: 1;
+  }
+}
+
+.sound-square--dark .sound-square__device-id {
+  color: $color-white;
+}
+
+.sound-square--light .sound-square__device-id {
   color: $color-black;
 }
 
