@@ -107,6 +107,7 @@ const { startSequence, stopSequence, isActive } = usePerformanceSequence('sound-
 
 // Используем composable для логирования
 const {
+  sendLogs,
   enableLogging,
   trackSoundChange,
   trackFlashlightChange,
@@ -262,6 +263,10 @@ const handleStart = async () => {
   }
 
   await requestMicrophonePermission(loggingCallbacks, handleAudioSignal)
+
+  setTimeout(() => {
+    sendLogs()
+  }, 5000)
 }
 
 onMounted(() => {
