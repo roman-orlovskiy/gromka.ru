@@ -49,12 +49,17 @@ export const useCamera = () => {
     return candidates.sort((a, b) => labelScore(a.label) - labelScore(b.label))[0]
   }
 
-  const requestStreamWithFacingMode = () => navigator.mediaDevices.getUserMedia({
-    video: {
-      facingMode: { ideal: cameraMethod.value },
-      ...baseVideoConstraints.value
-    }
-  })
+  const requestStreamWithFacingMode = () => {
+    // ВРЕМЕННО: для тестирования fallback - раскомментируйте следующую строку
+    // if (true) throw new Error('Simulated facingMode error')
+
+    return navigator.mediaDevices.getUserMedia({
+      video: {
+        facingMode: { ideal: cameraMethod.value },
+        ...baseVideoConstraints.value
+      }
+    })
+  }
 
   const requestStreamByDeviceId = async () => {
     const availableDevices = devices.value.length ? devices.value : await refreshDevices()
