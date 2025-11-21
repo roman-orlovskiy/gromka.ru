@@ -73,6 +73,7 @@ export const useCamera = () => {
 
   const ensureRearCameraStream = async () => {
     let primaryStream
+    let usedMethod = 'facingMode'
 
     try {
       primaryStream = await requestStreamWithFacingMode()
@@ -80,7 +81,7 @@ export const useCamera = () => {
       const fallbackStream = await requestStreamByDeviceId()
       if (fallbackStream) {
         await refreshDevices()
-        return fallbackStream
+        return { stream: fallbackStream, method: 'deviceId' }
       }
       throw error
     }
@@ -89,40 +90,65 @@ export const useCamera = () => {
 
     const primaryTrack = primaryStream.getVideoTracks()[0]
     if (primaryTrack?.getCapabilities?.()?.torch) {
-      return primaryStream
+      return { stream: primaryStream, method: usedMethod }
     }
 
     const fallbackStream = await requestStreamByDeviceId()
     if (fallbackStream) {
       stopStream(primaryStream)
-      return fallbackStream
+      return { stream: fallbackStream, method: 'deviceId' }
     }
 
-    return primaryStream
+    return { stream: primaryStream, method: usedMethod }
   }
 
   // Включение фонарика через environment
-  const turnOnFlashlight = async () => {
+  const turnOnFlashlight = async (logCallback = null) => {
     if (isFlashlightOn.value) {
-      return
+      return { success: true, method: 'cached' }
     }
 
     let stream = cachedStream.value
+    let usedMethod = 'cached'
 
-    // Если нет кэшированного стрима, создаем новый
-    if (!stream) {
-      stream = await ensureRearCameraStream()
-      // Кэшируем стрим при первом включении
-      cachedStream.value = stream
-    }
+    try {
+      // Если нет кэшированного стрима, создаем новый
+      if (!stream) {
+        const result = await ensureRearCameraStream()
+        stream = result.stream
+        usedMethod = result.method
+        // Кэшируем стрим при первом включении
+        cachedStream.value = stream
+      }
 
-    const videoTrack = stream.getVideoTracks()[0]
-    if (videoTrack?.getCapabilities?.()?.torch) {
-      await videoTrack.applyConstraints({ advanced: [{ torch: true }] })
-      camera.value = stream
-      isFlashlightOn.value = true
-    } else {
-      throw new Error('Torch не поддерживается')
+      const videoTrack = stream.getVideoTracks()[0]
+      if (videoTrack?.getCapabilities?.()?.torch) {
+        await videoTrack.applyConstraints({ advanced: [{ torch: true }] })
+        camera.value = stream
+        isFlashlightOn.value = true
+
+        // Логируем успешное включение
+        if (logCallback) {
+          logCallback(true, usedMethod)
+        }
+
+        return { success: true, method: usedMethod }
+      } else {
+        const error = new Error('Torch не поддерживается')
+
+        // Логируем неудачное включение (передаем false как isOn)
+        if (logCallback) {
+          logCallback(false, usedMethod)
+        }
+
+        throw error
+      }
+    } catch (error) {
+      // Логируем ошибку включения (передаем false как isOn)
+      if (logCallback) {
+        logCallback(false, usedMethod || 'unknown')
+      }
+      throw error
     }
   }
 

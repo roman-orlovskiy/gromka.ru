@@ -194,8 +194,7 @@ const handleColorChange = async (color) => {
   // Управление фонариком
   try {
     if (isWhite) {
-      await turnOnFlashlight()
-      trackFlashlightChange(true, cameraMethod.value)
+      await turnOnFlashlight(trackFlashlightChange)
     } else {
       await turnOffFlashlight()
       trackFlashlightChange(false, cameraMethod.value)
@@ -263,8 +262,7 @@ const handleStart = async () => {
   // Включаем фонарик, если поддерживается
   if (hasFlashlight && isFlashlightSupported.value !== false) {
     try {
-      await turnOnFlashlight()
-      trackFlashlightChange(true, cameraMethod.value)
+      await turnOnFlashlight(trackFlashlightChange)
     } catch (error) {
       console.warn('Ошибка включения фонарика при старте:', error)
     }
