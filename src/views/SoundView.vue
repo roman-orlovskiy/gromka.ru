@@ -240,11 +240,17 @@ const handleStart = async () => {
   // Активируем Wake Lock для предотвращения засыпания экрана
   await requestWakeLock()
 
+  // Устанавливаем начальное состояние - белый экран и включенный фонарик
+  // Используем флаг, чтобы не запустить последовательность при начальной установке
+  isInitializing.value = true
+  mainStore.isLightOn = true
+
   // Включаем фонарик и проверяем поддержку
   let hasFlashlight = false
 
   try {
-    hasFlashlight = await checkFlashlightSupport()
+    // Передаем callback для логирования включения фонарика
+    hasFlashlight = await checkFlashlightSupport(trackFlashlightChange)
     if (hasFlashlight) {
       logFlashlightSupport(true, cameraMethod.value)
     } else {
@@ -252,20 +258,6 @@ const handleStart = async () => {
     }
   } catch (error) {
     logFlashlightSupport(false, null, error)
-  }
-
-  // Устанавливаем начальное состояние - белый экран и включенный фонарик
-  // Используем флаг, чтобы не запустить последовательность при начальной установке
-  isInitializing.value = true
-  mainStore.isLightOn = true
-
-  // Включаем фонарик, если поддерживается
-  if (hasFlashlight && isFlashlightSupported.value !== false) {
-    try {
-      await turnOnFlashlight(trackFlashlightChange)
-    } catch (error) {
-      console.warn('Ошибка включения фонарика при старте:', error)
-    }
   }
 
   // Снимаем флаг инициализации после установки начального состояния

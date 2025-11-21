@@ -105,6 +105,10 @@ export const useCamera = () => {
   // Включение фонарика через environment
   const turnOnFlashlight = async (logCallback = null) => {
     if (isFlashlightOn.value) {
+      // Если фонарик уже включен, но передан callback, логируем это
+      if (logCallback) {
+        logCallback(true, 'cached')
+      }
       return { success: true, method: 'cached' }
     }
 
@@ -168,13 +172,13 @@ export const useCamera = () => {
   }
 
   // Проверка поддержки фонарика - просто пытается включить и возвращает true/false
-  const checkFlashlightSupport = async () => {
+  const checkFlashlightSupport = async (logCallback = null) => {
     if (isFlashlightSupported.value !== null) {
       return isFlashlightSupported.value
     }
 
     try {
-      await turnOnFlashlight()
+      await turnOnFlashlight(logCallback)
       isFlashlightSupported.value = true
       return true
     } catch {
