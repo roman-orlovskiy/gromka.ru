@@ -196,8 +196,7 @@ const handleColorChange = async (color) => {
     if (isWhite) {
       await turnOnFlashlight(trackFlashlightChange)
     } else {
-      await turnOffFlashlight()
-      trackFlashlightChange(false, cameraMethod.value)
+      await turnOffFlashlight(trackFlashlightChange)
     }
   } catch (error) {
     console.warn('Ошибка управления фонариком:', error)
@@ -277,7 +276,7 @@ const handleStart = async () => {
 
   setTimeout(() => {
     sendLogs()
-  }, 5000)
+  }, 3000)
 }
 
 onMounted(() => {

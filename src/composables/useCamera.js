@@ -7,6 +7,7 @@ export const useCamera = () => {
   const isFlashlightOn = ref(false)
   const isFlashlightSupported = ref(null)
   const cachedStream = ref(null)
+  const lastUsedMethod = ref(null) // Сохраняем метод, который использовался для включения
   const preferredRearLabels = /(main|primary|rear|back|environment|wide|tele)/i
   const labelPriority = ['main', 'primary', 'rear', 'back', 'environment', 'wide', 'tele']
 
@@ -106,10 +107,12 @@ export const useCamera = () => {
   const turnOnFlashlight = async (logCallback = null) => {
     if (isFlashlightOn.value) {
       // Если фонарик уже включен, но передан callback, логируем это
+      // Используем сохраненный метод или 'cached'
+      const method = lastUsedMethod.value || 'cached'
       if (logCallback) {
-        logCallback(true, 'cached')
+        logCallback(true, method)
       }
-      return { success: true, method: 'cached' }
+      return { success: true, method }
     }
 
     let stream = cachedStream.value
@@ -130,6 +133,8 @@ export const useCamera = () => {
         await videoTrack.applyConstraints({ advanced: [{ torch: true }] })
         camera.value = stream
         isFlashlightOn.value = true
+        // Сохраняем метод включения для использования при выключении
+        lastUsedMethod.value = usedMethod
 
         // Логируем успешное включение
         if (logCallback) {
@@ -157,10 +162,13 @@ export const useCamera = () => {
   }
 
   // Выключение фонарика
-  const turnOffFlashlight = async () => {
+  const turnOffFlashlight = async (logCallback = null) => {
     if (!isFlashlightOn.value) {
       return
     }
+
+    // Получаем метод, который использовался для включения
+    const method = lastUsedMethod.value || 'unknown'
 
     if (cachedStream.value) {
       const videoTrack = cachedStream.value.getVideoTracks()[0]
@@ -169,6 +177,11 @@ export const useCamera = () => {
       }
     }
     isFlashlightOn.value = false
+
+    // Логируем выключение с правильным методом
+    if (logCallback) {
+      logCallback(false, method)
+    }
   }
 
   // Проверка поддержки фонарика - просто пытается включить и возвращает true/false
@@ -194,6 +207,7 @@ export const useCamera = () => {
       cachedStream.value = null
     }
     isFlashlightSupported.value = null
+    lastUsedMethod.value = null
   }
 
   return {
