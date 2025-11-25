@@ -101,7 +101,8 @@ const {
   turnOnFlashlight,
   turnOffFlashlight,
   checkFlashlightSupport,
-  refreshDevices
+  refreshDevices,
+  cachedAudioStream
 } = useCamera()
 
 // Используем composable для предотвращения засыпания экрана
@@ -265,14 +266,17 @@ const handleStart = async () => {
   mainStore.isLightOn = true
 
   // Включаем фонарик и проверяем поддержку
-  // Если поддержка еще не проверена, проверяем и логируем
+  // Используем includeAudio: true для объединённого запроса (камера + микрофон в одном диалоге)
   let hasFlashlight = false
+  let audioStream = null
 
   if (isFlashlightSupported.value === null) {
     // Поддержка еще не проверена, проверяем и логируем
+    // Запрашиваем камеру И микрофон одним запросом
     try {
-      // Передаем callbacks для детального логирования
-      hasFlashlight = await checkFlashlightSupport(cameraLogCallbacks)
+      const result = await checkFlashlightSupport(cameraLogCallbacks, { includeAudio: true })
+      hasFlashlight = result.supported
+      audioStream = result.audioStream
       if (hasFlashlight) {
         logFlashlightSupport(true, cameraMethod.value)
       } else {
@@ -286,11 +290,17 @@ const handleStart = async () => {
     hasFlashlight = isFlashlightSupported.value
     if (hasFlashlight) {
       try {
-        await turnOnFlashlight(cameraLogCallbacks)
+        const result = await turnOnFlashlight(cameraLogCallbacks, { includeAudio: true })
+        audioStream = result.audioStream
       } catch (error) {
         console.warn('Ошибка включения фонарика:', error)
       }
     }
+  }
+
+  // Если audio stream не получен через камеру, используем кэшированный
+  if (!audioStream) {
+    audioStream = cachedAudioStream.value
   }
 
   // Снимаем флаг инициализации после установки начального состояния
@@ -312,7 +322,8 @@ const handleStart = async () => {
     logFirstSoundSignal
   }
 
-  await requestMicrophonePermission(loggingCallbacks, handleAudioSignal)
+  // Используем уже полученный audioStream (из объединённого запроса) или запрашиваем отдельно
+  await requestMicrophonePermission(loggingCallbacks, handleAudioSignal, audioStream)
 
   // Отправляем логи инициализации через 5 секунд как fallback
   // Если звуковой сигнал придет раньше и будет 3 смены — логи отправятся через trackSoundChange
@@ -337,16 +348,8 @@ onMounted(async () => {
   await refreshDevices()
   logCameraInfo(devices.value, cameraMethod.value)
 
-  // Проверяем поддержку фонарика сразу при монтировании
-  // ВАЖНО: передаем cameraLogCallbacks для детального логирования всех попыток
-  try {
-    const hasFlashlight = await checkFlashlightSupport(cameraLogCallbacks)
-    // Логируем финальный результат проверки поддержки
-    logFlashlightSupport(hasFlashlight, cameraMethod.value)
-  } catch (error) {
-    // Логируем ошибку проверки поддержки
-    logFlashlightSupport(false, null, error)
-  }
+  // НЕ проверяем фонарик здесь — это включит его!
+  // Проверка фонарика будет в handleStart при нажатии "Начать"
 })
 
 onUnmounted(async () => {

@@ -113,8 +113,55 @@ export function useAudio() {
     return sum / payloadWindow.samples.length
   }
 
+  // Настройка аудио анализа с уже полученным stream (для объединённого запроса камера+микрофон)
+  const setupWithExistingStream = (audioStream, loggingCallback = null, signalCallback = null) => {
+    // Если уже слушаем — не создаём новый AudioContext
+    if (isListening.value) {
+      console.log('setupWithExistingStream: уже слушаем, пропускаем')
+      return true
+    }
+
+    if (!audioStream || audioStream.getAudioTracks().length === 0) {
+      console.warn('setupWithExistingStream: нет audio tracks в stream')
+      return false
+    }
+
+    hasPermission.value = true
+
+    const audioSettings = {
+      sampleRate: 44100,
+      channelCount: 1,
+      echoCancellation: false,
+      noiseSuppression: false,
+      autoGainControl: false
+    }
+
+    // Логируем успешное получение разрешения (через объединённый запрос)
+    if (loggingCallback) {
+      loggingCallback.logMicrophonePermission(true, null, 'combined_request')
+      loggingCallback.logAudioSettings(audioSettings)
+    }
+
+    setupAudioAnalysis(audioStream, loggingCallback, signalCallback)
+    return true
+  }
+
   // Функция для запроса разрешения на микрофон
-  const requestMicrophonePermission = async (loggingCallback = null, signalCallback = null) => {
+  // existingStream — если передан, используем его вместо нового запроса
+  const requestMicrophonePermission = async (loggingCallback = null, signalCallback = null, existingStream = null) => {
+    // Если уже слушаем — не создаём новый AudioContext
+    if (isListening.value) {
+      console.log('requestMicrophonePermission: уже слушаем, пропускаем')
+      return existingStream || true
+    }
+
+    // Если уже есть stream с audio — используем его
+    if (existingStream && existingStream.getAudioTracks().length > 0) {
+      return setupWithExistingStream(existingStream, loggingCallback, signalCallback)
+        ? existingStream
+        : null
+    }
+
     const audioSettings = {
       sampleRate: 44100,
       channelCount: 1,
@@ -324,6 +371,7 @@ export function useAudio() {
 
     // Методы
     requestMicrophonePermission,
+    setupWithExistingStream, // Для использования audio stream из объединённого запроса
     cleanup
   }
 }

@@ -7,6 +7,7 @@ export const useCamera = () => {
   const isFlashlightOn = ref(false)
   const isFlashlightSupported = ref(null)
   const cachedStream = ref(null)
+  const cachedAudioStream = ref(null) // Кэш audio стрима для передачи в useAudio
   const lastUsedMethod = ref(null) // Сохраняем метод, который использовался для включения
   const preferredRearLabels = /(main|primary|rear|back|environment|wide|tele|задн|основн)/i
   const labelPriority = ['main', 'primary', 'rear', 'back', 'environment', 'wide', 'tele', 'camera 0', '0']
@@ -16,6 +17,23 @@ export const useCamera = () => {
   const isIOS = /iPad|iPhone|iPod/.test(userAgent) ||
     (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
   const isAndroid = /Android/i.test(userAgent)
+
+  // Парсинг версии iOS для определения поддержки torch API (с iOS 15.4)
+  const getIOSVersion = () => {
+    if (!isIOS) return null
+    const match = userAgent.match(/OS (\d+)[_.](\d+)/)
+    if (match) {
+      return { major: parseInt(match[1], 10), minor: parseInt(match[2], 10) }
+    }
+    return null
+  }
+  const iosVersion = getIOSVersion()
+  // Если iOS, но версия неизвестна — пробуем включить torch (лучше попробовать, чем отказаться)
+  const isIOSVersionUnknown = isIOS && !iosVersion
+  // torch API поддерживается с iOS 15.4
+  const isOldIOS = isIOS && iosVersion
+    ? (iosVersion.major < 15 || (iosVersion.major === 15 && iosVersion.minor < 4))
+    : false
   const isSamsung = /Samsung|SM-|Galaxy/i.test(userAgent)
   const isHuawei = /Huawei|Honor|HUAWEI/i.test(userAgent)
   const isXiaomi = /Xiaomi|Mi |Redmi|POCO/i.test(userAgent)
@@ -86,6 +104,11 @@ export const useCamera = () => {
       isSamsung,
       isHuawei,
       isXiaomi,
+      isOldIOS, // iOS < 15.4 (torch API не поддерживается)
+      isIOSVersionUnknown, // iOS, но версия не определена
+      iosVersionMajor: iosVersion?.major ?? null,
+      iosVersionMinor: iosVersion?.minor ?? null,
+      torchApiSupported: isIOS ? (!isOldIOS && !isIOSVersionUnknown ? true : 'unknown') : true,
       userAgent,
       platform: navigator.platform,
       maxTouchPoints: navigator.maxTouchPoints || 0
@@ -99,14 +122,39 @@ export const useCamera = () => {
     frameRate: { ideal: 15, max: 30 }
   }))
 
+  // Audio constraints для объединённого запроса (камера + микрофон)
+  const audioConstraints = {
+    sampleRate: 44100,
+    channelCount: 1,
+    echoCancellation: false,
+    noiseSuppression: false,
+    autoGainControl: false
+  }
+
   // Задержка для ожидания готовности torch (особенно на iOS)
   const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms))
 
-  // Утилита: остановка стрима
-  const stopStream = (stream) => {
+  // Утилита: остановка стрима (только video tracks, audio сохраняем)
+  const stopStream = (stream, keepAudio = false) => {
     if (stream && stream.getTracks) {
-      stream.getTracks().forEach(track => track.stop())
+      stream.getTracks().forEach(track => {
+        if (keepAudio && track.kind === 'audio') return
+        track.stop()
+      })
     }
+  }
+
+  // Утилита: извлечение и кэширование audio stream
+  const cacheAudioFromStream = (stream) => {
+    if (!stream) return null
+    const audioTracks = stream.getAudioTracks()
+    if (audioTracks.length > 0) {
+      // Создаём новый MediaStream только с audio tracks
+      const audioOnlyStream = new MediaStream(audioTracks)
+      cachedAudioStream.value = audioOnlyStream
+      return audioOnlyStream
+    }
+    return null
   }
 
   const refreshDevices = async () => {
@@ -122,49 +170,54 @@ export const useCamera = () => {
   }
 
   // Метод 1: facingMode ideal (работает на большинстве устройств)
-  const requestStreamWithFacingModeIdeal = () => {
+  const requestStreamWithFacingModeIdeal = (includeAudio = false) => {
     return navigator.mediaDevices.getUserMedia({
       video: {
         facingMode: { ideal: 'environment' },
         ...baseVideoConstraints.value
-      }
+      },
+      audio: includeAudio ? audioConstraints : false
     })
   }
 
   // Метод 2: facingMode exact (лучше работает на iOS)
-  const requestStreamWithFacingModeExact = () => {
+  const requestStreamWithFacingModeExact = (includeAudio = false) => {
     return navigator.mediaDevices.getUserMedia({
       video: {
         facingMode: { exact: 'environment' },
         ...baseVideoConstraints.value
-      }
+      },
+      audio: includeAudio ? audioConstraints : false
     })
   }
 
   // Метод 3: facingMode simple (для старых браузеров)
-  const requestStreamWithFacingModeSimple = () => {
+  const requestStreamWithFacingModeSimple = (includeAudio = false) => {
     return navigator.mediaDevices.getUserMedia({
       video: {
         facingMode: 'environment',
         ...baseVideoConstraints.value
-      }
+      },
+      audio: includeAudio ? audioConstraints : false
     })
   }
 
   // Метод 4: по deviceId конкретной камеры
-  const requestStreamByDeviceId = async (deviceId) => {
+  const requestStreamByDeviceId = (deviceId, includeAudio = false) => {
     return navigator.mediaDevices.getUserMedia({
       video: {
         deviceId: { exact: deviceId },
         ...baseVideoConstraints.value
-      }
+      },
+      audio: includeAudio ? audioConstraints : false
     })
   }
 
   // Метод 5: простой запрос видео без ограничений (fallback)
-  const requestStreamSimple = () => {
+  const requestStreamSimple = (includeAudio = false) => {
     return navigator.mediaDevices.getUserMedia({
-      video: true
+      video: true,
+      audio: includeAudio ? audioConstraints : false
     })
   }
 
@@ -188,17 +241,44 @@ export const useCamera = () => {
   }
 
   // Проверка наличия torch в стриме с задержкой для iOS
-  const checkTorchSupport = async (stream) => {
+  // На старых iOS (< 15.4) torch API не поддерживается
+  const checkTorchSupport = async (stream, tryForce = false) => {
     const track = stream.getVideoTracks()[0]
     if (!track) return false
 
-    // На iOS нужна небольшая задержка перед проверкой capabilities
+    // На старых iOS torch API не поддерживается вообще
+    if (isOldIOS) {
+      return false
+    }
+
+    // На iOS нужна задержка перед проверкой capabilities
+    // На новых iOS (15.4+) достаточно 100ms, но для надёжности используем 200ms
     if (isIOS) {
-      await delay(100)
+      await delay(200)
     }
 
     const capabilities = track.getCapabilities?.()
-    return capabilities?.torch === true
+
+    // Если capabilities показывает torch — отлично
+    if (capabilities?.torch === true) {
+      return true
+    }
+
+    // На некоторых iOS версиях getCapabilities() может врать
+    // Пробуем принудительно включить torch, если tryForce = true
+    if (tryForce && isIOS && !isOldIOS) {
+      try {
+        await track.applyConstraints({ advanced: [{ torch: true }] })
+        // Если не выбросило ошибку — torch работает
+        // Сразу выключаем, чтобы не оставлять включённым
+        await track.applyConstraints({ advanced: [{ torch: false }] })
+        return true
+      } catch {
+        return false
+      }
+    }
+
+    return false
   }
 
   // Попытка включить torch с retry для надежности
@@ -220,8 +300,10 @@ export const useCamera = () => {
   // Универсальный метод получения стрима с torch
   // Пробует несколько методов в порядке приоритета для максимальной совместимости
   // logCallbacks: { trackFlashlightChange, logCameraAttempt, logPlatformInfo }
-  const ensureRearCameraStream = async (logCallbacks = null) => {
+  // options: { includeAudio: boolean } — запросить камеру и микрофон одним запросом
+  const ensureRearCameraStream = async (logCallbacks = null, options = {}) => {
     const { trackFlashlightChange, logCameraAttempt, logPlatformInfo } = logCallbacks || {}
+    const { includeAudio = false } = options
 
     // Логируем детальную информацию о платформе и устройстве
     if (logPlatformInfo) {
@@ -231,25 +313,26 @@ export const useCamera = () => {
     const methods = []
 
     // Определяем порядок методов в зависимости от платформы
+    // Каждый метод теперь принимает includeAudio
     if (isIOS) {
       // Для iOS: exact лучше работает
       methods.push(
-        { name: 'facingMode-exact', fn: requestStreamWithFacingModeExact },
-        { name: 'facingMode-ideal', fn: requestStreamWithFacingModeIdeal },
-        { name: 'facingMode-simple', fn: requestStreamWithFacingModeSimple }
+        { name: 'facingMode-exact', fn: () => requestStreamWithFacingModeExact(includeAudio) },
+        { name: 'facingMode-ideal', fn: () => requestStreamWithFacingModeIdeal(includeAudio) },
+        { name: 'facingMode-simple', fn: () => requestStreamWithFacingModeSimple(includeAudio) }
       )
     } else if (isSamsung) {
       // Для Samsung: сначала пробуем facingMode, потом deviceId
       methods.push(
-        { name: 'facingMode-ideal', fn: requestStreamWithFacingModeIdeal },
-        { name: 'facingMode-exact', fn: requestStreamWithFacingModeExact }
+        { name: 'facingMode-ideal', fn: () => requestStreamWithFacingModeIdeal(includeAudio) },
+        { name: 'facingMode-exact', fn: () => requestStreamWithFacingModeExact(includeAudio) }
       )
     } else {
       // Для остальных Android и других платформ
       methods.push(
-        { name: 'facingMode-ideal', fn: requestStreamWithFacingModeIdeal },
-        { name: 'facingMode-exact', fn: requestStreamWithFacingModeExact },
-        { name: 'facingMode-simple', fn: requestStreamWithFacingModeSimple }
+        { name: 'facingMode-ideal', fn: () => requestStreamWithFacingModeIdeal(includeAudio) },
+        { name: 'facingMode-exact', fn: () => requestStreamWithFacingModeExact(includeAudio) },
+        { name: 'facingMode-simple', fn: () => requestStreamWithFacingModeSimple(includeAudio) }
       )
     }
 
@@ -258,7 +341,12 @@ export const useCamera = () => {
       logCameraAttempt({
         stage: 'start',
         methodsToTry: methods.map(m => m.name),
-        platform: isIOS ? 'iOS' : isSamsung ? 'Samsung' : 'other'
+        platform: isIOS ? 'iOS' : isSamsung ? 'Samsung' : 'other',
+        iosVersion: iosVersion ? `${iosVersion.major}.${iosVersion.minor}` : null,
+        isOldIOS,
+        isIOSVersionUnknown,
+        torchApiSupported: !isOldIOS,
+        includeAudio
       })
     }
 
@@ -298,8 +386,8 @@ export const useCamera = () => {
           trackFlashlightChange(false, method.name)
         }
 
-        // Проверяем поддержку torch
-        const hasTorch = await checkTorchSupport(stream)
+        // Проверяем поддержку torch (с tryForce для iOS, где capabilities может врать)
+        const hasTorch = await checkTorchSupport(stream, isIOS)
 
         // Логируем результат проверки torch
         if (logCameraAttempt) {
@@ -307,22 +395,26 @@ export const useCamera = () => {
             stage: 'torch_check',
             attempt: attemptNumber,
             method: method.name,
-            hasTorch
+            hasTorch,
+            isOldIOS
           })
         }
 
         if (hasTorch) {
           // Нашли камеру с torch
+          // Кэшируем audio stream если был запрошен
+          const audioStream = includeAudio ? cacheAudioFromStream(stream) : null
           if (logCameraAttempt) {
             logCameraAttempt({
               stage: 'success',
               attempt: attemptNumber,
               method: method.name,
-              hasTorch: true
+              hasTorch: true,
+              hasAudio: !!audioStream
             })
           }
           await refreshDevices()
-          return { stream, method: method.name }
+          return { stream, method: method.name, audioStream }
         }
 
         // Камера без torch - сохраняем как запасной вариант
@@ -382,7 +474,7 @@ export const useCamera = () => {
             })
           }
 
-          const stream = await requestStreamByDeviceId(camera.deviceId)
+          const stream = await requestStreamByDeviceId(camera.deviceId, includeAudio)
 
           // Логируем успешное получение стрима
           if (logCameraAttempt) {
@@ -398,7 +490,7 @@ export const useCamera = () => {
             trackFlashlightChange(false, `deviceId:${cameraLabel}`)
           }
 
-          const hasTorch = await checkTorchSupport(stream)
+          const hasTorch = await checkTorchSupport(stream, isIOS)
 
           // Логируем результат проверки torch
           if (logCameraAttempt) {
@@ -406,23 +498,27 @@ export const useCamera = () => {
               stage: 'torch_check',
               attempt: attemptNumber,
               method: `deviceId:${cameraLabel}`,
-              hasTorch
+              hasTorch,
+              isOldIOS
             })
           }
 
           if (hasTorch) {
             // Нашли камеру с torch
+            // Кэшируем audio stream если был запрошен
+            const audioStream = includeAudio ? cacheAudioFromStream(stream) : null
             if (logCameraAttempt) {
               logCameraAttempt({
                 stage: 'success',
                 attempt: attemptNumber,
                 method: `deviceId:${cameraLabel}`,
-                hasTorch: true
+                hasTorch: true,
+                hasAudio: !!audioStream
               })
             }
             if (bestStream) stopStream(bestStream)
             await refreshDevices()
-            return { stream, method: `deviceId:${cameraLabel}` }
+            return { stream, method: `deviceId:${cameraLabel}`, audioStream }
           }
 
           // Камера без torch - сохраняем как запасной вариант
@@ -472,7 +568,7 @@ export const useCamera = () => {
           })
         }
 
-        bestStream = await requestStreamSimple()
+        bestStream = await requestStreamSimple(includeAudio)
         bestMethod = 'simple'
 
         if (logCameraAttempt) {
@@ -503,28 +599,33 @@ export const useCamera = () => {
     }
 
     // Логируем финальный результат (нет torch, но есть стрим)
+    // Кэшируем audio stream если был запрошен
+    const audioStream = includeAudio ? cacheAudioFromStream(bestStream) : null
     if (logCameraAttempt) {
       logCameraAttempt({
         stage: 'finish',
         method: bestMethod,
         hasTorch: false,
-        totalAttempts: attemptNumber
+        totalAttempts: attemptNumber,
+        hasAudio: !!audioStream
       })
     }
 
     await refreshDevices()
-    return { stream: bestStream, method: bestMethod }
+    return { stream: bestStream, method: bestMethod, audioStream }
   }
 
   // Включение фонарика - универсальный метод с поддержкой разных устройств
   // logCallbacks: { trackFlashlightChange, logCameraAttempt, logPlatformInfo } или function (для обратной совместимости)
-  const turnOnFlashlight = async (logCallbacks = null) => {
+  // options: { includeAudio: boolean } — запросить камеру и микрофон одним запросом
+  const turnOnFlashlight = async (logCallbacks = null, options = {}) => {
     // Обратная совместимость: если передана функция, оборачиваем её
     const callbacks = typeof logCallbacks === 'function'
       ? { trackFlashlightChange: logCallbacks }
       : logCallbacks
 
     const { trackFlashlightChange, logCameraAttempt } = callbacks || {}
+    const { includeAudio = false } = options
 
     if (isFlashlightOn.value) {
       // Если фонарик уже включен, но передан callback, логируем это
@@ -538,7 +639,8 @@ export const useCamera = () => {
           method
         })
       }
-      return { success: true, method }
+      // Возвращаем кэшированный audio stream если есть
+      return { success: true, method, audioStream: cachedAudioStream.value }
     }
 
     let stream = cachedStream.value
@@ -555,10 +657,11 @@ export const useCamera = () => {
           })
         }
         // Передаем callbacks для логирования попыток получения стрима разными методами
-        const result = await ensureRearCameraStream(callbacks)
+        const result = await ensureRearCameraStream(callbacks, { includeAudio })
         stream = result.stream
         usedMethod = result.method
-        // НЕ кэшируем стрим здесь - кэшируем только после успешного включения torch
+        // Сохраняем audioStream из результата (уже закэширован в ensureRearCameraStream)
+        // НЕ кэшируем video стрим здесь - кэшируем только после успешного включения torch
       } else {
         // Используем кэшированный стрим - быстрый путь
         usedMethod = lastUsedMethod.value || 'cached'
@@ -576,12 +679,13 @@ export const useCamera = () => {
       // Для нового стрима проверяем поддержку torch
       let hasTorch = isCached
       if (!isCached) {
-        hasTorch = await checkTorchSupport(stream)
+        hasTorch = await checkTorchSupport(stream, isIOS)
         if (logCameraAttempt) {
           logCameraAttempt({
             stage: 'torch_check_before_enable',
             hasTorch,
-            method: usedMethod
+            method: usedMethod,
+            isOldIOS
           })
         }
       }
@@ -601,7 +705,7 @@ export const useCamera = () => {
         if (isCached) {
           // Быстрый путь для кэшированного стрима
           try {
-            await videoTrack.applyConstraints({ advanced: [{ torch: true }] })
+        await videoTrack.applyConstraints({ advanced: [{ torch: true }] })
             success = true
           } catch {
             // Если не удалось — пробуем с retry
@@ -628,11 +732,12 @@ export const useCamera = () => {
               stage: 'torch_enabled',
               success: true,
               method: usedMethod,
-              cached: true
+              cached: true,
+              hasAudio: !!cachedAudioStream.value
             })
         }
 
-        return { success: true, method: usedMethod }
+        return { success: true, method: usedMethod, audioStream: cachedAudioStream.value }
       } else {
           if (logCameraAttempt) {
             logCameraAttempt({
@@ -645,9 +750,9 @@ export const useCamera = () => {
       }
 
       // Torch не поддерживается или не удалось включить
-      // Останавливаем стрим, чтобы не держать камеру занятой
+      // Останавливаем только video стрим, сохраняем audio (если был запрошен)
       if (stream && !cachedStream.value) {
-        stopStream(stream)
+        stopStream(stream, includeAudio) // keepAudio = true если был запрошен audio
       }
 
       const error = new Error('Torch не поддерживается на этом устройстве')
@@ -667,9 +772,9 @@ export const useCamera = () => {
 
       throw error
     } catch (error) {
-      // Останавливаем стрим при ошибке, если он не был закэширован
+      // Останавливаем только video стрим при ошибке, сохраняем audio
       if (stream && !cachedStream.value) {
-        stopStream(stream)
+        stopStream(stream, includeAudio) // keepAudio = true если был запрошен audio
       }
 
       // Логируем ошибку включения
@@ -681,7 +786,8 @@ export const useCamera = () => {
           stage: 'error',
           method: usedMethod || 'unknown',
           error: error.message,
-          streamStopped: true
+          streamStopped: true,
+          audioPreserved: includeAudio
         })
       }
       throw error
@@ -745,13 +851,15 @@ export const useCamera = () => {
 
   // Проверка поддержки фонарика - просто пытается включить и возвращает true/false
   // logCallbacks: { trackFlashlightChange, logCameraAttempt, logPlatformInfo } или function (для обратной совместимости)
-  const checkFlashlightSupport = async (logCallbacks = null) => {
+  // options: { includeAudio: boolean } — запросить камеру и микрофон одним запросом
+  const checkFlashlightSupport = async (logCallbacks = null, options = {}) => {
     // Обратная совместимость: если передана функция, оборачиваем её
     const callbacks = typeof logCallbacks === 'function'
       ? { trackFlashlightChange: logCallbacks }
       : logCallbacks
 
     const { trackFlashlightChange, logCameraAttempt } = callbacks || {}
+    const { includeAudio = false } = options
 
     // Если поддержка уже проверена, но передан callback, логируем текущее состояние
     if (isFlashlightSupported.value !== null) {
@@ -767,29 +875,32 @@ export const useCamera = () => {
           method: lastUsedMethod.value || 'cached'
         })
       }
-      return isFlashlightSupported.value
+      // Возвращаем объект с audioStream для согласованности
+      return { supported: isFlashlightSupported.value, audioStream: cachedAudioStream.value }
     }
 
     if (logCameraAttempt) {
       logCameraAttempt({
         stage: 'checking_support',
-        action: 'starting'
+        action: 'starting',
+        includeAudio
       })
     }
 
     try {
-      await turnOnFlashlight(callbacks)
+      const result = await turnOnFlashlight(callbacks, { includeAudio })
       isFlashlightSupported.value = true
 
       if (logCameraAttempt) {
         logCameraAttempt({
           stage: 'support_check_complete',
           isSupported: true,
-          method: lastUsedMethod.value
+          method: lastUsedMethod.value,
+          hasAudio: !!result.audioStream
         })
       }
 
-      return true
+      return { supported: true, audioStream: result.audioStream }
     } catch {
       isFlashlightSupported.value = false
 
@@ -805,7 +916,7 @@ export const useCamera = () => {
         })
       }
 
-      return false
+      return { supported: false, audioStream: cachedAudioStream.value }
     }
   }
 
@@ -814,6 +925,10 @@ export const useCamera = () => {
     if (cachedStream.value) {
       stopStream(cachedStream.value)
       cachedStream.value = null
+    }
+    if (cachedAudioStream.value) {
+      stopStream(cachedAudioStream.value)
+      cachedAudioStream.value = null
     }
     isFlashlightSupported.value = null
     lastUsedMethod.value = null
@@ -825,6 +940,7 @@ export const useCamera = () => {
     devices,
     isFlashlightOn,
     isFlashlightSupported,
+    cachedAudioStream, // Audio stream для передачи в useAudio
     turnOnFlashlight,
     turnOffFlashlight,
     checkFlashlightSupport,
