@@ -77,17 +77,39 @@ export const useCamera = () => {
     })
   }
 
-  const ensureRearCameraStream = async () => {
+  const ensureRearCameraStream = async (logCallback = null) => {
     let primaryStream
     let usedMethod = 'facingMode'
 
     try {
+      // Пробуем получить стрим через facingMode
       primaryStream = await requestStreamWithFacingMode()
+      // Логируем попытку получения стрима через facingMode (даже если torch не поддерживается)
+      if (logCallback) {
+        logCallback(false, 'facingMode') // false = попытка включения, но еще не включен
+      }
     } catch (error) {
-      const fallbackStream = await requestStreamByDeviceId()
-      if (fallbackStream) {
-        await refreshDevices()
-        return { stream: fallbackStream, method: 'deviceId' }
+      // Логируем неудачную попытку через facingMode
+      if (logCallback) {
+        logCallback(false, 'facingMode')
+      }
+
+      // Пробуем fallback через deviceId
+      try {
+        const fallbackStream = await requestStreamByDeviceId()
+        if (fallbackStream) {
+          // Логируем успешную попытку получения стрима через deviceId
+          if (logCallback) {
+            logCallback(false, 'deviceId')
+          }
+          await refreshDevices()
+          return { stream: fallbackStream, method: 'deviceId' }
+        }
+      } catch {
+        // Логируем неудачную попытку через deviceId
+        if (logCallback) {
+          logCallback(false, 'deviceId')
+        }
       }
       throw error
     }
@@ -99,10 +121,22 @@ export const useCamera = () => {
       return { stream: primaryStream, method: usedMethod }
     }
 
-    const fallbackStream = await requestStreamByDeviceId()
-    if (fallbackStream) {
-      stopStream(primaryStream)
-      return { stream: fallbackStream, method: 'deviceId' }
+    // Если torch не поддерживается в primaryStream, пробуем deviceId
+    try {
+      const fallbackStream = await requestStreamByDeviceId()
+      if (fallbackStream) {
+        // Логируем попытку через deviceId
+        if (logCallback) {
+          logCallback(false, 'deviceId')
+        }
+        stopStream(primaryStream)
+        return { stream: fallbackStream, method: 'deviceId' }
+      }
+    } catch {
+      // Логируем неудачную попытку через deviceId
+      if (logCallback) {
+        logCallback(false, 'deviceId')
+      }
     }
 
     return { stream: primaryStream, method: usedMethod }
@@ -126,7 +160,8 @@ export const useCamera = () => {
     try {
       // Если нет кэшированного стрима, создаем новый
       if (!stream) {
-        const result = await ensureRearCameraStream()
+        // Передаем callback для логирования попыток получения стрима разными методами
+        const result = await ensureRearCameraStream(logCallback)
         stream = result.stream
         usedMethod = result.method
         // Кэшируем стрим при первом включении
@@ -191,7 +226,13 @@ export const useCamera = () => {
 
   // Проверка поддержки фонарика - просто пытается включить и возвращает true/false
   const checkFlashlightSupport = async (logCallback = null) => {
+    // Если поддержка уже проверена, но передан callback, логируем текущее состояние
     if (isFlashlightSupported.value !== null) {
+      if (logCallback) {
+        // Логируем текущее состояние фонарика (включен/выключен) с методом из кэша
+        const method = lastUsedMethod.value || 'cached'
+        logCallback(isFlashlightOn.value, method)
+      }
       return isFlashlightSupported.value
     }
 
@@ -201,6 +242,11 @@ export const useCamera = () => {
       return true
     } catch {
       isFlashlightSupported.value = false
+      // Логируем финальную неудачную попытку, если callback передан
+      // (все промежуточные попытки уже залогированы в turnOnFlashlight)
+      if (logCallback) {
+        logCallback(false, 'unknown')
+      }
       return false
     }
   }
@@ -225,5 +271,6 @@ export const useCamera = () => {
     turnOffFlashlight,
     checkFlashlightSupport,
     clearCache,
+    refreshDevices,
   }
 }

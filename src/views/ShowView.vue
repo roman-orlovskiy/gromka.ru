@@ -117,7 +117,8 @@ const {
   devices,
   turnOnFlashlight,
   turnOffFlashlight,
-  checkFlashlightSupport
+  checkFlashlightSupport,
+  refreshDevices
 } = useCamera()
 
 // Используем composable для предотвращения засыпания экрана
@@ -140,7 +141,8 @@ const {
   logFirstSoundSignal,
   logFlashlightSupport,
   logDeviceInfo,
-  sendLogs
+  sendLogs,
+  logs
 } = useLogging()
 
 
@@ -219,8 +221,11 @@ const handleColorChange = async (color) => {
     squareBurstTimeout = null
   }, 150)
 
-  // Если фонарик не поддерживается, просто выходим без управления им
+  // Управление фонариком
+  // Если фонарик не поддерживается, логируем попытку включения, но не пытаемся включить
   if (isFlashlightSupported.value === false) {
+    // Логируем попытку включения, даже если фонарик не поддерживается
+    trackFlashlightChange(isWhite, null)
     return
   }
 
@@ -233,6 +238,8 @@ const handleColorChange = async (color) => {
     }
   } catch (error) {
     console.warn('Ошибка управления фонариком:', error)
+    // Логируем ошибку как попытку включения
+    trackFlashlightChange(isWhite, cameraMethod.value)
     logFlashlightSupport(false, cameraMethod.value, error)
   }
 }
@@ -273,7 +280,7 @@ const handleStart = async () => {
   // Устанавливаем последовательность по ряду и месту
   setSequenceBySeat(rowValue.value.trim(), seatValue.value.trim())
 
-  // Включаем логирование
+  // Включаем логирование (если еще не включено)
   enableLogging()
 
   // Активируем Wake Lock для предотвращения засыпания экрана
@@ -285,25 +292,45 @@ const handleStart = async () => {
   mainStore.isLightOn = true
 
   // Включаем фонарик и проверяем поддержку
+  // Если поддержка еще не проверена, проверяем и логируем
   let hasFlashlight = false
 
-  try {
-    // Передаем callback для логирования включения фонарика
-    hasFlashlight = await checkFlashlightSupport(trackFlashlightChange)
-    if (hasFlashlight) {
-      logFlashlightSupport(true, cameraMethod.value)
-    } else {
-      logFlashlightSupport(false, null)
+  if (isFlashlightSupported.value === null) {
+    // Поддержка еще не проверена, проверяем и логируем
+    try {
+      // Передаем callback для логирования включения фонарика
+      hasFlashlight = await checkFlashlightSupport(trackFlashlightChange)
+      if (hasFlashlight) {
+        logFlashlightSupport(true, cameraMethod.value)
+      } else {
+        logFlashlightSupport(false, null)
+      }
+    } catch (error) {
+      logFlashlightSupport(false, null, error)
     }
-  } catch (error) {
-    logFlashlightSupport(false, null, error)
+  } else {
+    // Поддержка уже проверена, просто включаем фонарик если поддерживается
+    hasFlashlight = isFlashlightSupported.value
+    if (hasFlashlight) {
+      try {
+        await turnOnFlashlight(trackFlashlightChange)
+      } catch (error) {
+        console.warn('Ошибка включения фонарика:', error)
+      }
+    }
   }
 
   // Снимаем флаг инициализации после установки начального состояния
   isInitializing.value = false
 
-  // Логируем информацию о камерах
-  logCameraInfo(devices.value, cameraMethod.value)
+  // Логируем информацию о камерах (если еще не залогирована)
+  // Обновляем список устройств перед логированием
+  await refreshDevices()
+  // Проверяем, есть ли уже логи camera_info
+  const hasCameraInfo = logs.value.some(log => log.type === 'camera_info')
+  if (!hasCameraInfo) {
+    logCameraInfo(devices.value, cameraMethod.value)
+  }
 
   // Создаем объект с функциями логирования для передачи в useAudio
   const loggingCallbacks = {
@@ -319,9 +346,28 @@ const handleStart = async () => {
   }, 3000)
 }
 
-onMounted(() => {
+onMounted(async () => {
+  // Включаем логирование ПЕРВЫМ делом
   enableLogging()
-  logDeviceInfo()
+
+  // Логируем информацию об устройстве
+  await logDeviceInfo()
+
+  // Логируем информацию о камерах сразу при монтировании
+  // Обновляем список устройств перед логированием
+  await refreshDevices()
+  logCameraInfo(devices.value, cameraMethod.value)
+
+  // Проверяем поддержку фонарика сразу при монтировании
+  // ВАЖНО: передаем trackFlashlightChange для логирования всех попыток
+  try {
+    const hasFlashlight = await checkFlashlightSupport(trackFlashlightChange)
+    // Логируем финальный результат проверки поддержки
+    logFlashlightSupport(hasFlashlight, cameraMethod.value)
+  } catch (error) {
+    // Логируем ошибку проверки поддержки
+    logFlashlightSupport(false, null, error)
+  }
 })
 
 onUnmounted(async () => {
