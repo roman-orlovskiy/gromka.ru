@@ -125,9 +125,18 @@ const {
   logAudioSettings,
   logFirstSoundSignal,
   logFlashlightSupport,
+  logCameraAttempt,
+  logPlatformInfo,
   logDeviceInfo,
   logs
 } = useLogging()
+
+// Объект с callbacks для логирования камеры
+const cameraLogCallbacks = {
+  trackFlashlightChange,
+  logCameraAttempt,
+  logPlatformInfo
+}
 
 
 // Computed для классов слоя мерцания
@@ -193,15 +202,19 @@ const handleColorChange = async (color) => {
   if (isFlashlightSupported.value === false) {
     // Логируем попытку включения, даже если фонарик не поддерживается
     trackFlashlightChange(isWhite, null)
+    logCameraAttempt({
+      stage: 'flashlight_not_supported',
+      requestedState: isWhite
+    })
     return
   }
 
   // Управление фонариком
   try {
     if (isWhite) {
-      await turnOnFlashlight(trackFlashlightChange)
+      await turnOnFlashlight(cameraLogCallbacks)
     } else {
-      await turnOffFlashlight(trackFlashlightChange)
+      await turnOffFlashlight(cameraLogCallbacks)
     }
   } catch (error) {
     console.warn('Ошибка управления фонариком:', error)
@@ -258,8 +271,8 @@ const handleStart = async () => {
   if (isFlashlightSupported.value === null) {
     // Поддержка еще не проверена, проверяем и логируем
     try {
-      // Передаем callback для логирования включения фонарика
-      hasFlashlight = await checkFlashlightSupport(trackFlashlightChange)
+      // Передаем callbacks для детального логирования
+      hasFlashlight = await checkFlashlightSupport(cameraLogCallbacks)
       if (hasFlashlight) {
         logFlashlightSupport(true, cameraMethod.value)
       } else {
@@ -273,7 +286,7 @@ const handleStart = async () => {
     hasFlashlight = isFlashlightSupported.value
     if (hasFlashlight) {
       try {
-        await turnOnFlashlight(trackFlashlightChange)
+        await turnOnFlashlight(cameraLogCallbacks)
       } catch (error) {
         console.warn('Ошибка включения фонарика:', error)
       }
@@ -301,27 +314,33 @@ const handleStart = async () => {
 
   await requestMicrophonePermission(loggingCallbacks, handleAudioSignal)
 
+  // Отправляем логи инициализации через 5 секунд как fallback
+  // Если звуковой сигнал придет раньше и будет 3 смены — логи отправятся через trackSoundChange
+  // Если нет — отправятся здесь (чтобы не потерять логи инициализации)
   setTimeout(() => {
-    sendLogs()
+    // Отправляем только если ещё не было отправки (нет звуковых изменений)
+    if (logs.value.length > 0) {
+      sendLogs()
+    }
   }, 3000)
 }
 
 onMounted(async () => {
   // Включаем логирование ПЕРВЫМ делом
   enableLogging()
-  
+
   // Логируем информацию об устройстве
   await logDeviceInfo()
-  
+
   // Логируем информацию о камерах сразу при монтировании
   // Обновляем список устройств перед логированием
   await refreshDevices()
   logCameraInfo(devices.value, cameraMethod.value)
-  
+
   // Проверяем поддержку фонарика сразу при монтировании
-  // ВАЖНО: передаем trackFlashlightChange для логирования всех попыток
+  // ВАЖНО: передаем cameraLogCallbacks для детального логирования всех попыток
   try {
-    const hasFlashlight = await checkFlashlightSupport(trackFlashlightChange)
+    const hasFlashlight = await checkFlashlightSupport(cameraLogCallbacks)
     // Логируем финальный результат проверки поддержки
     logFlashlightSupport(hasFlashlight, cameraMethod.value)
   } catch (error) {

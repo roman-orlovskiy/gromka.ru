@@ -156,6 +156,26 @@ export function useLogging() {
     })
   }
 
+  // Логирование попыток инициализации камеры (детальное)
+  const logCameraAttempt = (data) => {
+    if (!isLoggingEnabled.value) return
+
+    addLog('camera_attempt', {
+      ...data,
+      timestamp: Date.now()
+    })
+  }
+
+  // Логирование информации о платформе
+  const logPlatformInfo = (platformData) => {
+    if (!isLoggingEnabled.value) return
+
+    addLog('platform_info', {
+      ...platformData,
+      timestamp: Date.now()
+    })
+  }
+
   const getUserAgentHints = async () => {
     const uaData = navigator.userAgentData
     if (!uaData?.getHighEntropyValues) {
@@ -369,6 +389,8 @@ export function useLogging() {
     logAudioSettings,
     logFirstSoundSignal,
     logFlashlightSupport,
+    logCameraAttempt,
+    logPlatformInfo,
     logDeviceInfo,
     sendLogs,
     clearLogs
