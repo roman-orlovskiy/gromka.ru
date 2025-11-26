@@ -66,6 +66,7 @@ const errorMessage = ref('')
 const isPlayingMusic = ref(false)
 const currentRhythm = ref(null)
 const musicInterval = ref(null)
+const isPermissionRequested = ref(false)
 // Кэш быстрых ограничений для мгновенного переключения фонарика
 const cachedConstraints = ref({ on: null, off: null })
 // Кэш capabilities трека, чтобы не дергать их на каждом переключении
@@ -583,8 +584,43 @@ const getFlashlightConstraints = (turnOn) => {
   return constraints
 }
 
+const requestCameraPermission = async () => {
+  try {
+    console.log('🔐 Запрос разрешений на камеру...')
+    errorMessage.value = ''
+
+    // Делаем минимальный запрос разрешений на камеру
+    const permissionStream = await navigator.mediaDevices.getUserMedia({ video: true })
+
+    // Сразу останавливаем стрим - нам нужны только разрешения
+    permissionStream.getTracks().forEach(track => track.stop())
+
+    console.log('✅ Разрешения на камеру получены')
+    return true
+  } catch (error) {
+    console.error('❌ Ошибка запроса разрешений на камеру:', error)
+    errorMessage.value = `Ошибка доступа к камере: ${error.message}`
+    alert(`Ошибка запроса разрешений на камеру: ${error.message}\n\nПроверьте:\n- Разрешения на доступ к камере\n- Используется ли HTTPS\n- Поддерживает ли устройство камеру`)
+    return false
+  }
+}
+
 const toggleFlashlight = async () => {
   if (!isStreamActive.value) {
+    // Запрашиваем разрешения только один раз при первом запуске
+    if (!isPermissionRequested.value) {
+      const permissionGranted = await requestCameraPermission()
+      if (!permissionGranted) {
+        return
+      }
+      isPermissionRequested.value = true
+
+      // Ждем 600мс после выданных разрешений перед запуском камеры
+      console.log('⏳ Ожидание прогрева камеры (600мс)...')
+      await new Promise(resolve => setTimeout(resolve, 600))
+    }
+
+    // Теперь запускаем камеру
     await startCamera()
     if (!isStreamActive.value) return
   }
