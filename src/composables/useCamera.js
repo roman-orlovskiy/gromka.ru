@@ -8,6 +8,11 @@ export const useCamera = () => {
   const isFlashlightSupported = ref(null)
   const cachedStream = ref(null)
   const cachedAudioStream = ref(null) // Кэш audio стрима для передачи в useAudio
+  const cachedImageCapture = ref(null)
+  const cachedTorchConstraints = ref({
+    on: null,
+    off: null
+  })
   const lastUsedMethod = ref(null) // Сохраняем метод, который использовался для включения
   const preferredRearLabels = /(main|primary|rear|back|environment|wide|tele|задн|основн)/i
   const labelPriority = ['main', 'primary', 'rear', 'back', 'environment', 'wide', 'tele', 'camera 0', '0']
@@ -157,6 +162,211 @@ export const useCamera = () => {
     return null
   }
 
+  // Скрытое видео для «прогрева» трека
+  let hiddenVideoEl = null
+  const getHiddenVideoEl = () => {
+    if (typeof document === 'undefined') {
+      return null
+    }
+    if (!hiddenVideoEl) {
+      hiddenVideoEl = document.createElement('video')
+      hiddenVideoEl.playsInline = true
+      hiddenVideoEl.muted = true
+      hiddenVideoEl.autoplay = true
+      hiddenVideoEl.setAttribute('aria-hidden', 'true')
+      hiddenVideoEl.style.position = 'absolute'
+      hiddenVideoEl.style.top = '0'
+      hiddenVideoEl.style.left = '0'
+      hiddenVideoEl.style.width = '1px'
+      hiddenVideoEl.style.height = '1px'
+      hiddenVideoEl.style.opacity = '0'
+      hiddenVideoEl.style.pointerEvents = 'none'
+      document.body.appendChild(hiddenVideoEl)
+    }
+    return hiddenVideoEl
+  }
+
+  const primeStream = async (stream) => {
+    if (!stream) return
+    const videoEl = getHiddenVideoEl()
+    if (!videoEl) return
+    try {
+      if (videoEl.srcObject !== stream) {
+        videoEl.srcObject = stream
+      }
+      const playPromise = videoEl.play()
+      if (playPromise && typeof playPromise.then === 'function') {
+        await playPromise.catch(() => {})
+      }
+    } catch {
+      // Игнорируем ошибки автоплея
+    }
+    await delay(150)
+  }
+
+  const waitForTorchSupport = async (track, attempts = 8, delayMs = 120) => {
+    if (!track?.getCapabilities) {
+      return null
+    }
+    let capabilities = null
+    for (let attempt = 0; attempt < attempts; attempt++) {
+      try {
+        capabilities = track.getCapabilities()
+      } catch {
+        capabilities = null
+      }
+      if (
+        capabilities &&
+        (
+          capabilities.torch === true ||
+          (Array.isArray(capabilities.fillLightMode) &&
+            (capabilities.fillLightMode.includes('flash') || capabilities.fillLightMode.includes('torch')))
+        )
+      ) {
+        return capabilities
+      }
+      await delay(delayMs)
+    }
+    return capabilities
+  }
+
+  const createImageCapture = (videoTrack) => {
+    if (typeof window === 'undefined') return null
+    if (!videoTrack || typeof window.ImageCapture !== 'function') return null
+    try {
+      return new window.ImageCapture(videoTrack)
+    } catch {
+      return null
+    }
+  }
+
+  const getTorchConstraintVariants = (turnOn, isLegacyIOS = false) => {
+    const variants = []
+    const targetMode = turnOn ? 'torch' : 'off'
+    const flashMode = turnOn ? 'flash' : 'off'
+
+    variants.push(
+      { advanced: [{ torch: turnOn }] },
+      { torch: turnOn }
+    )
+
+    variants.push(
+      { advanced: [{ fillLightMode: targetMode }] },
+      { fillLightMode: targetMode }
+    )
+
+    variants.push(
+      { advanced: [{ fillLightMode: flashMode }] },
+      { fillLightMode: flashMode }
+    )
+
+    if (turnOn) {
+      variants.push(
+        { advanced: [{ flash: true }] },
+        { flash: true }
+      )
+    } else {
+      variants.push(
+        { advanced: [{ flash: false }] },
+        { flash: false }
+      )
+    }
+
+    if (isLegacyIOS) {
+      variants.push(
+        { advanced: [{ fillLightMode: 'on' }] },
+        { fillLightMode: 'on' }
+      )
+    }
+
+    return variants
+  }
+
+  const setTorchState = async (track, turnOn, imageCapture = null, options = {}) => {
+    if (!track) return false
+    const { cacheResult = true, useCache = true } = options
+    const cacheKey = turnOn ? 'on' : 'off'
+
+    if (useCache) {
+      const cachedEntry = cachedTorchConstraints.value[cacheKey]
+      if (cachedEntry) {
+        if (cachedEntry.type === 'constraint') {
+          try {
+            await track.applyConstraints(cachedEntry.value)
+            return true
+          } catch {
+            cachedTorchConstraints.value[cacheKey] = null
+          }
+        } else if (cachedEntry.type === 'imageCapture' && imageCapture) {
+          try {
+            if (cachedEntry.value.mode === 'torch') {
+              await imageCapture.setOptions({ torch: turnOn })
+            } else if (cachedEntry.value.mode === 'fillLightMode') {
+              await imageCapture.setOptions({ fillLightMode: turnOn ? 'torch' : 'off' })
+            }
+            return true
+          } catch {
+            cachedTorchConstraints.value[cacheKey] = null
+          }
+        }
+      }
+    }
+
+    const variants = getTorchConstraintVariants(turnOn, isOldIOS)
+    for (const constraint of variants) {
+      for (let attempt = 0; attempt < 3; attempt++) {
+        try {
+          await track.applyConstraints(constraint)
+          if (cacheResult) {
+            cachedTorchConstraints.value[cacheKey] = {
+              type: 'constraint',
+              value: constraint
+            }
+          }
+          return true
+        } catch {
+          if (attempt < 2) {
+            await delay(80 * (attempt + 1))
+          }
+        }
+      }
+    }
+
+    if (imageCapture) {
+      try {
+        await imageCapture.setOptions({ torch: turnOn })
+        if (cacheResult) {
+          cachedTorchConstraints.value[cacheKey] = {
+            type: 'imageCapture',
+            value: { mode: 'torch' }
+          }
+        }
+        return true
+      } catch { /* noop */ }
+
+      try {
+        await imageCapture.setOptions({ fillLightMode: turnOn ? 'torch' : 'off' })
+        if (cacheResult) {
+          cachedTorchConstraints.value[cacheKey] = {
+            type: 'imageCapture',
+            value: { mode: 'fillLightMode' }
+          }
+        }
+        return true
+      } catch { /* noop */ }
+    }
+
+    return false
+  }
+
+  const tryForceTorchToggle = async (track, turnOn, imageCapture = null) => {
+    const success = await setTorchState(track, turnOn, imageCapture, { cacheResult: false, useCache: false })
+    if (success && turnOn) {
+      await setTorchState(track, false, imageCapture, { cacheResult: false, useCache: false })
+    }
+    return success
+  }
+
   const refreshDevices = async () => {
     const availableDevices = await navigator.mediaDevices.enumerateDevices()
     devices.value = availableDevices
@@ -240,67 +450,57 @@ export const useCamera = () => {
     return rearCameras
   }
 
-  const tryForceTorchToggle = async (track) => {
-    try {
-      await track.applyConstraints({ advanced: [{ torch: true }] })
-      // Небольшая задержка, чтобы драйвер успел включить torch
-      await delay(50)
-      await track.applyConstraints({ advanced: [{ torch: false }] })
-      return true
-    } catch {
-      return false
-    }
-  }
-
-  // Проверка наличия torch в стриме с задержкой для iOS
+  // Проверка наличия torch в стриме
   // На старых iOS (< 15.4) torch API не поддерживается
   const checkTorchSupport = async (stream, tryForce = false) => {
     const track = stream.getVideoTracks()[0]
     if (!track) return false
 
-    // На старых iOS torch API не поддерживается вообще
     if (isOldIOS) {
       return false
     }
 
-    // На iOS нужна задержка перед проверкой capabilities
-    // На новых iOS (15.4+) достаточно 100ms, но для надёжности используем 200ms
-    if (isIOS) {
-      await delay(200)
+    await waitForTorchSupport(track)
+
+    let capabilities = null
+    try {
+      capabilities = track.getCapabilities?.()
+    } catch {
+      capabilities = null
     }
 
-    const capabilities = track.getCapabilities?.()
-
-    // Если capabilities показывает torch — отлично
-    if (capabilities?.torch === true) {
+    if (
+      capabilities &&
+      (
+        capabilities.torch === true ||
+        (Array.isArray(capabilities.fillLightMode) &&
+          (capabilities.fillLightMode.includes('flash') || capabilities.fillLightMode.includes('torch')))
+      )
+    ) {
       return true
     }
 
-    // На некоторых версиях Android/iOS getCapabilities() может не возвращать torch
-    // Пробуем принудительно включить torch, если tryForce = true
-    if (tryForce && !isOldIOS) {
-      const forced = await tryForceTorchToggle(track)
+    const imageCapture = createImageCapture(track)
+    if (imageCapture) {
+      try {
+        const photoCaps = await imageCapture.getPhotoCapabilities()
+        if (
+          photoCaps?.torch === true ||
+          (Array.isArray(photoCaps?.fillLightMode) &&
+            (photoCaps.fillLightMode.includes('flash') || photoCaps.fillLightMode.includes('torch')))
+        ) {
+          return true
+        }
+      } catch { /* ignore */ }
+    }
+
+    if (tryForce) {
+      const forced = await tryForceTorchToggle(track, true, imageCapture)
       if (forced) {
         return true
       }
     }
 
-    return false
-  }
-
-  // Попытка включить torch с retry для надежности
-  const tryEnableTorch = async (track, retries = 3) => {
-    for (let i = 0; i < retries; i++) {
-      try {
-        await track.applyConstraints({ advanced: [{ torch: true }] })
-        return true
-      } catch {
-        if (i < retries - 1) {
-          // Ждем перед повторной попыткой
-          await delay(100 * (i + 1))
-        }
-      }
-    }
     return false
   }
 
@@ -377,6 +577,7 @@ export const useCamera = () => {
         }
 
         const stream = await method.fn()
+        await primeStream(stream)
 
         // Логируем успешное получение стрима
         if (logCameraAttempt) {
@@ -394,6 +595,8 @@ export const useCamera = () => {
         }
 
         // Проверяем поддержку torch (с tryForce для iOS, где capabilities может врать)
+        const track = stream.getVideoTracks()[0]
+        await waitForTorchSupport(track)
         const hasTorch = await checkTorchSupport(stream, true)
 
         // Логируем результат проверки torch
@@ -482,6 +685,7 @@ export const useCamera = () => {
           }
 
           const stream = await requestStreamByDeviceId(camera.deviceId, includeAudio)
+          await primeStream(stream)
 
           // Логируем успешное получение стрима
           if (logCameraAttempt) {
@@ -497,6 +701,8 @@ export const useCamera = () => {
             trackFlashlightChange(false, `deviceId:${cameraLabel}`)
           }
 
+          const track = stream.getVideoTracks()[0]
+          await waitForTorchSupport(track)
           const hasTorch = await checkTorchSupport(stream, true)
 
           // Логируем результат проверки torch
@@ -663,14 +869,13 @@ export const useCamera = () => {
             action: 'creating_new'
           })
         }
-        // Передаем callbacks для логирования попыток получения стрима разными методами
         const result = await ensureRearCameraStream(callbacks, { includeAudio })
         stream = result.stream
         usedMethod = result.method
-        // Сохраняем audioStream из результата (уже закэширован в ensureRearCameraStream)
-        // НЕ кэшируем video стрим здесь - кэшируем только после успешного включения torch
+        if (includeAudio && result.audioStream) {
+          cachedAudioStream.value = result.audioStream
+        }
       } else {
-        // Используем кэшированный стрим - быстрый путь
         usedMethod = lastUsedMethod.value || 'cached'
         if (logCameraAttempt) {
           logCameraAttempt({
@@ -681,9 +886,13 @@ export const useCamera = () => {
       }
 
       const videoTrack = stream.getVideoTracks()[0]
+      const imageCapture = cachedImageCapture.value || createImageCapture(videoTrack)
+      if (!isCached) {
+        cachedImageCapture.value = imageCapture
+        cachedTorchConstraints.value.on = null
+        cachedTorchConstraints.value.off = null
+      }
 
-      // Для кэшированного стрима пропускаем проверку torch (уже знаем, что работает)
-      // Для нового стрима проверяем поддержку torch
       let hasTorch = isCached
       if (!isCached) {
         hasTorch = await checkTorchSupport(stream, true)
@@ -697,87 +906,56 @@ export const useCamera = () => {
         }
       }
 
-      if (hasTorch) {
-        // Для кэшированного стрима — быстрое включение без retry
-        // Для нового стрима — с retry для надежности
+      if (!hasTorch) {
         if (logCameraAttempt) {
           logCameraAttempt({
-            stage: 'enabling_torch',
+            stage: 'torch_enable_failed',
             method: usedMethod,
-            fastPath: isCached
+            reason: 'torch_not_supported'
           })
         }
+        throw new Error('Torch не поддерживается на этом устройстве')
+      }
 
-        let success
-        if (isCached) {
-          // Быстрый путь для кэшированного стрима
-          try {
-        await videoTrack.applyConstraints({ advanced: [{ torch: true }] })
-            success = true
-          } catch {
-            // Если не удалось — пробуем с retry
-            success = await tryEnableTorch(videoTrack)
-          }
-        } else {
-          // Новый стрим — с retry для надежности
-          success = await tryEnableTorch(videoTrack)
+      if (logCameraAttempt) {
+        logCameraAttempt({
+          stage: 'enabling_torch',
+          method: usedMethod,
+          fastPath: isCached
+        })
+      }
+
+      const success = await setTorchState(videoTrack, true, imageCapture)
+      if (!success) {
+        if (logCameraAttempt) {
+          logCameraAttempt({
+            stage: 'torch_enable_failed',
+            method: usedMethod,
+            reason: 'apply_constraints_failed'
+          })
         }
+        throw new Error('Torch не поддерживается на этом устройстве')
+      }
 
-        if (success) {
-          // Кэшируем стрим ТОЛЬКО после успешного включения torch
-          cachedStream.value = stream
+      cachedStream.value = stream
         camera.value = stream
         isFlashlightOn.value = true
         lastUsedMethod.value = usedMethod
 
-        // Логируем успешное включение
-          if (trackFlashlightChange) {
-            trackFlashlightChange(true, usedMethod)
-          }
-          if (logCameraAttempt) {
-            logCameraAttempt({
-              stage: 'torch_enabled',
-              success: true,
-              method: usedMethod,
-              cached: true,
-              hasAudio: !!cachedAudioStream.value
-            })
-        }
-
-        return { success: true, method: usedMethod, audioStream: cachedAudioStream.value }
-      } else {
-          if (logCameraAttempt) {
-            logCameraAttempt({
-              stage: 'torch_enable_failed',
-              method: usedMethod,
-              reason: 'tryEnableTorch returned false'
-            })
-          }
-        }
-      }
-
-      // Torch не поддерживается или не удалось включить
-      // Останавливаем только video стрим, сохраняем audio (если был запрошен)
-      if (stream && !cachedStream.value) {
-        stopStream(stream, includeAudio) // keepAudio = true если был запрошен audio
-      }
-
-      const error = new Error('Torch не поддерживается на этом устройстве')
-
-      // Логируем неудачное включение
       if (trackFlashlightChange) {
-        trackFlashlightChange(false, usedMethod)
+        trackFlashlightChange(true, usedMethod)
       }
       if (logCameraAttempt) {
         logCameraAttempt({
-          stage: 'torch_not_supported',
+          stage: 'torch_enabled',
+          success: true,
           method: usedMethod,
-          hasTorch: false,
-          streamStopped: true
+          cached: isCached,
+          hasAudio: !!cachedAudioStream.value
         })
       }
 
-      throw error
+      return { success: true, method: usedMethod, audioStream: cachedAudioStream.value }
     } catch (error) {
       // Останавливаем только video стрим при ошибке, сохраняем audio
       if (stream && !cachedStream.value) {
@@ -825,27 +1003,15 @@ export const useCamera = () => {
 
     if (cachedStream.value) {
       const videoTrack = cachedStream.value.getVideoTracks()[0]
-      if (videoTrack?.getCapabilities?.()?.torch) {
-        // Пробуем выключить с retry
-        let success = false
-        for (let i = 0; i < 3; i++) {
-          try {
-        await videoTrack.applyConstraints({ advanced: [{ torch: false }] })
-            success = true
-            break
-          } catch {
-            if (i < 2) await delay(50)
-          }
-        }
+      const imageCapture = cachedImageCapture.value || createImageCapture(videoTrack)
+      const success = await setTorchState(videoTrack, false, imageCapture)
 
-        if (logCameraAttempt) {
-          logCameraAttempt({
-            stage: 'torch_disabled',
-            success,
-            method,
-            retries: success ? 1 : 3
-          })
-        }
+      if (logCameraAttempt) {
+        logCameraAttempt({
+          stage: 'torch_disabled',
+          success,
+          method
+        })
       }
     }
     isFlashlightOn.value = false
@@ -939,6 +1105,10 @@ export const useCamera = () => {
     }
     isFlashlightSupported.value = null
     lastUsedMethod.value = null
+    cachedImageCapture.value = null
+    cachedTorchConstraints.value.on = null
+    cachedTorchConstraints.value.off = null
+    isFlashlightOn.value = false
   }
 
   return {
