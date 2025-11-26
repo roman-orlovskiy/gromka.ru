@@ -24,6 +24,11 @@ const router = createRouter({
       component: () => import('../views/DemoView.vue'),
     },
     {
+      path: '/flashlight',
+      name: 'flashlight-old',
+      component: () => import('../views/FlashlightView_old.vue'),
+    },
+    {
       path: '/parinn',
       name: 'parinn',
       component: () => import('../views/PariView.vue'),
