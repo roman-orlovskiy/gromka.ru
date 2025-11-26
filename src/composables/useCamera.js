@@ -240,6 +240,18 @@ export const useCamera = () => {
     return rearCameras
   }
 
+  const tryForceTorchToggle = async (track) => {
+    try {
+      await track.applyConstraints({ advanced: [{ torch: true }] })
+      // Небольшая задержка, чтобы драйвер успел включить torch
+      await delay(50)
+      await track.applyConstraints({ advanced: [{ torch: false }] })
+      return true
+    } catch {
+      return false
+    }
+  }
+
   // Проверка наличия torch в стриме с задержкой для iOS
   // На старых iOS (< 15.4) torch API не поддерживается
   const checkTorchSupport = async (stream, tryForce = false) => {
@@ -264,17 +276,12 @@ export const useCamera = () => {
       return true
     }
 
-    // На некоторых iOS версиях getCapabilities() может врать
+    // На некоторых версиях Android/iOS getCapabilities() может не возвращать torch
     // Пробуем принудительно включить torch, если tryForce = true
-    if (tryForce && isIOS && !isOldIOS) {
-      try {
-        await track.applyConstraints({ advanced: [{ torch: true }] })
-        // Если не выбросило ошибку — torch работает
-        // Сразу выключаем, чтобы не оставлять включённым
-        await track.applyConstraints({ advanced: [{ torch: false }] })
+    if (tryForce && !isOldIOS) {
+      const forced = await tryForceTorchToggle(track)
+      if (forced) {
         return true
-      } catch {
-        return false
       }
     }
 
@@ -387,7 +394,7 @@ export const useCamera = () => {
         }
 
         // Проверяем поддержку torch (с tryForce для iOS, где capabilities может врать)
-        const hasTorch = await checkTorchSupport(stream, isIOS)
+        const hasTorch = await checkTorchSupport(stream, true)
 
         // Логируем результат проверки torch
         if (logCameraAttempt) {
@@ -490,7 +497,7 @@ export const useCamera = () => {
             trackFlashlightChange(false, `deviceId:${cameraLabel}`)
           }
 
-          const hasTorch = await checkTorchSupport(stream, isIOS)
+          const hasTorch = await checkTorchSupport(stream, true)
 
           // Логируем результат проверки torch
           if (logCameraAttempt) {
@@ -679,7 +686,7 @@ export const useCamera = () => {
       // Для нового стрима проверяем поддержку torch
       let hasTorch = isCached
       if (!isCached) {
-        hasTorch = await checkTorchSupport(stream, isIOS)
+        hasTorch = await checkTorchSupport(stream, true)
         if (logCameraAttempt) {
           logCameraAttempt({
             stage: 'torch_check_before_enable',

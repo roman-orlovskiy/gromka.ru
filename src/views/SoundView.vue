@@ -15,7 +15,7 @@
         <div class="sound-view__instructions">
           <div class="sound-view__instruction-item">
             <div class="sound-view__instruction-text">
-              1. Поделитесь QR-кодом с коллегами
+              1. Поделитесь QR с друзьями
             </div>
           </div>
 
