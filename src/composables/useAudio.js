@@ -10,6 +10,8 @@ export function useAudio() {
   const currentFrequency = ref(0)
   const lastSignal = ref(null)
   const isFirstSignal = ref(true)
+  const frequencyData = ref(null) // Данные для визуализации спектра
+  const frequencyRange = ref({ min: 17500, max: 19500 }) // Диапазон частот для визуализации
 
   let audioContext = null
   let analyser = null
@@ -17,6 +19,9 @@ export function useAudio() {
   let dataArray = null
   let animationId = null
   let signalHistory = [] // История последних сигналов для проверки кода
+  let minIndex = null
+  let maxIndex = null
+  let frequencyResolution = null
 
   const SIGNAL_CONSTANTS = {
     PREAMBLE_FREQ: 19500,
@@ -219,30 +224,40 @@ export function useAudio() {
     // Предвычисляем константы для ультразвукового диапазона
     const MIN_FREQ = 17500
     const MAX_FREQ = 19500
-    const minIndex = Math.floor((MIN_FREQ * analyser.fftSize) / audioContext.sampleRate)
-    const maxIndex = Math.min(
+    minIndex = Math.floor((MIN_FREQ * analyser.fftSize) / audioContext.sampleRate)
+    maxIndex = Math.min(
       Math.ceil((MAX_FREQ * analyser.fftSize) / audioContext.sampleRate),
       bufferLength
     )
-    const frequencyResolution = audioContext.sampleRate / analyser.fftSize
+    frequencyResolution = audioContext.sampleRate / analyser.fftSize
+
+    // Устанавливаем диапазон для визуализации
+    frequencyRange.value = { min: MIN_FREQ, max: MAX_FREQ }
 
     isListening.value = true
     startListening(minIndex, maxIndex, frequencyResolution, loggingCallback, signalCallback)
   }
 
   // Начало прослушивания с предвычисленными константами
-  const startListening = (minIndex, maxIndex, frequencyResolution, loggingCallback = null, signalCallback = null) => {
+  const startListening = (minIdx, maxIdx, freqResolution, loggingCallback = null, signalCallback = null) => {
     const detectFrequency = () => {
       if (!analyser) return
 
       analyser.getByteFrequencyData(dataArray)
+
+      // Обновляем данные для визуализации - извлекаем данные из нужного диапазона
+      const spectrumData = new Uint8Array(maxIdx - minIdx)
+      for (let i = 0; i < spectrumData.length; i++) {
+        spectrumData[i] = dataArray[minIdx + i]
+      }
+      frequencyData.value = spectrumData
 
       // Находим доминирующую частоту ТОЛЬКО в ультразвуковом диапазоне
       let maxValue = 0
       let maxValueIndex = 0
 
       // Оптимизированный цикл без Math.min
-      for (let i = minIndex; i < maxIndex; i++) {
+      for (let i = minIdx; i < maxIdx; i++) {
         if (dataArray[i] > maxValue) {
           maxValue = dataArray[i]
           maxValueIndex = i
@@ -262,7 +277,7 @@ export function useAudio() {
       }
 
       // Быстрое вычисление частоты с предвычисленным разрешением
-      const frequency = maxValueIndex * frequencyResolution
+      const frequency = maxValueIndex * freqResolution
 
       currentFrequency.value = frequency | 0 // быстрое целочисленное округление
 
@@ -368,6 +383,8 @@ export function useAudio() {
     hasPermission,
     currentFrequency,
     lastSignal,
+    frequencyData, // Данные для визуализации спектра
+    frequencyRange, // Диапазон частот
 
     // Методы
     requestMicrophonePermission,

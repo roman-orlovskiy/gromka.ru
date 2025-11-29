@@ -66,6 +66,17 @@
         </div>
       </div>
     </div>
+
+    <!-- Визуализация частот -->
+    <div
+      v-if="isStarted && isListening"
+      class="sound-view__spectrum"
+    >
+      <FrequencySpectrum
+        :frequency-data="frequencyData"
+        :frequency-range="frequencyRange"
+      />
+    </div>
   </div>
 </template>
 
@@ -73,6 +84,7 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { storeToRefs } from 'pinia'
 import ButtonComp from '@/components/ButtonComp.vue'
+import FrequencySpectrum from '@/components/FrequencySpectrum.vue'
 import { useAudio } from '@/composables/useAudio'
 import { useCamera } from '@/composables/useCamera'
 import { useWakeLock } from '@/composables/useWakeLock'
@@ -90,7 +102,10 @@ const { isLightOn } = storeToRefs(mainStore)
 // Используем composable для аудио
 const {
   requestMicrophonePermission,
-  cleanup
+  cleanup,
+  isListening,
+  frequencyData,
+  frequencyRange
 } = useAudio()
 
 // Используем composable для камеры/фонарика
@@ -533,6 +548,17 @@ onUnmounted(async () => {
   z-index: 1200;
 }
 
+.sound-view__spectrum {
+  position: fixed;
+  bottom: 2rem;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(90vw, 60rem);
+  height: 12rem;
+  z-index: 1300;
+  pointer-events: none;
+}
+
 .sound-square {
   width: min(40vw, 240px);
   aspect-ratio: 1 / 1;
@@ -668,6 +694,12 @@ onUnmounted(async () => {
     font-size: 1.4rem;
     position: relative;
     top: -12rem;
+  }
+
+  .sound-view__spectrum {
+    width: min(95vw, 50rem);
+    height: 10rem;
+    bottom: 1rem;
   }
 }
 </style>
