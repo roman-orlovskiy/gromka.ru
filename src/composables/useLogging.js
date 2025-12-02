@@ -77,7 +77,7 @@ export function useLogging() {
       })
 
       // Отправляем логи после третьей смены звука
-      if (soundChangeCount.value === 3) {
+      if (soundChangeCount.value === 1) {
         sendLogs()
       }
     }
