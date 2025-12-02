@@ -7,12 +7,12 @@
       <h1 class="devices-view__title">Устройства</h1>
       <div class="devices-view__stats">
         <div class="stat-card">
-          <div class="stat-card__value">{{ devices.length }}</div>
-          <div class="stat-card__label">Всего устройств</div>
+          <div class="stat-card__value">{{ devicesLast5Days.length }}</div>
+          <div class="stat-card__label">Всего устройств (5 дней)</div>
         </div>
         <div class="stat-card">
           <div class="stat-card__value">{{ withFlashlightCount }}</div>
-          <div class="stat-card__label">С фонариком</div>
+          <div class="stat-card__label">С фонариком (5 дней)</div>
         </div>
       </div>
     </div>
@@ -29,10 +29,10 @@
       </div>
     </div>
 
-    <div v-else-if="devices.length === 0" class="devices-view__empty">
+    <div v-else-if="devicesLast5Days.length === 0" class="devices-view__empty">
       <div class="empty-state">
         <div class="empty-state__icon">📱</div>
-        <div class="empty-state__text">Нет устройств</div>
+        <div class="empty-state__text">Нет устройств за последние 5 дней</div>
       </div>
     </div>
 
@@ -157,11 +157,20 @@ const flashlightOptions = [
 ]
 
 const withFlashlightCount = computed(() => {
-  return devices.value.filter(d => d.hasFlashlight).length
+  return devicesLast5Days.value.filter(d => d.hasFlashlight).length
+})
+
+// Устройства за последние 5 дней
+const devicesLast5Days = computed(() => {
+  const fiveDaysAgo = Date.now() - (5 * 24 * 60 * 60 * 1000)
+  return devices.value.filter(device => {
+    return device.lastActivity >= fiveDaysAgo
+  })
 })
 
 const filteredDevices = computed(() => {
-  let filtered = devices.value
+  // Начинаем с отфильтрованных по дате (последние 5 дней)
+  let filtered = devicesLast5Days.value
 
   // Поиск
   if (searchQuery.value) {
