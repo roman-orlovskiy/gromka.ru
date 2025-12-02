@@ -82,6 +82,16 @@ export const getGromkaLogs = async () => {
   }
 }
 
+export const getDeviceLogs = async (deviceId) => {
+  try {
+    const response = await api.get(`/gromka-logs/${deviceId}`)
+    return response.data
+  } catch (error) {
+    console.error('Error fetching device logs:', error)
+    throw error
+  }
+}
+
 export const saveGromkaLogs = async (id, logs) => {
   try {
     const response = await api.post('/gromka-logs', { id, logs })
