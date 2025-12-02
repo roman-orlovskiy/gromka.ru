@@ -211,7 +211,17 @@ const parseDeviceData = (logEntry) => {
     const hasFlashlight = flashlightSupportLog?.data?.isSupported === true
 
     const microphoneLog = logData.logs?.find(log => log.type === 'microphone_permission')
-    const hasAudio = microphoneLog?.data?.success === true
+    const audioSettingsLog = logData.logs?.find(log => log.type === 'audio_settings')
+    const soundChangeCount = logData.soundChangeCount || 0
+
+    // Микрофон есть, если:
+    // 1. Есть успешный лог разрешения на микрофон ИЛИ
+    // 2. Есть настройки аудио (значит микрофон был настроен) ИЛИ
+    // 3. Были изменения звука (soundChangeCount > 0) - это значит микрофон точно работал
+    //    для обработки ультразвуковых сигналов и переключения фонарика
+    const hasAudio = microphoneLog?.data?.success === true ||
+      audioSettingsLog !== undefined ||
+      soundChangeCount > 0
 
     const platformInfoLog = logData.logs?.find(log => log.type === 'platform_info')
     const platformInfo = platformInfoLog?.data || {}
