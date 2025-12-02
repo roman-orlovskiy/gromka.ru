@@ -208,7 +208,20 @@ const parseDeviceData = (logEntry) => {
     const deviceInfo = deviceInfoLog?.data || {}
 
     const flashlightSupportLog = logData.logs?.find(log => log.type === 'flashlight_support')
-    const hasFlashlight = flashlightSupportLog?.data?.isSupported === true
+    const flashlightChangeLogs = logData.logs?.filter(log => log.type === 'flashlight_change') || []
+    const torchEnabledLogs = logData.logs?.filter(log =>
+      log.type === 'camera_attempt' &&
+      log.data?.stage === 'torch_enabled' &&
+      log.data?.success === true
+    ) || []
+
+    // Фонарик есть, если:
+    // 1. Есть лог поддержки фонарика с isSupported: true ИЛИ
+    // 2. Был хотя бы один успешный лог включения фонарика (torch_enabled с success: true) ИЛИ
+    // 3. Был хотя бы один лог включения фонарика (flashlight_change с isOn: true и method не null)
+    const hasFlashlight = flashlightSupportLog?.data?.isSupported === true ||
+      torchEnabledLogs.length > 0 ||
+      flashlightChangeLogs.some(log => log.data?.isOn === true && log.data?.method !== null)
 
     const microphoneLog = logData.logs?.find(log => log.type === 'microphone_permission')
     const audioSettingsLog = logData.logs?.find(log => log.type === 'audio_settings')
