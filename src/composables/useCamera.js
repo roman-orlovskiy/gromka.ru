@@ -665,6 +665,11 @@ export const useCamera = () => {
 
       return { success: true, method: usedMethod, audioStream: cachedAudioStream.value }
     } catch (error) {
+      // ВАЖНО: Сохраняем audio stream в кэш перед остановкой, если он был получен
+      if (includeAudio && stream && !cachedAudioStream.value) {
+        cacheAudioFromStream(stream)
+      }
+
       // Останавливаем только video стрим при ошибке, сохраняем audio
       if (stream && !cachedStream.value) {
         stopStream(stream, includeAudio) // keepAudio = true если был запрошен audio
