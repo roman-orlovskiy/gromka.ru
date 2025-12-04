@@ -91,6 +91,7 @@ import { useWakeLock } from '@/composables/useWakeLock'
 import { useLogging } from '@/composables/useLogging'
 import { usePerformanceSequence } from '@/composables/usePerformanceSequence'
 import { useMainStore } from '@/stores/main'
+import staticDemoData from '@/assets/data/static-demo.json'
 
 const isStarted = ref(false)
 const isSquareBursting = ref(false)
@@ -128,6 +129,13 @@ const {
 
 // Используем composable для последовательности перформанса
 const { startSequence, stopSequence, isActive } = usePerformanceSequence('sound-demo')
+
+// Логика для зацикленного проигрывания static-demo
+const staticDemoSequence = staticDemoData['static-demo'] || []
+let staticDemoIntervalId = null
+let staticDemoFlickerIntervalId = null
+let staticDemoCurrentIndex = 0
+const isStaticDemoActive = ref(false)
 
 // Используем composable для логирования
 const {
@@ -246,12 +254,80 @@ const handleSequenceComplete = () => {
   // Готовы ждать нового сигнала включения
 }
 
+// Остановка static-demo последовательности
+const stopStaticDemo = () => {
+  if (staticDemoIntervalId) {
+    clearInterval(staticDemoIntervalId)
+    staticDemoIntervalId = null
+  }
+  if (staticDemoFlickerIntervalId) {
+    clearInterval(staticDemoFlickerIntervalId)
+    staticDemoFlickerIntervalId = null
+  }
+  isStaticDemoActive.value = false
+  staticDemoCurrentIndex = 0
+}
+
+// Обработка значения шага static-demo
+const handleStaticDemoStepValue = (value) => {
+  if (value === -1) {
+    // Мерцание
+    if (staticDemoFlickerIntervalId) {
+      clearInterval(staticDemoFlickerIntervalId)
+    }
+    staticDemoFlickerIntervalId = setInterval(() => {
+      const currentIsWhite = mainStore.isLightOn
+      handleColorChange(currentIsWhite ? 0 : 1)
+    }, 150)
+    return
+  }
+
+  // Останавливаем мерцание если было
+  if (staticDemoFlickerIntervalId) {
+    clearInterval(staticDemoFlickerIntervalId)
+    staticDemoFlickerIntervalId = null
+  }
+
+  // Устанавливаем цвет
+  handleColorChange(value)
+}
+
+// Запуск зацикленного static-demo
+const startStaticDemo = () => {
+  if (isStaticDemoActive.value || !staticDemoSequence.length) {
+    return
+  }
+
+  isStaticDemoActive.value = true
+  staticDemoCurrentIndex = 0
+
+  // Обрабатываем первый шаг
+  handleStaticDemoStepValue(staticDemoSequence[0])
+
+  // Запускаем интервал для зацикленного проигрывания
+  staticDemoIntervalId = setInterval(() => {
+    staticDemoCurrentIndex++
+
+    // Если достигли конца последовательности, начинаем сначала
+    if (staticDemoCurrentIndex >= staticDemoSequence.length) {
+      staticDemoCurrentIndex = 0
+    }
+
+    handleStaticDemoStepValue(staticDemoSequence[staticDemoCurrentIndex])
+  }, 2000) // Тот же таймаут, что и в usePerformanceSequence
+}
+
 // Обработчик аудиосигнала - управление последовательностью
 const handleAudioSignal = (flag) => {
   // Игнорируем, если не начали или идет инициализация
   if (!isStarted.value || isInitializing.value) return
 
   if (flag === 1) {
+    // Останавливаем static-demo если он активен
+    if (isStaticDemoActive.value) {
+      stopStaticDemo()
+    }
+
     // Если последовательность уже запущена, повторный запуск не нужен
     if (isActive.value) return
     startSequence(handleColorChange, handleSequenceComplete)
@@ -321,6 +397,9 @@ const handleStart = async () => {
   // Снимаем флаг инициализации после установки начального состояния
   isInitializing.value = false
 
+  // Запускаем зацикленное проигрывание static-demo
+  startStaticDemo()
+
   // Логируем информацию о камерах (если еще не залогирована)
   // Обновляем список устройств перед логированием
   await refreshDevices()
@@ -370,6 +449,9 @@ onMounted(async () => {
 onUnmounted(async () => {
   // Останавливаем последовательность
   stopSequence()
+
+  // Останавливаем static-demo
+  stopStaticDemo()
 
   // Выключаем фонарик при размонтировании
   try {
