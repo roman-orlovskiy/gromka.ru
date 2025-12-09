@@ -8,14 +8,14 @@
     />
 
     <!-- Кнопка запуска -->
-    <div v-if="!isActive" class="show-view__start">
+    <div v-if="!isStarted" class="show-view__start">
       <div class="show-view__content">
-        <div class="show-view__title">ТЧК + GROMKA</div>
+        <div class="show-view__title">Зажигайте экраны и&nbsp;сердца</div>
 
         <div class="show-view__instructions">
           <div class="show-view__instruction-item">
             <div class="show-view__instruction-text">
-              1. Введите ряд и место
+              1. Включите &nbsp;<span class="show-view__instruction-highlight">✧ яркость экрана на максимум ✧</span>
             </div>
           </div>
 
@@ -26,51 +26,57 @@
           </div>
         </div>
 
-        <div class="show-view__inputs-row">
-        <InputComp
-          placeholder="Ряд"
-            :value="rowValue"
-            @handleInput="handleRowInput"
-          :error="errors.row"
-          :show-shake="shakeFields.row"
-          type="number"
-            mod="black"
-        />
-        <InputComp
-          placeholder="Место"
-            :value="seatValue"
-            @handleInput="handleSeatInput"
-          :error="errors.seat"
-          :show-shake="shakeFields.seat"
-          type="number"
-            mod="black"
-          />
+        <div class="show-view__qr">
+          <img
+            src="/images/show-qr.webp"
+            alt="QR-код для перформанса"
+            class="show-view__qr-image"
+          >
         </div>
 
         <div class="show-view__button">
           <ButtonComp mod="outline" @click="handleStart">Начать</ButtonComp>
         </div>
-
-        <div class="show-view__qr">
-            <img
-              src="/images/show-qr.webp"
-              alt="QR-код для перформанса"
-              class="show-view__qr-image"
-            >
-        </div>
-        </div>
       </div>
+    </div>
 
     <!-- Сообщение о неподдерживаемом фонарике -->
     <div v-if="isStarted && isFlashlightSupported === false" class="show-view__flashlight-message">
       <div class="flashlight-message">
-        <div class="flashlight-message__subtitle">
-          Фонарик не поддерживается<br>
-          <span class="flashlight-message__action">Поверните экран к сцене</span>
+        <div class="flashlight-message__subtitle">Фонарик не поддерживается<br>Поверните экран к сцене</div>
+      </div>
+    </div>
+
+    <!-- Анимация перформанса -->
+    <div
+      v-if="isStarted"
+      class="show-view__performance"
+    >
+      <div
+        class="show-square"
+        :class="showSquareClass"
+        @click="copyDeviceId"
+      >
+        <div class="show-square__label">Gromka</div>
+        <div
+          v-if="displayDeviceId"
+          class="show-square__device-id"
+        >
+          {{ displayDeviceId }}
         </div>
       </div>
     </div>
 
+    <!-- Визуализация частот -->
+    <div
+      v-if="isStarted && isListening"
+      class="show-view__spectrum"
+    >
+      <FrequencySpectrum
+        :frequency-data="frequencyData"
+        :frequency-range="frequencyRange"
+      />
+    </div>
   </div>
 </template>
 
@@ -78,13 +84,14 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { storeToRefs } from 'pinia'
 import ButtonComp from '@/components/ButtonComp.vue'
-import InputComp from '@/components/InputComp.vue'
+import FrequencySpectrum from '@/components/FrequencySpectrum.vue'
 import { useAudio } from '@/composables/useAudio'
 import { useCamera } from '@/composables/useCamera'
 import { useWakeLock } from '@/composables/useWakeLock'
 import { useLogging } from '@/composables/useLogging'
 import { usePerformanceSequence } from '@/composables/usePerformanceSequence'
 import { useMainStore } from '@/stores/main'
+import staticDemoData from '@/assets/data/static-demo.json'
 
 const isStarted = ref(false)
 const isSquareBursting = ref(false)
@@ -93,21 +100,13 @@ let squareBurstTimeout = null
 const mainStore = useMainStore()
 const { isLightOn } = storeToRefs(mainStore)
 
-const rowValue = ref('')
-const seatValue = ref('')
-const shakeFields = ref({
-  row: false,
-  seat: false,
-})
-const errors = ref({
-  row: '',
-  seat: '',
-})
-
 // Используем composable для аудио
 const {
   requestMicrophonePermission,
-  cleanup
+  cleanup,
+  isListening,
+  frequencyData,
+  frequencyRange
 } = useAudio()
 
 // Используем composable для камеры/фонарика
@@ -129,10 +128,19 @@ const {
 } = useWakeLock()
 
 // Используем composable для последовательности перформанса
-const { startSequence, stopSequence, isActive, setSequenceBySeat } = usePerformanceSequence('tchk-show')
+const { startSequence, stopSequence, isActive } = usePerformanceSequence('sound-demo')
+
+// Логика для зацикленного проигрывания static-demo
+const staticDemoSequence = staticDemoData['static-demo'] || []
+let staticDemoIntervalId = null
+let staticDemoFlickerIntervalId = null
+let staticDemoCurrentIndex = 0
+const isStaticDemoActive = ref(false)
 
 // Используем composable для логирования
 const {
+  deviceId,
+  sendLogs,
   enableLogging,
   trackSoundChange,
   trackFlashlightChange,
@@ -144,7 +152,6 @@ const {
   logCameraAttempt,
   logPlatformInfo,
   logDeviceInfo,
-  sendLogs,
   logs
 } = useLogging()
 
@@ -167,49 +174,32 @@ const flickerLayerClasses = computed(() => {
   }
 })
 
-const validateFields = () => {
-  let isValid = true
-  errors.value = {
-    row: '',
-    seat: '',
-  }
-  shakeFields.value = {
-    row: false,
-    seat: false,
+const showSquareClass = computed(() => {
+  if (isLightOn.value === null) {
+    return {}
   }
 
-  if (!rowValue.value.trim()) {
-    errors.value.row = 'Укажите ряд'
-    shakeFields.value.row = true
-    isValid = false
+  return {
+    'show-square--dark': isLightOn.value,
+    'show-square--light': !isLightOn.value,
+    'show-square--burst': isSquareBursting.value
   }
+})
 
-  if (!seatValue.value.trim()) {
-    errors.value.seat = 'Укажите место'
-    shakeFields.value.seat = true
-    isValid = false
+const displayDeviceId = computed(() => {
+  if (!deviceId.value) return null
+  return deviceId.value.replace(/^device_/, '')
+})
+
+const copyDeviceId = async () => {
+  if (!deviceId.value) return
+
+  try {
+    await navigator.clipboard.writeText(deviceId.value)
+    console.log('[ShowView] Device ID скопирован:', deviceId.value)
+  } catch (error) {
+    console.error('[ShowView] Ошибка копирования Device ID:', error)
   }
-
-  if (!isValid) {
-    setTimeout(() => {
-      shakeFields.value = {
-        row: false,
-        seat: false,
-      }
-    }, 500)
-  }
-
-  return isValid
-}
-
-const handleRowInput = (event) => {
-  rowValue.value = event.target.value
-  errors.value.row = ''
-}
-
-const handleSeatInput = (event) => {
-  seatValue.value = event.target.value
-  errors.value.seat = ''
 }
 
 // Управление цветом экрана и фонариком по скрипту
@@ -264,12 +254,80 @@ const handleSequenceComplete = () => {
   // Готовы ждать нового сигнала включения
 }
 
+// Остановка static-demo последовательности
+const stopStaticDemo = () => {
+  if (staticDemoIntervalId) {
+    clearInterval(staticDemoIntervalId)
+    staticDemoIntervalId = null
+  }
+  if (staticDemoFlickerIntervalId) {
+    clearInterval(staticDemoFlickerIntervalId)
+    staticDemoFlickerIntervalId = null
+  }
+  isStaticDemoActive.value = false
+  staticDemoCurrentIndex = 0
+}
+
+// Обработка значения шага static-demo
+const handleStaticDemoStepValue = (value) => {
+  if (value === -1) {
+    // Мерцание
+    if (staticDemoFlickerIntervalId) {
+      clearInterval(staticDemoFlickerIntervalId)
+    }
+    staticDemoFlickerIntervalId = setInterval(() => {
+      const currentIsWhite = mainStore.isLightOn
+      handleColorChange(currentIsWhite ? 0 : 1)
+    }, 150)
+    return
+  }
+
+  // Останавливаем мерцание если было
+  if (staticDemoFlickerIntervalId) {
+    clearInterval(staticDemoFlickerIntervalId)
+    staticDemoFlickerIntervalId = null
+  }
+
+  // Устанавливаем цвет
+  handleColorChange(value)
+}
+
+// Запуск зацикленного static-demo
+const startStaticDemo = () => {
+  if (isStaticDemoActive.value || !staticDemoSequence.length) {
+    return
+  }
+
+  isStaticDemoActive.value = true
+  staticDemoCurrentIndex = 0
+
+  // Обрабатываем первый шаг
+  handleStaticDemoStepValue(staticDemoSequence[0])
+
+  // Запускаем интервал для зацикленного проигрывания
+  staticDemoIntervalId = setInterval(() => {
+    staticDemoCurrentIndex++
+
+    // Если достигли конца последовательности, начинаем сначала
+    if (staticDemoCurrentIndex >= staticDemoSequence.length) {
+      staticDemoCurrentIndex = 0
+    }
+
+    handleStaticDemoStepValue(staticDemoSequence[staticDemoCurrentIndex])
+  }, 2000) // Тот же таймаут, что и в usePerformanceSequence
+}
+
 // Обработчик аудиосигнала - управление последовательностью
 const handleAudioSignal = (flag) => {
   // Игнорируем, если не начали или идет инициализация
   if (!isStarted.value || isInitializing.value) return
 
   if (flag === 1) {
+    // Останавливаем static-demo если он активен
+    if (isStaticDemoActive.value) {
+      stopStaticDemo()
+    }
+
     // Если последовательность уже запущена, повторный запуск не нужен
     if (isActive.value) return
     startSequence(handleColorChange, handleSequenceComplete)
@@ -285,16 +343,9 @@ const handleAudioSignal = (flag) => {
 
 // Обработчик нажатия кнопки "Начать"
 const handleStart = async () => {
-  if (!validateFields()) {
-    return
-  }
-
   isStarted.value = true
 
-  // Устанавливаем последовательность по ряду и месту
-  setSequenceBySeat(rowValue.value.trim(), seatValue.value.trim())
-
-  // Включаем логирование (если еще не включено)
+  // Включаем логирование
   enableLogging()
 
   // Активируем Wake Lock для предотвращения засыпания экрана
@@ -346,6 +397,9 @@ const handleStart = async () => {
   // Снимаем флаг инициализации после установки начального состояния
   isInitializing.value = false
 
+  // Запускаем зацикленное проигрывание static-demo
+  startStaticDemo()
+
   // Логируем информацию о камерах (если еще не залогирована)
   // Обновляем список устройств перед логированием
   await refreshDevices()
@@ -369,7 +423,7 @@ const handleStart = async () => {
   // Если звуковой сигнал придет раньше и будет 3 смены — логи отправятся через trackSoundChange
   // Если нет — отправятся здесь (чтобы не потерять логи инициализации)
   setTimeout(() => {
-    // Отправляем только если есть что отправлять
+    // Отправляем только если ещё не было отправки (нет звуковых изменений)
     if (logs.value.length > 0) {
       sendLogs()
     }
@@ -395,6 +449,9 @@ onMounted(async () => {
 onUnmounted(async () => {
   // Останавливаем последовательность
   stopSequence()
+
+  // Останавливаем static-demo
+  stopStaticDemo()
 
   // Выключаем фонарик при размонтировании
   try {
@@ -428,7 +485,6 @@ onUnmounted(async () => {
   align-items: center;
   justify-content: center;
   z-index: 1000;
-  overflow-y: auto;
 }
 
 .show-view__flicker {
@@ -454,29 +510,22 @@ onUnmounted(async () => {
   align-items: center;
   justify-content: center;
   width: 100%;
-  min-height: 100vh;
-  padding: 2rem 0;
-  overflow-y: auto;
-  position: absolute;
-  top: 0;
-  left: 0;
-  z-index: 999;
+  height: 100%;
 }
 
 .show-view__content {
   text-align: center;
   max-width: 500px;
   padding: 2rem;
-  width: 100%;
 }
 
 .show-view__title {
   font-size: 3.6rem;
   font-weight: 700;
-  color: $color-gray-700;
+  color: $color-show-red;
   margin-bottom: 3rem;
-    line-height: 1.2;
-  }
+  line-height: 1.2;
+}
 
 .show-view__instructions {
   margin-bottom: 3rem;
@@ -497,10 +546,15 @@ onUnmounted(async () => {
 }
 
 .show-view__instruction-text {
-  font-size: 2rem;
+  font-size: 1.6rem;
   color: $color-gray-700;
   line-height: 1.4;
   padding-top: 0;
+}
+
+.show-view__instruction-highlight {
+  display: inline-block;
+  animation: brightness-pulse 2s ease-in-out infinite;
 }
 
 .show-view__button {
@@ -511,7 +565,7 @@ onUnmounted(async () => {
 
 .show-view__qr {
   margin-bottom: 3rem;
-    display: flex;
+  display: flex;
   justify-content: center;
 }
 
@@ -522,20 +576,13 @@ onUnmounted(async () => {
   box-shadow: 0 1.2rem 3rem rgba($color-black, 0.1);
 }
 
-.show-view__inputs-row {
-    display: flex;
-    gap: 1.5rem;
-    width: 100%;
-  margin-bottom: 3rem;
-}
-
 .show-view__flashlight-message {
   position: fixed;
   top: 0;
   left: 0;
   width: 100vw;
   height: 100vh;
-    display: flex;
+  display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1002;
@@ -563,20 +610,10 @@ onUnmounted(async () => {
 
 .flashlight-message__subtitle {
   font-size: 3rem;
-  color: $color-black;
+  color: $color-gray-600;
   line-height: 1.4;
+  top: -26rem;
   position: relative;
-}
-
-.flashlight-message__action {
-  display: inline-block;
-  padding: 0.8rem 1.6rem;
-  background: $color-black;
-  color: $color-white;
-  border: 0.2rem solid $color-black;
-  border-radius: 0.5rem;
-  margin-top: 2rem;
-  font-size: 3.2rem;
 }
 
 @keyframes pulse {
@@ -588,27 +625,51 @@ onUnmounted(async () => {
   }
 }
 
+@keyframes brightness-pulse {
+  0%, 100% {
+    transform: scale(1);
+    color: $color-black;
+  }
+  50% {
+    transform: scale(1.1);
+    color: $color-show-red;
+  }
+}
+
 .show-view__performance {
   position: absolute;
   inset: 0;
-    display: flex;
-    align-items: center;
+  display: flex;
+  align-items: center;
   justify-content: center;
   pointer-events: none;
-  z-index: 1001;
-  }
+  z-index: 1200;
+}
+
+.show-view__spectrum {
+  position: fixed;
+  bottom: 2rem;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(90vw, 60rem);
+  height: 12rem;
+  z-index: 1300;
+  pointer-events: none;
+}
 
 .show-square {
   width: min(40vw, 240px);
   aspect-ratio: 1 / 1;
   border-radius: 1.2rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   background: $color-black;
   transition: transform 0.2s ease-in-out;
   transform: scale(1);
-    color: $color-white;
+  color: $color-white;
+  pointer-events: auto;
 
   &--dark {
     background: $color-black;
@@ -632,11 +693,34 @@ onUnmounted(async () => {
 }
 
 .show-square--dark .show-square__label {
-    color: $color-white;
+  color: $color-white;
 }
 
 .show-square--light .show-square__label {
-      color: $color-black;
+  color: $color-black;
+}
+
+.show-square__device-id {
+  font-size: 2rem;
+  font-weight: 400;
+  margin-top: 0.8rem;
+  opacity: 0.7;
+  cursor: pointer;
+  user-select: none;
+  pointer-events: auto;
+  transition: opacity 0.2s ease-in-out;
+
+  &:hover {
+    opacity: 1;
+  }
+}
+
+.show-square--dark .show-square__device-id {
+  color: $color-white;
+}
+
+.show-square--light .show-square__device-id {
+  color: $color-black;
 }
 
 @keyframes square-pulse {
@@ -680,17 +764,13 @@ onUnmounted(async () => {
   }
 
   .show-view__instruction-text {
-    font-size: 1.8rem;
+    font-size: 1.4rem;
   }
 
   .show-view__instruction-number {
     width: 2.5rem;
     height: 2.5rem;
     font-size: 1.3rem;
-  }
-
-  .show-view__inputs-row {
-    gap: 1rem;
   }
 
   .flashlight-message {
@@ -709,13 +789,15 @@ onUnmounted(async () => {
   }
 
   .flashlight-message__subtitle {
-    font-size: 2.1rem;
+    font-size: 1.4rem;
+    position: relative;
+    top: -12rem;
   }
 
-  .flashlight-message__action {
-    padding: 0.6rem 1.2rem;
-    font-size: 2.4rem;
-    margin-top: 1.6rem;
+  .show-view__spectrum {
+    width: min(95vw, 50rem);
+    height: 10rem;
+    bottom: 1rem;
   }
 }
 </style>
