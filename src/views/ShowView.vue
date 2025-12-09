@@ -5,6 +5,7 @@
       v-if="isStarted"
       class="show-view__flicker"
       :class="flickerLayerClasses"
+      :style="flickerLayerStyle"
     />
 
     <!-- Кнопка запуска -->
@@ -86,7 +87,7 @@ import { useWakeLock } from '@/composables/useWakeLock'
 import { useLogging } from '@/composables/useLogging'
 import { usePerformanceSequence } from '@/composables/usePerformanceSequence'
 import { useMainStore } from '@/stores/main'
-import staticDemoData from '@/assets/data/static-demo.json'
+import showDemoData from '@/assets/data/show-demo.json'
 
 const isStarted = ref(false)
 const isSquareBursting = ref(false)
@@ -94,6 +95,10 @@ const isInitializing = ref(false) // Флаг начальной инициал�
 let squareBurstTimeout = null
 const mainStore = useMainStore()
 const { isLightOn } = storeToRefs(mainStore)
+
+// Реактивные переменные для цвета и яркости экрана
+const screenColor = ref('ffffff')
+const screenBrightness = ref(100)
 
 // Используем composable для аудио
 const {
@@ -113,12 +118,12 @@ const {
 // Используем composable для последовательности перформанса
 const { startSequence, stopSequence, isActive } = usePerformanceSequence('sound-demo')
 
-// Логика для зацикленного проигрывания static-demo
-const staticDemoSequence = staticDemoData['static-demo'] || []
-let staticDemoIntervalId = null
-let staticDemoFlickerIntervalId = null
-let staticDemoCurrentIndex = 0
-const isStaticDemoActive = ref(false)
+// Логика для зацикленного проигрывания show-demo
+const showDemoSequence = showDemoData['show-demo'] || []
+let showDemoIntervalId = null
+let showDemoFlickerIntervalId = null
+let showDemoCurrentIndex = 0
+const isShowDemoActive = ref(false)
 
 // Используем composable для логирования
 const {
@@ -141,6 +146,18 @@ const flickerLayerClasses = computed(() => {
   return {
     'show-view__flicker--white': isLightOn.value,
     'show-view__flicker--black': !isLightOn.value
+  }
+})
+
+// Computed для динамических стилей слоя мерцания (цвет и яркость)
+const flickerLayerStyle = computed(() => {
+  if (!isLightOn.value) {
+    return {}
+  }
+
+  return {
+    backgroundColor: `#${screenColor.value}`,
+    filter: `brightness(${screenBrightness.value}%)`
   }
 })
 
@@ -195,66 +212,88 @@ const handleSequenceComplete = () => {
   // Готовы ждать нового сигнала включения
 }
 
-// Остановка static-demo последовательности
-const stopStaticDemo = () => {
-  if (staticDemoIntervalId) {
-    clearInterval(staticDemoIntervalId)
-    staticDemoIntervalId = null
+// Остановка show-demo последовательности
+const stopShowDemo = () => {
+  if (showDemoIntervalId) {
+    clearInterval(showDemoIntervalId)
+    showDemoIntervalId = null
   }
-  if (staticDemoFlickerIntervalId) {
-    clearInterval(staticDemoFlickerIntervalId)
-    staticDemoFlickerIntervalId = null
+  if (showDemoFlickerIntervalId) {
+    clearInterval(showDemoFlickerIntervalId)
+    showDemoFlickerIntervalId = null
   }
-  isStaticDemoActive.value = false
-  staticDemoCurrentIndex = 0
+  isShowDemoActive.value = false
+  showDemoCurrentIndex = 0
 }
 
-// Обработка значения шага static-demo
-const handleStaticDemoStepValue = (value) => {
-  if (value === -1) {
+// Обработка значения шага show-demo
+const handleShowDemoStep = (step) => {
+  if (step.status === 'flash') {
     // Мерцание
-    if (staticDemoFlickerIntervalId) {
-      clearInterval(staticDemoFlickerIntervalId)
+    if (showDemoFlickerIntervalId) {
+      clearInterval(showDemoFlickerIntervalId)
     }
-    staticDemoFlickerIntervalId = setInterval(() => {
+    showDemoFlickerIntervalId = setInterval(() => {
       const currentIsWhite = mainStore.isLightOn
-      handleColorChange(currentIsWhite ? 0 : 1)
+      mainStore.isLightOn = !currentIsWhite
+
+      if (!currentIsWhite) {
+        // Применяем цвет и яркость при включении
+        screenColor.value = step.color
+        screenBrightness.value = step.brightness
+      }
     }, 150)
     return
   }
 
   // Останавливаем мерцание если было
-  if (staticDemoFlickerIntervalId) {
-    clearInterval(staticDemoFlickerIntervalId)
-    staticDemoFlickerIntervalId = null
+  if (showDemoFlickerIntervalId) {
+    clearInterval(showDemoFlickerIntervalId)
+    showDemoFlickerIntervalId = null
   }
 
-  // Устанавливаем цвет
-  handleColorChange(value)
+  // Устанавливаем состояние экрана
+  if (step.status === 'on') {
+    mainStore.isLightOn = true
+    screenColor.value = step.color
+    screenBrightness.value = step.brightness
+  } else if (step.status === 'off') {
+    mainStore.isLightOn = false
+  }
+
+  // Анимация квадрата
+  if (squareBurstTimeout) {
+    clearTimeout(squareBurstTimeout)
+  }
+  isSquareBursting.value = true
+  squareBurstTimeout = setTimeout(() => {
+    isSquareBursting.value = false
+    squareBurstTimeout = null
+  }, 150)
 }
 
-// Запуск зацикленного static-demo
-const startStaticDemo = () => {
-  if (isStaticDemoActive.value || !staticDemoSequence.length) {
+// Запуск зацикленного show-demo
+const startShowDemo = () => {
+  if (isShowDemoActive.value || !showDemoSequence.length) {
     return
   }
 
-  isStaticDemoActive.value = true
-  staticDemoCurrentIndex = 0
+  isShowDemoActive.value = true
+  showDemoCurrentIndex = 0
 
   // Обрабатываем первый шаг
-  handleStaticDemoStepValue(staticDemoSequence[0])
+  handleShowDemoStep(showDemoSequence[0])
 
   // Запускаем интервал для зацикленного проигрывания
-  staticDemoIntervalId = setInterval(() => {
-    staticDemoCurrentIndex++
+  showDemoIntervalId = setInterval(() => {
+    showDemoCurrentIndex++
 
     // Если достигли конца последовательности, начинаем сначала
-    if (staticDemoCurrentIndex >= staticDemoSequence.length) {
-      staticDemoCurrentIndex = 0
+    if (showDemoCurrentIndex >= showDemoSequence.length) {
+      showDemoCurrentIndex = 0
     }
 
-    handleStaticDemoStepValue(staticDemoSequence[staticDemoCurrentIndex])
+    handleShowDemoStep(showDemoSequence[showDemoCurrentIndex])
   }, 2000) // Тот же таймаут, что и в usePerformanceSequence
 }
 
@@ -264,9 +303,9 @@ const handleAudioSignal = (flag) => {
   if (!isStarted.value || isInitializing.value) return
 
   if (flag === 1) {
-    // Останавливаем static-demo если он активен
-    if (isStaticDemoActive.value) {
-      stopStaticDemo()
+    // Останавливаем show-demo если он активен
+    if (isShowDemoActive.value) {
+      stopShowDemo()
     }
 
     // Если последовательность уже запущена, повторный запуск не нужен
@@ -300,8 +339,8 @@ const handleStart = async () => {
   // Снимаем флаг инициализации после установки начального состояния
   isInitializing.value = false
 
-  // Запускаем зацикленное проигрывание static-demo
-  startStaticDemo()
+  // Запускаем зацикленное проигрывание show-demo
+  startShowDemo()
 
   // Создаем объект с функциями логирования для передачи в useAudio
   const loggingCallbacks = {
@@ -333,8 +372,8 @@ onUnmounted(async () => {
   // Останавливаем последовательность
   stopSequence()
 
-  // Останавливаем static-demo
-  stopStaticDemo()
+  // Останавливаем show-demo
+  stopShowDemo()
 
   // Деактивируем Wake Lock при размонтировании
   await releaseWakeLock()

@@ -1,0 +1,30 @@
+{
+  "show-demo": [
+    {
+      "status": "on",
+      "color": "ff0000",
+      "brightness": 100
+    },
+    {
+      "status": "on",
+      "color": "ff0000",
+      "brightness": 35
+    },
+    {
+      "status": "on",
+      "color": "ff0000",
+      "brightness": 60
+    },
+    {
+      "status": "flash",
+      "color": "ff0000",
+      "brightness": 100
+    },
+    {
+      "status": "flash",
+      "color": "ff0000",
+      "brightness": 100
+    }
+  ]
+}
+

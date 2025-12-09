@@ -28,7 +28,7 @@ export default defineConfig({
     https: false,
     allowedHosts: [
       'gromka.ru.tuna.am',
-      'g6qach-89-109-44-85.ru.tuna.am'
+      '4z7kn8-2a05-fc1-40-3a--c.ru.tuna.am'
     ],
     proxy: {
       '/api': {
