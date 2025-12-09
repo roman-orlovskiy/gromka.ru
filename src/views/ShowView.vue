@@ -43,13 +43,6 @@
       </div>
     </div>
 
-    <!-- Сообщение о неподдерживаемом фонарике -->
-    <div v-if="isStarted && isFlashlightSupported === false" class="show-view__flashlight-message">
-      <div class="flashlight-message">
-        <div class="flashlight-message__subtitle">Фонарик не поддерживается<br>Поверните экран к сцене</div>
-      </div>
-    </div>
-
     <!-- Анимация перформанса -->
     <div
       v-if="isStarted"
@@ -89,7 +82,6 @@ import { storeToRefs } from 'pinia'
 import ButtonComp from '@/components/ButtonComp.vue'
 import FrequencySpectrum from '@/components/FrequencySpectrum.vue'
 import { useAudio } from '@/composables/useAudio'
-import { useCamera } from '@/composables/useCamera'
 import { useWakeLock } from '@/composables/useWakeLock'
 import { useLogging } from '@/composables/useLogging'
 import { usePerformanceSequence } from '@/composables/usePerformanceSequence'
@@ -112,18 +104,6 @@ const {
   frequencyRange
 } = useAudio()
 
-// Используем composable для камеры/фонарика
-const {
-  cameraMethod,
-  isFlashlightSupported,
-  devices,
-  turnOnFlashlight,
-  turnOffFlashlight,
-  checkFlashlightSupport,
-  refreshDevices,
-  cachedAudioStream
-} = useCamera()
-
 // Используем composable для предотвращения засыпания экрана
 const {
   requestWakeLock,
@@ -145,25 +125,12 @@ const {
   deviceId,
   sendLogs,
   enableLogging,
-  trackSoundChange,
-  trackFlashlightChange,
-  logCameraInfo,
   logMicrophonePermission,
   logAudioSettings,
   logFirstSoundSignal,
-  logFlashlightSupport,
-  logCameraAttempt,
-  logPlatformInfo,
   logDeviceInfo,
   logs
 } = useLogging()
-
-// Объект с callbacks для логирования камеры
-const cameraLogCallbacks = {
-  trackFlashlightChange,
-  logCameraAttempt,
-  logPlatformInfo
-}
 
 
 // Computed для классов слоя мерцания
@@ -205,14 +172,11 @@ const copyDeviceId = async () => {
   }
 }
 
-// Управление цветом экрана и фонариком по скрипту
+// Управление цветом экрана по скрипту
 const handleColorChange = async (color) => {
   // color: 0 - черный, 1 - белый
   const isWhite = color === 1
   mainStore.isLightOn = isWhite
-
-  // Логируем изменение звука
-  trackSoundChange(isWhite)
 
   // Анимация квадрата
   if (squareBurstTimeout) {
@@ -223,32 +187,6 @@ const handleColorChange = async (color) => {
     isSquareBursting.value = false
     squareBurstTimeout = null
   }, 150)
-
-  // Управление фонариком
-  // Если фонарик не поддерживается, логируем попытку включения, но не пытаемся включить
-  if (isFlashlightSupported.value === false) {
-    // Логируем попытку включения, даже если фонарик не поддерживается
-    trackFlashlightChange(isWhite, null)
-    logCameraAttempt({
-      stage: 'flashlight_not_supported',
-      requestedState: isWhite
-    })
-    return
-  }
-
-  // Управление фонариком
-  try {
-    if (isWhite) {
-      await turnOnFlashlight(cameraLogCallbacks)
-    } else {
-      await turnOffFlashlight(cameraLogCallbacks)
-    }
-  } catch (error) {
-    console.warn('Ошибка управления фонариком:', error)
-    // Логируем ошибку как попытку включения
-    trackFlashlightChange(isWhite, cameraMethod.value)
-    logFlashlightSupport(false, cameraMethod.value, error)
-  }
 }
 
 // Обработчик завершения последовательности - оставляем последний цвет последовательности
@@ -354,63 +292,16 @@ const handleStart = async () => {
   // Активируем Wake Lock для предотвращения засыпания экрана
   await requestWakeLock()
 
-  // Устанавливаем начальное состояние - белый экран и включенный фонарик
+  // Устанавливаем начальное состояние - белый экран
   // Используем флаг, чтобы не запустить последовательность при начальной установке
   isInitializing.value = true
   mainStore.isLightOn = true
-
-  // Включаем фонарик и проверяем поддержку
-  // Используем includeAudio: true для объединённого запроса (камера + микрофон в одном диалоге)
-  let hasFlashlight = false
-  let audioStream = null
-
-  if (isFlashlightSupported.value === null) {
-    // Поддержка еще не проверена, проверяем и логируем
-    // Запрашиваем камеру И микрофон одним запросом
-    try {
-      const result = await checkFlashlightSupport(cameraLogCallbacks, { includeAudio: true })
-      hasFlashlight = result.supported
-      audioStream = result.audioStream
-      if (hasFlashlight) {
-        logFlashlightSupport(true, cameraMethod.value)
-      } else {
-        logFlashlightSupport(false, null)
-      }
-    } catch (error) {
-      logFlashlightSupport(false, null, error)
-    }
-  } else {
-    // Поддержка уже проверена, просто включаем фонарик если поддерживается
-    hasFlashlight = isFlashlightSupported.value
-    if (hasFlashlight) {
-      try {
-        const result = await turnOnFlashlight(cameraLogCallbacks, { includeAudio: true })
-        audioStream = result.audioStream
-      } catch (error) {
-        console.warn('Ошибка включения фонарика:', error)
-      }
-    }
-  }
-
-  // Если audio stream не получен через камеру, используем кэшированный
-  if (!audioStream) {
-    audioStream = cachedAudioStream.value
-  }
 
   // Снимаем флаг инициализации после установки начального состояния
   isInitializing.value = false
 
   // Запускаем зацикленное проигрывание static-demo
   startStaticDemo()
-
-  // Логируем информацию о камерах (если еще не залогирована)
-  // Обновляем список устройств перед логированием
-  await refreshDevices()
-  // Проверяем, есть ли уже логи camera_info
-  const hasCameraInfo = logs.value.some(log => log.type === 'camera_info')
-  if (!hasCameraInfo) {
-    logCameraInfo(devices.value, cameraMethod.value)
-  }
 
   // Создаем объект с функциями логирования для передачи в useAudio
   const loggingCallbacks = {
@@ -419,14 +310,11 @@ const handleStart = async () => {
     logFirstSoundSignal
   }
 
-  // Используем уже полученный audioStream (из объединённого запроса) или запрашиваем отдельно
-  await requestMicrophonePermission(loggingCallbacks, handleAudioSignal, audioStream)
+  // Запрашиваем доступ к микрофону
+  await requestMicrophonePermission(loggingCallbacks, handleAudioSignal)
 
-  // Отправляем логи инициализации через 5 секунд как fallback
-  // Если звуковой сигнал придет раньше и будет 3 смены — логи отправятся через trackSoundChange
-  // Если нет — отправятся здесь (чтобы не потерять логи инициализации)
+  // Отправляем логи инициализации через 3 секунды как fallback
   setTimeout(() => {
-    // Отправляем только если ещё не было отправки (нет звуковых изменений)
     if (logs.value.length > 0) {
       sendLogs()
     }
@@ -439,14 +327,6 @@ onMounted(async () => {
 
   // Логируем информацию об устройстве
   await logDeviceInfo()
-
-  // Логируем информацию о камерах сразу при монтировании
-  // Обновляем список устройств перед логированием
-  await refreshDevices()
-  logCameraInfo(devices.value, cameraMethod.value)
-
-  // НЕ проверяем фонарик здесь — это включит его!
-  // Проверка фонарика будет в handleStart при нажатии "Начать"
 })
 
 onUnmounted(async () => {
@@ -455,13 +335,6 @@ onUnmounted(async () => {
 
   // Останавливаем static-demo
   stopStaticDemo()
-
-  // Выключаем фонарик при размонтировании
-  try {
-    await turnOffFlashlight()
-  } catch (error) {
-    console.warn('Ошибка выключения фонарика при размонтировании:', error)
-  }
 
   // Деактивируем Wake Lock при размонтировании
   await releaseWakeLock()
@@ -588,55 +461,6 @@ onUnmounted(async () => {
   color: $color-gray-600;
   text-align: center;
   line-height: 1.4;
-}
-
-.show-view__flashlight-message {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1002;
-}
-
-.flashlight-message {
-  text-align: center;
-  max-width: 500px;
-  padding: 2rem;
-}
-
-.flashlight-message__icon {
-  font-size: 8rem;
-  margin-bottom: 2rem;
-  animation: pulse 2s infinite;
-}
-
-.flashlight-message__title {
-  font-size: 2.6rem;
-  font-weight: 700;
-  color: $color-gray-700;
-  margin-bottom: 1rem;
-  line-height: 1.2;
-}
-
-.flashlight-message__subtitle {
-  font-size: 3rem;
-  color: $color-gray-600;
-  line-height: 1.4;
-  top: -26rem;
-  position: relative;
-}
-
-@keyframes pulse {
-  0%, 100% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.1);
-  }
 }
 
 @keyframes brightness-pulse {
@@ -785,27 +609,6 @@ onUnmounted(async () => {
     width: 2.5rem;
     height: 2.5rem;
     font-size: 1.3rem;
-  }
-
-  .flashlight-message {
-    padding: 1rem;
-    max-width: 100%;
-  }
-
-  .flashlight-message__icon {
-    font-size: 6rem;
-    margin-bottom: 1.5rem;
-  }
-
-  .flashlight-message__title {
-    font-size: 2.5rem;
-    margin-bottom: 0.8rem;
-  }
-
-  .flashlight-message__subtitle {
-    font-size: 1.4rem;
-    position: relative;
-    top: -12rem;
   }
 
   .show-view__spectrum {
