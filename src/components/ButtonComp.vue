@@ -22,7 +22,8 @@ const props = defineProps({
       'gradient-7',
       'spartak',
       'outline',
-      'black'
+      'black',
+      'red'
     ],
   },
 })
@@ -100,6 +101,13 @@ const buttonClass = computed(() => {
     background-color: $color-black;
     color: $color-white;
     box-shadow: 0 0 10px 0 rgba($color-black, 0.5);
+  }
+
+  &--mod-red {
+    background-color: $color-white;
+    color: $color-show-red;
+    border: 0.2rem solid $color-show-red;
+    box-shadow: none;
   }
 
   &:hover {

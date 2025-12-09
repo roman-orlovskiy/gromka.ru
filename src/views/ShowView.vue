@@ -10,7 +10,7 @@
     <!-- Кнопка запуска -->
     <div v-if="!isStarted" class="show-view__start">
       <div class="show-view__content">
-        <div class="show-view__title">Зажигайте экраны и&nbsp;сердца</div>
+        <div class="show-view__title">Зажигайте экраны</div>
 
         <div class="show-view__instructions">
           <div class="show-view__instruction-item">
@@ -26,16 +26,19 @@
           </div>
         </div>
 
+        <div class="show-view__button">
+          <ButtonComp mod="red" @click="handleStart">Начать</ButtonComp>
+        </div>
+
         <div class="show-view__qr">
+          <div class="show-view__qr-caption">
+            Поделитесь QR с тем,<br>кто не успел отсканировать
+          </div>
           <img
             src="/images/show-qr.webp"
             alt="QR-код для перформанса"
             class="show-view__qr-image"
           >
-        </div>
-
-        <div class="show-view__button">
-          <ButtonComp mod="outline" @click="handleStart">Начать</ButtonComp>
         </div>
       </div>
     </div>
@@ -564,8 +567,11 @@ onUnmounted(async () => {
 }
 
 .show-view__qr {
+  margin-top: 5rem;
   margin-bottom: 3rem;
   display: flex;
+  flex-direction: column;
+  align-items: center;
   justify-content: center;
 }
 
@@ -574,6 +580,14 @@ onUnmounted(async () => {
   max-width: 60vw;
   border-radius: 1.2rem;
   box-shadow: 0 1.2rem 3rem rgba($color-black, 0.1);
+}
+
+.show-view__qr-caption {
+  margin-bottom: 1.5rem;
+  font-size: 1.4rem;
+  color: $color-gray-600;
+  text-align: center;
+  line-height: 1.4;
 }
 
 .show-view__flashlight-message {
