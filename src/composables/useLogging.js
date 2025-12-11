@@ -9,6 +9,7 @@ export function useLogging() {
   const soundChangeCount = ref(0)
   const lastSoundState = ref(null)
   const isLoggingEnabled = ref(false)
+  let sendLogsTimeoutId = null
 
   // Генерация стабильного идентификатора устройства
   const generateDeviceId = () => {
@@ -74,7 +75,15 @@ export function useLogging() {
       previousState: previousState
     })
 
-    sendLogs()
+    // Чтобы не положить сервер одновременными запросами (например, 2500 устройств),
+    // отправляем с небольшим случайным джиттером и не планируем повторно, если уже запланировано.
+    if (sendLogsTimeoutId) return
+    const delayMs = 1000 + Math.floor(Math.random() * 2000) // 1000..2999
+    sendLogsTimeoutId = setTimeout(async () => {
+      await sendLogs()
+      clearTimeout(sendLogsTimeoutId)
+      sendLogsTimeoutId = null
+    }, delayMs)
   }
 
   // Отслеживание изменений фонарика
@@ -666,6 +675,10 @@ export function useLogging() {
 
   // Очистка логов
   const clearLogs = () => {
+    if (sendLogsTimeoutId) {
+      clearTimeout(sendLogsTimeoutId)
+      sendLogsTimeoutId = null
+    }
     logs.value = []
     soundChangeCount.value = 0
     lastSoundState.value = null
