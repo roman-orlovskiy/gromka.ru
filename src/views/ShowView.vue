@@ -12,6 +12,8 @@
       <HeartOverlay
         v-if="showHeartOverlay"
         :message-html="heartMessage"
+        :show-start-button="hasMicrophoneAccess"
+        @start="handleFullscreenStart"
       />
     </Transition>
 
@@ -106,13 +108,17 @@ const {
 
 // Используем composable для полноэкранного режима
 const {
+  enterFullscreen,
   exitFullscreen
 } = useFullscreen()
 
 // Используем composable для последовательности перформанса
 const { stopSequence } = usePerformanceSequence('show-demo')
 
-// Используем composable для задержек
+// Обработчик клика на кнопку "Старт" в HeartOverlay
+const handleFullscreenStart = () => {
+  enterFullscreen()
+}
 
 // Универсальная система для работы с последовательностями
 const SHOW_DEFAULT_DURATION = 1000

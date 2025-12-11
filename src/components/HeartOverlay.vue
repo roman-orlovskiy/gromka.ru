@@ -83,24 +83,44 @@
 
         <div class="heart-overlay__message" v-html="messageHtml" />
       </div>
+
+      <div v-if="showStartButton && isStartButtonVisible" class="heart-overlay__button">
+        <ButtonComp mod="red" @click="handleStartClick">Нажмите для старта</ButtonComp>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup>
+import { ref } from 'vue'
+import ButtonComp from '@/components/ButtonComp.vue'
+
 defineProps({
   messageHtml: {
     type: String,
     required: true
+  },
+  showStartButton: {
+    type: Boolean,
+    default: false
   }
 })
+
+const emit = defineEmits(['start'])
+
+const isStartButtonVisible = ref(true)
+
+const handleStartClick = () => {
+  isStartButtonVisible.value = false
+  emit('start')
+}
 </script>
 
 <style scoped lang="scss">
 @import '@/assets/scss/variables.scss';
 
 .heart-overlay {
-  position: fixed;
+  position: absolute;
   inset: 0;
   width: 100vw;
   height: 100vh;
@@ -113,7 +133,7 @@ defineProps({
   &__backdrop {
     position: absolute;
     inset: 0;
-    background: rgba($color-black, 0.25);
+    background: rgba($color-white, 0.6);
     backdrop-filter: blur(2px);
   }
 
@@ -122,6 +142,7 @@ defineProps({
     width: 90vw;
     max-width: 90vw;
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
     pointer-events: none;
@@ -160,6 +181,11 @@ defineProps({
     line-height: 1.2;
     text-shadow: 0 0.2rem 1rem rgba($color-black, 0.15);
     pointer-events: none;
+  }
+
+  &__button {
+    margin-top: 2rem;
+    pointer-events: auto;
   }
 }
 
