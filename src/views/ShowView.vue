@@ -376,12 +376,6 @@ const handleStart = async () => {
   // Показываем подсказку с сердцем
   showHeartOverlay.value = true
 
-  // Входим в полноэкранный режим
-  enterFullscreen()
-
-  // Активируем Wake Lock для предотвращения засыпания экрана
-  requestWakeLock()
-
   // Устанавливаем начальное состояние - белый экран
   // Используем флаг, чтобы не запустить последовательность при начальной установке
   isInitializing.value = true
@@ -416,6 +410,12 @@ const handleStart = async () => {
     console.error('Ошибка при получении доступа к микрофону:', err)
     // Доступ не получен, оставляем hasMicrophoneAccess = false
   }
+
+  // Входим в полноэкранный режим
+  enterFullscreen()
+
+  // Активируем Wake Lock для предотвращения засыпания экрана
+  requestWakeLock()
 
   // Скрываем подсказку через 10 секунд
   setTimeout(() => {
