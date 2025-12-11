@@ -53,6 +53,7 @@ import { storeToRefs } from 'pinia'
 import ButtonComp from '@/components/ButtonComp.vue'
 import { useAudio } from '@/composables/useAudio'
 import { useWakeLock } from '@/composables/useWakeLock'
+import { useFullscreen } from '@/composables/useFullscreen'
 import { useLogging } from '@/composables/useLogging'
 import { usePerformanceSequence } from '@/composables/usePerformanceSequence'
 import { useMainStore } from '@/stores/main'
@@ -80,6 +81,12 @@ const {
   requestWakeLock,
   releaseWakeLock
 } = useWakeLock()
+
+// Используем composable для полноэкранного режима
+const {
+  enterFullscreen,
+  exitFullscreen
+} = useFullscreen()
 
 // Используем composable для последовательности перформанса
 const { stopSequence } = usePerformanceSequence('show-demo')
@@ -264,7 +271,7 @@ const startShowSequence = (sequence) => {
 }
 
 // Обработчик аудиосигнала - управление последовательностью
-const handleAudioSignal = (flag) => {
+const handleAudioSignal = async (flag) => {
   // Игнорируем, если не начали или идет инициализация
   if (!isStarted.value || isInitializing.value) return
 
@@ -301,6 +308,10 @@ const handleAudioSignal = (flag) => {
     stopSequence()
     stopShowSequence()
     handleColorChange(0)
+    // Освобождаем Wake Lock при остановке
+    await releaseWakeLock()
+    // Выходим из полноэкранного режима при остановке
+    await exitFullscreen()
   }
 }
 
@@ -311,6 +322,9 @@ const handleStart = async () => {
 
   // Включаем логирование
   enableLogging()
+
+  // Входим в полноэкранный режим
+  await enterFullscreen()
 
   // Активируем Wake Lock для предотвращения засыпания экрана
   await requestWakeLock()
@@ -360,6 +374,9 @@ onUnmounted(async () => {
 
   // Останавливаем show-последовательность
   stopShowSequence()
+
+  // Выходим из полноэкранного режима
+  await exitFullscreen()
 
   // Деактивируем Wake Lock при размонтировании
   await releaseWakeLock()
