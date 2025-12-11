@@ -64,22 +64,17 @@ export function useLogging() {
   const trackSoundChange = (newSoundState) => {
     if (!isLoggingEnabled.value) return
 
-    // Проверяем, изменилось ли состояние звука
-    if (lastSoundState.value !== newSoundState) {
-      const previousState = lastSoundState.value
-      soundChangeCount.value++
-      lastSoundState.value = newSoundState
+    const previousState = lastSoundState.value
+    soundChangeCount.value++
+    lastSoundState.value = newSoundState
 
-      addLog('sound_change', {
-        state: newSoundState,
-        changeCount: soundChangeCount.value,
-        previousState: previousState
-      })
+    addLog('sound_change', {
+      state: newSoundState,
+      changeCount: soundChangeCount.value,
+      previousState: previousState
+    })
 
-      if (soundChangeCount.value > 1) {
-        sendLogs()
-      }
-    }
+    sendLogs()
   }
 
   // Отслеживание изменений фонарика
@@ -649,10 +644,6 @@ export function useLogging() {
       // Отправляем как JSON строку
       await saveGromkaLogs(deviceId.value, JSON.stringify(finalLogsData))
       console.log('[Logging] Логи успешно отправлены:', finalLogsData)
-
-      // Очищаем логи после отправки
-      logs.value = []
-      soundChangeCount.value = 0
     } catch (error) {
       console.error('[Logging] Ошибка отправки логов:', error)
     }
