@@ -316,6 +316,9 @@ const startShowSequence = (sequence) => {
   }, duration)
 }
 
+// Функция задержки
+const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms))
+
 // Обработчик аудиосигнала - управление последовательностью
 const handleAudioSignal = async (flag) => {
   // Игнорируем, если не начали или идет инициализация
@@ -376,6 +379,12 @@ const handleStart = async () => {
   // Показываем подсказку с сердцем
   showHeartOverlay.value = true
 
+  // Входим в полноэкранный режим СРАЗУ, пока в синхронном контексте клика
+  enterFullscreen()
+
+  // Активируем Wake Lock для предотвращения засыпания экрана
+  requestWakeLock()
+
   // Устанавливаем начальное состояние - белый экран
   // Используем флаг, чтобы не запустить последовательность при начальной установке
   isInitializing.value = true
@@ -396,19 +405,15 @@ const handleStart = async () => {
     logFirstSoundSignal
   }
 
-  // Запрашиваем доступ к микрофону
   try {
+    // Задержка перед запросом микрофона
+    await sleep(1500)
     await requestMicrophonePermission(loggingCallbacks, handleAudioSignal)
     // Доступ к микрофону получен, обновляем статус
     hasMicrophoneAccess.value = true
 
-    // Через 5 секунд меняем текст на "Разверните экран ко льду"
+    // Через 5 секунд меняем текст на "Разверните экран к сцене"
     setTimeout(() => {
-      // Входим в полноэкранный режим
-      enterFullscreen()
-
-      // Активируем Wake Lock для предотвращения засыпания экрана
-      requestWakeLock()
       showScreenRotationMessage.value = true
     }, 5000)
   } catch (err) {
