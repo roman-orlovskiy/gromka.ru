@@ -58,6 +58,7 @@ import { usePerformanceSequence } from '@/composables/usePerformanceSequence'
 import { useMainStore } from '@/stores/main'
 import showDemoData from '@/assets/data/show-demo.json'
 import showPart1Data from '@/assets/data/show-part-1.json'
+import showPart2Data from '@/assets/data/show-part-2.json'
 
 const isStarted = ref(false)
 const isInitializing = ref(false) // Флаг начальной инициализации
@@ -81,12 +82,13 @@ const {
 } = useWakeLock()
 
 // Используем composable для последовательности перформанса
-const { startSequence, stopSequence, isActive } = usePerformanceSequence('sound-demo')
+const { stopSequence } = usePerformanceSequence('show-demo')
 
 // Универсальная система для работы с последовательностями
 const SHOW_DEFAULT_DURATION = 1000
 const showDemoSequence = showDemoData['show-demo'] || []
 const showPart1Sequence = showPart1Data['show-part-1'] || []
+const showPart2Sequence = showPart2Data['show-part-2'] || []
 
 // Состояние текущей активной последовательности
 const currentSequenceState = ref({
@@ -97,7 +99,7 @@ const currentSequenceState = ref({
   isActive: false
 })
 
-const isFirstSignalReceived = ref(false)
+const signalCount = ref(0)
 
 // Используем composable для логирования
 const {
@@ -142,11 +144,6 @@ const handleColorChange = async (color) => {
   mainStore.isLightOn = isWhite
 }
 
-// Обработчик завершения последовательности - оставляем последний цвет последовательности
-const handleSequenceComplete = () => {
-  // Последний цвет последовательности уже применен, ничего не меняем
-  // Готовы ждать нового сигнала включения
-}
 
 // Универсальная остановка последовательности
 const stopShowSequence = () => {
@@ -278,15 +275,25 @@ const handleAudioSignal = (flag) => {
     }
 
     // При первом сигнале запускаем show-part-1 зацикленно
-    if (!isFirstSignalReceived.value) {
-      isFirstSignalReceived.value = true
+    if (signalCount.value === 0) {
+      signalCount.value = 1
       startShowSequence(showPart1Sequence)
       return
     }
 
+    // При втором сигнале переходим на show-part-2 зацикленно
+    if (signalCount.value === 1) {
+      signalCount.value = 2
+      startShowSequence(showPart2Sequence)
+      return
+    }
+
+    // При последующих сигналах остаемся на show-part-2 (не переходим дальше)
     // Если последовательность уже запущена, повторный запуск не нужен
-    if (isActive.value) return
-    startSequence(handleColorChange, handleSequenceComplete)
+    if (currentSequenceState.value.isActive) return
+
+    // Если show-part-2 не активна, запускаем её
+    startShowSequence(showPart2Sequence)
     return
   }
 
