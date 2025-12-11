@@ -181,6 +181,7 @@ const handleStartClick = () => {
     line-height: 1.2;
     text-shadow: 0 0.2rem 1rem rgba($color-black, 0.15);
     pointer-events: none;
+    padding-top: 0.9rem;
   }
 
   &__button {
