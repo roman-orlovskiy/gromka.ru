@@ -76,8 +76,7 @@ export function useLogging() {
         previousState: previousState
       })
 
-      // Отправляем логи после третьей смены звука
-      if (soundChangeCount.value === 1) {
+      if (soundChangeCount.value > 1) {
         sendLogs()
       }
     }

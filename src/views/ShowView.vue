@@ -145,6 +145,7 @@ const {
   logAudioSettings,
   logFirstSoundSignal,
   logDeviceInfo,
+  trackSoundChange,
   trackScreenModeChange,
   logs
 } = useLogging()
@@ -330,6 +331,10 @@ const startShowSequence = (sequence) => {
 const handleAudioSignal = async (flag) => {
   // Игнорируем, если не начали или идет инициализация
   if (!isStarted.value || isInitializing.value) return
+
+  // Логируем факт получения звукового сигнала (как смену состояния: on/off)
+  // Важно: логируем тут, чтобы не считать мерцание/скриптовые смены цветов как "звуковые" события
+  trackSoundChange(flag === 1)
 
   if (flag === 1) {
     // Останавливаем текущую последовательность если активна
