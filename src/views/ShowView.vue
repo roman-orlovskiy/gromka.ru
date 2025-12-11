@@ -136,6 +136,7 @@ const currentSequenceState = ref({
 })
 
 const signalCount = ref(0)
+const signalCooldownUntilMs = ref(0)
 
 // Используем composable для логирования
 const {
@@ -331,6 +332,11 @@ const startShowSequence = (sequence) => {
 const handleAudioSignal = async (flag) => {
   // Игнорируем, если не начали или идет инициализация
   if (!isStarted.value || isInitializing.value) return
+
+  // Защита от повторных срабатываний: после принятия сигнала 10с игнорируем новые
+  const nowMs = Date.now()
+  if (nowMs < signalCooldownUntilMs.value) return
+  signalCooldownUntilMs.value = nowMs + 10_000
 
   // Логируем факт получения звукового сигнала (как смену состояния: on/off)
   // Важно: логируем тут, чтобы не считать мерцание/скриптовые смены цветов как "звуковые" события
