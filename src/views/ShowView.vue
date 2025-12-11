@@ -78,7 +78,19 @@ const { isLightOn } = storeToRefs(mainStore)
 const screenColor = ref('ffffff')
 const screenBrightness = ref(100)
 const showHeartOverlay = ref(false)
-const heartMessage = computed(() => 'Яркость<br>экрана<br>на максимум')
+const hasMicrophoneAccess = ref(false)
+const showScreenRotationMessage = ref(false)
+
+// Computed для сообщения в сердце
+const heartMessage = computed(() => {
+  if (!hasMicrophoneAccess.value) {
+    return 'Разрешите<br>микрофон<br>для синхронизации'
+  }
+  if (showScreenRotationMessage.value) {
+    return 'Разверните<br>экран<br>ко льду'
+  }
+  return 'Яркость<br>экрана<br>на максимум'
+})
 
 // Используем composable для аудио
 const {
@@ -323,6 +335,9 @@ const handleAudioSignal = async (flag) => {
     // Выходим из полноэкранного режима при остановке
     exitFullscreen()
     showHeartOverlay.value = false
+    // Сбрасываем статус доступа к микрофону
+    hasMicrophoneAccess.value = false
+    showScreenRotationMessage.value = false
   }
 }
 
@@ -364,7 +379,24 @@ const handleStart = async () => {
   }
 
   // Запрашиваем доступ к микрофону
-  await requestMicrophonePermission(loggingCallbacks, handleAudioSignal)
+  try {
+    await requestMicrophonePermission(loggingCallbacks, handleAudioSignal)
+    // Доступ к микрофону получен, обновляем статус
+    hasMicrophoneAccess.value = true
+
+    // Через 5 секунд меняем текст на "Разверните экран ко льду"
+    setTimeout(() => {
+      showScreenRotationMessage.value = true
+    }, 5000)
+  } catch (err) {
+    console.error('Ошибка при получении доступа к микрофону:', err)
+    // Доступ не получен, оставляем hasMicrophoneAccess = false
+  }
+
+  // Скрываем подсказку через 10 секунд
+  setTimeout(() => {
+    showHeartOverlay.value = false
+  }, 10000)
 
   // Отправляем логи инициализации через 3 секунды как fallback
   setTimeout(() => {
@@ -396,6 +428,8 @@ onUnmounted(async () => {
   releaseWakeLock()
 
   showHeartOverlay.value = false
+  hasMicrophoneAccess.value = false
+  showScreenRotationMessage.value = false
   cleanup()
 })
 </script>

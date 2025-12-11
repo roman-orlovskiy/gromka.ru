@@ -155,7 +155,7 @@ defineProps({
     position: absolute;
     text-align: center;
     font-weight: 700;
-    font-size: clamp(2.2rem, 4vw, 4rem);
+    font-size: clamp(1.98rem, 3.6vw, 3.6rem);
     color: $color-black;
     line-height: 1.2;
     text-shadow: 0 0.2rem 1rem rgba($color-black, 0.15);
