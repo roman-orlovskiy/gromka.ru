@@ -12,7 +12,7 @@
       "brightness": 100,
       "duration": 4000,
       "random": 30,
-      "flashInterval": 100
+      "flashInterval": 500
     },
     {
       "status": "flash",
@@ -20,7 +20,7 @@
       "brightness": 100,
       "duration": 4000,
       "random": 70,
-      "flashInterval": 100
+      "flashInterval": 500
     },
     {
       "status": "on",
@@ -33,7 +33,7 @@
       "color": "0060ff",
       "brightness": 100,
       "duration": 3500,
-      "flashInterval": 100
+      "flashInterval": 400
     },
     {
       "status": "on",
@@ -47,7 +47,7 @@
       "brightness": 100,
       "duration": 3500,
       "random": 30,
-      "flashInterval": 500
+      "flashInterval": 400
     },
     {
       "status": "flash",
@@ -55,7 +55,7 @@
       "brightness": 100,
       "duration": 3500,
       "random": 60,
-      "flashInterval": 500
+      "flashInterval": 400
     },
     {
       "status": "on",
@@ -68,7 +68,7 @@
       "color": "0060ff",
       "brightness": 100,
       "duration": 4500,
-      "flashInterval": 100
+      "flashInterval": 200
     }
   ]
 }
