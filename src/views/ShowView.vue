@@ -44,16 +44,6 @@
       </div>
     </div>
 
-    <!-- Визуализация частот -->
-    <div
-      v-if="isStarted && isListening"
-      class="show-view__spectrum"
-    >
-      <FrequencySpectrum
-        :frequency-data="frequencyData"
-        :frequency-range="frequencyRange"
-      />
-    </div>
   </div>
 </template>
 
@@ -61,13 +51,13 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { storeToRefs } from 'pinia'
 import ButtonComp from '@/components/ButtonComp.vue'
-import FrequencySpectrum from '@/components/FrequencySpectrum.vue'
 import { useAudio } from '@/composables/useAudio'
 import { useWakeLock } from '@/composables/useWakeLock'
 import { useLogging } from '@/composables/useLogging'
 import { usePerformanceSequence } from '@/composables/usePerformanceSequence'
 import { useMainStore } from '@/stores/main'
 import showDemoData from '@/assets/data/show-demo.json'
+import showPart1Data from '@/assets/data/show-part-1.json'
 
 const isStarted = ref(false)
 const isInitializing = ref(false) // Флаг начальной инициализации
@@ -81,10 +71,7 @@ const screenBrightness = ref(100)
 // Используем composable для аудио
 const {
   requestMicrophonePermission,
-  cleanup,
-  isListening,
-  frequencyData,
-  frequencyRange
+  cleanup
 } = useAudio()
 
 // Используем composable для предотвращения засыпания экрана
@@ -96,13 +83,21 @@ const {
 // Используем composable для последовательности перформанса
 const { startSequence, stopSequence, isActive } = usePerformanceSequence('sound-demo')
 
-// Логика для зацикленного проигрывания show-demo
+// Универсальная система для работы с последовательностями
+const SHOW_DEFAULT_DURATION = 1000
 const showDemoSequence = showDemoData['show-demo'] || []
-const SHOW_DEMO_DEFAULT_DURATION = 1000
-let showDemoTimeoutId = null
-let showDemoFlickerIntervalId = null
-let showDemoCurrentIndex = 0
-const isShowDemoActive = ref(false)
+const showPart1Sequence = showPart1Data['show-part-1'] || []
+
+// Состояние текущей активной последовательности
+const currentSequenceState = ref({
+  sequence: null,
+  currentIndex: 0,
+  timeoutId: null,
+  flickerIntervalId: null,
+  isActive: false
+})
+
+const isFirstSignalReceived = ref(false)
 
 // Используем composable для логирования
 const {
@@ -153,28 +148,32 @@ const handleSequenceComplete = () => {
   // Готовы ждать нового сигнала включения
 }
 
-// Остановка show-demo последовательности
-const stopShowDemo = () => {
-  if (showDemoTimeoutId) {
-    clearTimeout(showDemoTimeoutId)
-    showDemoTimeoutId = null
+// Универсальная остановка последовательности
+const stopShowSequence = () => {
+  const state = currentSequenceState.value
+  if (state.timeoutId) {
+    clearTimeout(state.timeoutId)
+    state.timeoutId = null
   }
-  if (showDemoFlickerIntervalId) {
-    clearInterval(showDemoFlickerIntervalId)
-    showDemoFlickerIntervalId = null
+  if (state.flickerIntervalId) {
+    clearInterval(state.flickerIntervalId)
+    state.flickerIntervalId = null
   }
-  isShowDemoActive.value = false
-  showDemoCurrentIndex = 0
+  state.isActive = false
+  state.currentIndex = 0
+  state.sequence = null
 }
 
-// Обработка значения шага show-demo
-const handleShowDemoStep = (step) => {
+// Универсальная обработка шага последовательности
+const handleStep = (step) => {
+  const state = currentSequenceState.value
+
   if (step.status === 'flash') {
     // Мерцание
-    if (showDemoFlickerIntervalId) {
-      clearInterval(showDemoFlickerIntervalId)
+    if (state.flickerIntervalId) {
+      clearInterval(state.flickerIntervalId)
     }
-    showDemoFlickerIntervalId = setInterval(() => {
+    state.flickerIntervalId = setInterval(() => {
       const currentIsWhite = mainStore.isLightOn
       mainStore.isLightOn = !currentIsWhite
 
@@ -182,15 +181,20 @@ const handleShowDemoStep = (step) => {
         // Применяем цвет и яркость при включении
         screenColor.value = step.color
         screenBrightness.value = step.brightness
+        // Логируем изменение режима экрана при включении
+        trackScreenModeChange(true, step.color, step.brightness)
+      } else {
+        // Логируем изменение режима экрана при выключении
+        trackScreenModeChange(false, null, null)
       }
     }, 150)
     return
   }
 
   // Останавливаем мерцание если было
-  if (showDemoFlickerIntervalId) {
-    clearInterval(showDemoFlickerIntervalId)
-    showDemoFlickerIntervalId = null
+  if (state.flickerIntervalId) {
+    clearInterval(state.flickerIntervalId)
+    state.flickerIntervalId = null
   }
 
   // Устанавливаем состояние экрана
@@ -198,54 +202,67 @@ const handleShowDemoStep = (step) => {
     mainStore.isLightOn = true
     screenColor.value = step.color
     screenBrightness.value = step.brightness
+    // Логируем изменение режима экрана
+    trackScreenModeChange(true, step.color, step.brightness)
   } else if (step.status === 'off') {
     mainStore.isLightOn = false
+    // Логируем изменение режима экрана
+    trackScreenModeChange(false, null, null)
   }
 }
 
-// Функция для перехода к следующему шагу
-const playNextShowDemoStep = () => {
-  if (!isShowDemoActive.value || !showDemoSequence.length) {
+// Универсальная функция для перехода к следующему шагу
+const playNextStep = () => {
+  const state = currentSequenceState.value
+
+  if (!state.isActive || !state.sequence || !state.sequence.length) {
     return
   }
 
   // Переходим к следующему шагу
-  showDemoCurrentIndex++
+  state.currentIndex++
 
   // Если достигли конца последовательности, начинаем сначала
-  if (showDemoCurrentIndex >= showDemoSequence.length) {
-    showDemoCurrentIndex = 0
+  if (state.currentIndex >= state.sequence.length) {
+    state.currentIndex = 0
   }
 
-  const currentStep = showDemoSequence[showDemoCurrentIndex]
+  const currentStep = state.sequence[state.currentIndex]
 
   // Обрабатываем текущий шаг
-  handleShowDemoStep(currentStep)
+  handleStep(currentStep)
 
   // Запускаем таймаут для перехода к следующему шагу через duration текущего шага
-  const duration = currentStep.duration ?? SHOW_DEMO_DEFAULT_DURATION
-  showDemoTimeoutId = setTimeout(() => {
-    playNextShowDemoStep()
+  const duration = currentStep.duration ?? SHOW_DEFAULT_DURATION
+  state.timeoutId = setTimeout(() => {
+    playNextStep()
   }, duration)
 }
 
-// Запуск зацикленного show-demo
-const startShowDemo = () => {
-  if (isShowDemoActive.value || !showDemoSequence.length) {
+// Универсальная функция запуска последовательности
+const startShowSequence = (sequence) => {
+  if (!sequence || !sequence.length) {
     return
   }
 
-  isShowDemoActive.value = true
-  showDemoCurrentIndex = 0
+  // Останавливаем текущую последовательность если активна
+  if (currentSequenceState.value.isActive) {
+    stopShowSequence()
+  }
+
+  const state = currentSequenceState.value
+  state.sequence = sequence
+  state.isActive = true
+  state.currentIndex = 0
 
   // Обрабатываем первый шаг
-  const firstStep = showDemoSequence[0]
-  handleShowDemoStep(firstStep)
+  const firstStep = sequence[0]
+  handleStep(firstStep)
 
   // Запускаем таймаут для перехода к следующему шагу через duration первого шага
-  const duration = firstStep.duration ?? SHOW_DEMO_DEFAULT_DURATION
-  showDemoTimeoutId = setTimeout(() => {
-    playNextShowDemoStep()
+  const duration = firstStep.duration ?? SHOW_DEFAULT_DURATION
+  state.timeoutId = setTimeout(() => {
+    playNextStep()
   }, duration)
 }
 
@@ -255,9 +272,16 @@ const handleAudioSignal = (flag) => {
   if (!isStarted.value || isInitializing.value) return
 
   if (flag === 1) {
-    // Останавливаем show-demo если он активен
-    if (isShowDemoActive.value) {
-      stopShowDemo()
+    // Останавливаем текущую последовательность если активна
+    if (currentSequenceState.value.isActive) {
+      stopShowSequence()
+    }
+
+    // При первом сигнале запускаем show-part-1 зацикленно
+    if (!isFirstSignalReceived.value) {
+      isFirstSignalReceived.value = true
+      startShowSequence(showPart1Sequence)
+      return
     }
 
     // Если последовательность уже запущена, повторный запуск не нужен
@@ -268,6 +292,7 @@ const handleAudioSignal = (flag) => {
 
   if (flag === 0) {
     stopSequence()
+    stopShowSequence()
     handleColorChange(0)
   }
 }
@@ -294,7 +319,7 @@ const handleStart = async () => {
   isInitializing.value = false
 
   // Запускаем зацикленное проигрывание show-demo
-  startShowDemo()
+  startShowSequence(showDemoSequence)
 
   // Создаем объект с функциями логирования для передачи в useAudio
   const loggingCallbacks = {
@@ -326,8 +351,8 @@ onUnmounted(async () => {
   // Останавливаем последовательность
   stopSequence()
 
-  // Останавливаем show-demo
-  stopShowDemo()
+  // Останавливаем show-последовательность
+  stopShowSequence()
 
   // Деактивируем Wake Lock при размонтировании
   await releaseWakeLock()
@@ -461,17 +486,6 @@ onUnmounted(async () => {
     transform: scale(1.1);
     color: $color-show-red;
   }
-}
-
-.show-view__spectrum {
-  position: fixed;
-  bottom: 2rem;
-  left: 50%;
-  transform: translateX(-50%);
-  width: min(90vw, 60rem);
-  height: 12rem;
-  z-index: 1300;
-  pointer-events: none;
 }
 
 // Адаптивность для мобильных устройств
