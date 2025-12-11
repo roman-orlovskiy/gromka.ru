@@ -91,11 +91,11 @@ const isLoading = ref(false)
 const showSuccess = ref(false)
 const lastResult = ref(null)
 
-const { sendUltrasonicSignal, downloadUltrasonicWav } = useUltrasonicSignal()
+const { sendUltrasonicSignal, downloadUltrasonicWav, ultrasonicBurstDefaults } = useUltrasonicSignal()
 
 const onBroadcastClick = async (action) => {
   try {
-    await sendUltrasonicSignal(action, { count: 5, interFrameGapMs: 300 })
+    await sendUltrasonicSignal(action, ultrasonicBurstDefaults)
 
     const flag = action === 'on' ? 1 : 0
     const payloadFrequency = flag === 1 ? 19000 : 18000
@@ -106,7 +106,7 @@ const onBroadcastClick = async (action) => {
       type: 'ultrasonic',
       flag,
       frequency: `${payloadFrequency} Гц`,
-      message: `5 кадров подряд: частота ${payloadFrequency} Гц, пауза между кадрами 300мс`
+      message: `${ultrasonicBurstDefaults.count} кадров подряд: частота ${payloadFrequency} Гц, пауза между кадрами ${ultrasonicBurstDefaults.interFrameGapMs}мс`
     }
 
     // Показываем состояние успеха
@@ -137,7 +137,7 @@ const formatTime = (timestamp) => {
 
 const onDownloadClick = () => {
   try {
-    downloadUltrasonicWav('on')
+    downloadUltrasonicWav('on', null, ultrasonicBurstDefaults)
   } catch (error) {
     console.error('Ошибка при генерации файла:', error)
   }

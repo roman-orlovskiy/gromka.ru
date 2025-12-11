@@ -24,11 +24,16 @@ const SIGNAL_FRAME = {
   }
 }
 
+const getBurstDefaults = () => ({
+  count: SIGNAL_FRAME.burstCount,
+  interFrameGapMs: SIGNAL_FRAME.interFrameGapMs
+})
+
 /**
  * Отправляет ультразвуковой сигнал
  * @param {string} action - 'on' или 'off'
  * @param {Object} [options]
- * @param {number} [options.count=1] - количество кадров подряд
+ * @param {number} [options.count=SIGNAL_FRAME.burstCount] - количество кадров подряд
  * @param {number} [options.interFrameGapMs=SIGNAL_FRAME.interFrameGapMs] - пауза между кадрами
  * @returns {Promise<void>}
  */
@@ -65,11 +70,12 @@ export function sendUltrasonicSignal(action, options = {}) {
       const flag = action === 'on' ? 1 : 0
       const payloadFrequency =
         flag === 1 ? SIGNAL_FRAME.payloadFrequencies.on : SIGNAL_FRAME.payloadFrequencies.off
-      const burstCountRaw = typeof options.count === 'number' ? options.count : 1
+      const defaults = getBurstDefaults()
+      const burstCountRaw = typeof options.count === 'number' ? options.count : defaults.count
       const burstCount = Number.isFinite(burstCountRaw) ? Math.max(1, Math.floor(burstCountRaw)) : 1
 
       const interFrameGapMsRaw =
-        typeof options.interFrameGapMs === 'number' ? options.interFrameGapMs : SIGNAL_FRAME.interFrameGapMs
+        typeof options.interFrameGapMs === 'number' ? options.interFrameGapMs : defaults.interFrameGapMs
       const interFrameGapMs = Number.isFinite(interFrameGapMsRaw) ? Math.max(0, interFrameGapMsRaw) : 0
       const interFrameGapSec = interFrameGapMs / 1000
 
@@ -117,18 +123,30 @@ export function sendUltrasonicSignal(action, options = {}) {
 /**
  * Генерирует WAV файл с ультразвуковым сигналом
  * @param {string} action - 'on' или 'off'
+ * @param {Object} [options]
+ * @param {number} [options.count=SIGNAL_FRAME.burstCount] - количество кадров подряд
+ * @param {number} [options.interFrameGapMs=SIGNAL_FRAME.interFrameGapMs] - пауза между кадрами
  * @returns {Blob} WAV файл
  */
-export function generateUltrasonicWav(action) {
+export function generateUltrasonicWav(action, options = {}) {
   const sampleRate = 44100
   const flag = action === 'on' ? 1 : 0
   const payloadFrequency = flag === 1 ? SIGNAL_FRAME.payloadFrequencies.on : SIGNAL_FRAME.payloadFrequencies.off
+  const defaults = getBurstDefaults()
+  const burstCountRaw = typeof options.count === 'number' ? options.count : defaults.count
+  const burstCount = Number.isFinite(burstCountRaw) ? Math.max(1, Math.floor(burstCountRaw)) : 1
+
+  const interFrameGapMsRaw =
+    typeof options.interFrameGapMs === 'number' ? options.interFrameGapMs : defaults.interFrameGapMs
+  const interFrameGapMs = Number.isFinite(interFrameGapMsRaw) ? Math.max(0, interFrameGapMsRaw) : 0
 
   // Вычисляем длительности в сэмплах
   const preambleSamples = Math.floor(SIGNAL_FRAME.preambleDuration * sampleRate)
   const silenceSamples = Math.floor(SIGNAL_FRAME.silenceGap * sampleRate)
   const payloadSamples = Math.floor(SIGNAL_FRAME.payloadDuration * sampleRate)
-  const totalSamples = preambleSamples + silenceSamples + payloadSamples
+  const frameSamples = preambleSamples + silenceSamples + payloadSamples
+  const interFrameGapSamples = Math.floor((interFrameGapMs / 1000) * sampleRate)
+  const totalSamples = burstCount * frameSamples + Math.max(0, burstCount - 1) * interFrameGapSamples
 
   // Создаем массив сэмплов
   const samples = new Float32Array(totalSamples)
@@ -164,27 +182,31 @@ export function generateUltrasonicWav(action) {
   const attackSamples = Math.floor(SIGNAL_FRAME.envelope.attack * sampleRate)
   const releaseSamples = Math.floor(SIGNAL_FRAME.envelope.release * sampleRate)
 
-  // Преамбула
-  generateTone(
-    SIGNAL_FRAME.preambleFrequency,
-    0,
-    preambleSamples,
-    SIGNAL_FRAME.gains.preamble,
-    attackSamples,
-    releaseSamples
-  )
+  for (let i = 0; i < burstCount; i++) {
+    const frameStartSample = i * (frameSamples + interFrameGapSamples)
 
-  // Тишина (уже нули в массиве)
+    // Преамбула
+    generateTone(
+      SIGNAL_FRAME.preambleFrequency,
+      frameStartSample,
+      preambleSamples,
+      SIGNAL_FRAME.gains.preamble,
+      attackSamples,
+      releaseSamples
+    )
 
-  // Полезная часть
-  generateTone(
-    payloadFrequency,
-    preambleSamples + silenceSamples,
-    payloadSamples,
-    SIGNAL_FRAME.gains.payload,
-    attackSamples,
-    releaseSamples
-  )
+    // Тишина (уже нули в массиве)
+
+    // Полезная часть
+    generateTone(
+      payloadFrequency,
+      frameStartSample + preambleSamples + silenceSamples,
+      payloadSamples,
+      SIGNAL_FRAME.gains.payload,
+      attackSamples,
+      releaseSamples
+    )
+  }
 
   // Конвертируем Float32Array в Int16Array для WAV
   const int16Samples = new Int16Array(totalSamples)
@@ -230,9 +252,12 @@ export function generateUltrasonicWav(action) {
  * Скачивает WAV файл с ультразвуковым сигналом
  * @param {string} action - 'on' или 'off'
  * @param {string} filename - имя файла (по умолчанию 'ultrasonic-on.wav' или 'ultrasonic-off.wav')
+ * @param {Object} [options]
+ * @param {number} [options.count=SIGNAL_FRAME.burstCount] - количество кадров подряд
+ * @param {number} [options.interFrameGapMs=SIGNAL_FRAME.interFrameGapMs] - пауза между кадрами
  */
-export function downloadUltrasonicWav(action, filename = null) {
-  const blob = generateUltrasonicWav(action)
+export function downloadUltrasonicWav(action, filename = null, options = {}) {
+  const blob = generateUltrasonicWav(action, options)
   const defaultFilename = action === 'on' ? 'ultrasonic-on.wav' : 'ultrasonic-off.wav'
   const finalFilename = filename || defaultFilename
 
@@ -253,7 +278,8 @@ export function useUltrasonicSignal() {
   return {
     sendUltrasonicSignal,
     generateUltrasonicWav,
-    downloadUltrasonicWav
+    downloadUltrasonicWav,
+    ultrasonicBurstDefaults: Object.freeze(getBurstDefaults())
   }
 }
 
