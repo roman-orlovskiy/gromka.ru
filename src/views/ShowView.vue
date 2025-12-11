@@ -405,9 +405,8 @@ const handleStart = async () => {
     logFirstSoundSignal
   }
 
+  await sleep(1500)
   try {
-    // Задержка перед запросом микрофона
-    await sleep(1500)
     await requestMicrophonePermission(loggingCallbacks, handleAudioSignal)
     // Доступ к микрофону получен, обновляем статус
     hasMicrophoneAccess.value = true
