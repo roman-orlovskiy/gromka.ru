@@ -97,17 +97,29 @@
         <h2 class="section-title">Логи ({{ logs.length }})</h2>
         <div class="logs-container">
           <div
-            v-for="(log, index) in logs"
-            :key="index"
-            class="log-item"
-            :class="`log-item--${log.type}`"
+            v-for="(group, groupIndex) in groupedLogs"
+            :key="groupIndex"
+            class="log-group"
           >
-            <div class="log-item__header">
-              <span class="log-item__type">{{ log.type }}</span>
-              <span class="log-item__timestamp">{{ formatLogTimestamp(log.timestamp) }}</span>
+            <div class="log-group__header">
+              <span class="log-group__time">{{ formatGroupTime(group.timeRange.start) }}</span>
+              <span class="log-group__count">{{ group.logs.length }} {{ group.logs.length === 1 ? 'лог' : group.logs.length < 5 ? 'лога' : 'логов' }}</span>
             </div>
-            <div class="log-item__data">
-              <pre class="log-item__json">{{ formatLogData(log.data) }}</pre>
+            <div class="log-group__items">
+              <div
+                v-for="(log, index) in group.logs"
+                :key="index"
+                class="log-item"
+                :class="`log-item--${log.type}`"
+              >
+                <div class="log-item__header">
+                  <span class="log-item__type">{{ log.type }}</span>
+                  <span class="log-item__timestamp">{{ formatLogTimestamp(log.timestamp) }}</span>
+                </div>
+                <div class="log-item__data">
+                  <pre class="log-item__json">{{ formatLogData(log.data) }}</pre>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -270,6 +282,60 @@ const formatLogData = (data) => {
   }
 }
 
+// Группировка логов по 30-минутным интервалам (полчаса)
+const groupedLogs = computed(() => {
+  if (!logs.value || logs.value.length === 0) return []
+
+  // Сортируем логи по времени
+  const sortedLogs = [...logs.value].sort((a, b) => {
+    const timeA = a.timestamp || 0
+    const timeB = b.timestamp || 0
+    return timeA - timeB
+  })
+
+  const groups = []
+  const THIRTY_MINUTES = 30 * 60 * 1000 // 30 минут в миллисекундах
+
+  sortedLogs.forEach(log => {
+    const logTime = log.timestamp || 0
+    
+    // Находим или создаем группу для этого лога
+    let group = groups.find(g => {
+      const timeDiff = logTime - g.timeRange.start
+      return timeDiff >= 0 && timeDiff < THIRTY_MINUTES
+    })
+
+    if (!group) {
+      // Создаем новую группу, округляя время начала до 30 минут
+      const groupStart = Math.floor(logTime / THIRTY_MINUTES) * THIRTY_MINUTES
+      group = {
+        timeRange: {
+          start: groupStart,
+          end: groupStart + THIRTY_MINUTES
+        },
+        logs: []
+      }
+      groups.push(group)
+    }
+
+    group.logs.push(log)
+  })
+
+  return groups
+})
+
+const formatGroupTime = (timestamp) => {
+  if (!timestamp) return 'Неизвестно'
+  const date = new Date(timestamp)
+  return date.toLocaleString('ru-RU', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  })
+}
+
 const goBack = () => {
   emit('back')
 }
@@ -395,9 +461,46 @@ onMounted(() => {
 .logs-container {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 2rem;
   max-height: 80vh;
   overflow-y: auto;
+}
+
+.log-group {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.log-group__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  background: $color-gray-200;
+  border-radius: 0.8rem;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.log-group__time {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: $color-gray-700;
+}
+
+.log-group__count {
+  font-size: 1.4rem;
+  color: $color-gray-600;
+  font-weight: 500;
+}
+
+.log-group__items {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding-left: 1rem;
 }
 
 .log-item {
@@ -413,6 +516,10 @@ onMounted(() => {
   &--flashlight_support,
   &--flashlight_change {
     border-left: 4px solid $color-vibrant-orange;
+  }
+
+  &--screen_mode_change {
+    border-left: 4px solid $color-primary;
   }
 
   &--microphone_permission,

@@ -112,6 +112,7 @@ const {
   logAudioSettings,
   logFirstSoundSignal,
   logDeviceInfo,
+  trackScreenModeChange,
   logs
 } = useLogging()
 
@@ -286,6 +287,8 @@ const handleStart = async () => {
   // Используем флаг, чтобы не запустить последовательность при начальной установке
   isInitializing.value = true
   mainStore.isLightOn = true
+  // Логируем начальное состояние режима экрана
+  trackScreenModeChange(true, screenColor.value, screenBrightness.value)
 
   // Снимаем флаг инициализации после установки начального состояния
   isInitializing.value = false

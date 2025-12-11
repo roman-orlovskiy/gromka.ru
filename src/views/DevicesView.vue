@@ -14,6 +14,10 @@
           <div class="stat-card__value">{{ withFlashlightCount }}</div>
           <div class="stat-card__label">С фонариком (5 дней)</div>
         </div>
+        <div class="stat-card">
+          <div class="stat-card__value">{{ withScreenCount }}</div>
+          <div class="stat-card__label">С экраном (5 дней)</div>
+        </div>
       </div>
     </div>
 
@@ -61,49 +65,67 @@
       <!-- Список устройств -->
       <div class="devices-view__list">
         <div
-          v-for="device in filteredDevices"
-          :key="device.id"
-          class="device-card"
-          @click="openDeviceDetail(device.id)"
+          v-for="(group, groupIndex) in groupedDevices"
+          :key="groupIndex"
+          class="device-group"
         >
-          <div class="device-card__header">
-            <div class="device-card__id">{{ device.id }}</div>
-            <div class="device-card__badges">
-              <span
-                v-if="device.hasFlashlight"
-                class="device-badge device-badge--flashlight"
-              >
-                <FlashlightIcon />
-              </span>
-              <span
-                v-if="device.hasAudio"
-                class="device-badge device-badge--audio"
-              >
-                <MicrophoneIcon />
-              </span>
-            </div>
+          <div class="device-group__header">
+            <span class="device-group__time">{{ formatGroupTime(group.timeRange.start) }}</span>
+            <span class="device-group__count">{{ group.devices.length }} {{ group.devices.length === 1 ? 'устройство' : group.devices.length < 5 ? 'устройства' : 'устройств' }}</span>
           </div>
+          <div class="device-group__items">
+            <div
+              v-for="device in group.devices"
+              :key="device.id"
+              class="device-card"
+              @click="openDeviceDetail(device.id)"
+            >
+              <div class="device-card__header">
+                <div class="device-card__id">{{ device.id }}</div>
+                <div class="device-card__badges">
+                  <span
+                    v-if="device.hasFlashlight"
+                    class="device-badge device-badge--flashlight"
+                  >
+                    <FlashlightIcon />
+                  </span>
+                  <span
+                    v-if="device.hasScreen"
+                    class="device-badge device-badge--screen"
+                  >
+                    <ScreenIcon />
+                  </span>
+                  <span
+                    v-if="device.hasAudio"
+                    class="device-badge device-badge--audio"
+                  >
+                    <MicrophoneIcon />
+                  </span>
+                </div>
+              </div>
 
-          <div class="device-card__info">
-            <div class="device-info-item">
-              <span class="device-info-item__label">Платформа:</span>
-              <span class="device-info-item__value">{{ device.platform || 'Неизвестно' }}</span>
-            </div>
-            <div class="device-info-item">
-              <span class="device-info-item__label">Устройство:</span>
-              <span class="device-info-item__value">{{ device.deviceInfo || 'Неизвестно' }}</span>
-            </div>
-            <div class="device-info-item">
-              <span class="device-info-item__label">Браузер:</span>
-              <span class="device-info-item__value">{{ device.browser || 'Неизвестно' }}</span>
-            </div>
-            <div class="device-info-item">
-              <span class="device-info-item__label">Изменений звука:</span>
-              <span class="device-info-item__value">{{ device.soundChangeCount || 0 }}</span>
-            </div>
-            <div class="device-info-item">
-              <span class="device-info-item__label">Последняя активность:</span>
-              <span class="device-info-item__value">{{ formatDate(device.lastActivity) }}</span>
+              <div class="device-card__info">
+                <div class="device-info-item">
+                  <span class="device-info-item__label">Платформа:</span>
+                  <span class="device-info-item__value">{{ device.platform || 'Неизвестно' }}</span>
+                </div>
+                <div class="device-info-item">
+                  <span class="device-info-item__label">Устройство:</span>
+                  <span class="device-info-item__value">{{ device.deviceInfo || 'Неизвестно' }}</span>
+                </div>
+                <div class="device-info-item">
+                  <span class="device-info-item__label">Браузер:</span>
+                  <span class="device-info-item__value">{{ device.browser || 'Неизвестно' }}</span>
+                </div>
+                <div class="device-info-item">
+                  <span class="device-info-item__label">Изменений звука:</span>
+                  <span class="device-info-item__value">{{ device.soundChangeCount || 0 }}</span>
+                </div>
+                <div class="device-info-item">
+                  <span class="device-info-item__label">Последняя активность:</span>
+                  <span class="device-info-item__value">{{ formatDate(device.lastActivity) }}</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -123,6 +145,7 @@ import LoadingSpinner from '@/components/LoadingSpinner.vue'
 import DeviceDetailView from '@/views/DeviceDetailView.vue'
 import FlashlightIcon from '@/components/icons/FlashlightIcon.vue'
 import MicrophoneIcon from '@/components/icons/MicrophoneIcon.vue'
+import ScreenIcon from '@/components/icons/ScreenIcon.vue'
 import { getGromkaLogs } from '@/services/api'
 
 const route = useRoute()
@@ -158,6 +181,10 @@ const flashlightOptions = [
 
 const withFlashlightCount = computed(() => {
   return devicesLast5Days.value.filter(d => d.hasFlashlight).length
+})
+
+const withScreenCount = computed(() => {
+  return devicesLast5Days.value.filter(d => d.hasScreen).length
 })
 
 // Устройства за последние 5 дней
@@ -198,6 +225,53 @@ const filteredDevices = computed(() => {
   return filtered.sort((a, b) => b.lastActivity - a.lastActivity)
 })
 
+// Группировка устройств по 30-минутным интервалам (полчаса)
+const groupedDevices = computed(() => {
+  if (!filteredDevices.value || filteredDevices.value.length === 0) return []
+
+  const groups = []
+  const THIRTY_MINUTES = 30 * 60 * 1000 // 30 минут в миллисекундах
+
+  filteredDevices.value.forEach(device => {
+    const deviceTime = device.lastActivity || 0
+
+    // Находим или создаем группу для этого устройства
+    let group = groups.find(g => {
+      const timeDiff = deviceTime - g.timeRange.start
+      return timeDiff >= 0 && timeDiff < THIRTY_MINUTES
+    })
+
+    if (!group) {
+      // Создаем новую группу, округляя время начала до 30 минут
+      const groupStart = Math.floor(deviceTime / THIRTY_MINUTES) * THIRTY_MINUTES
+      group = {
+        timeRange: {
+          start: groupStart,
+          end: groupStart + THIRTY_MINUTES
+        },
+        devices: []
+      }
+      groups.push(group)
+    }
+
+    group.devices.push(device)
+  })
+
+  return groups
+})
+
+const formatGroupTime = (timestamp) => {
+  if (!timestamp) return 'Неизвестно'
+  const date = new Date(timestamp)
+  return date.toLocaleString('ru-RU', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  })
+}
+
 const parseDeviceData = (logEntry) => {
   try {
     const logData = typeof logEntry.logs === 'string'
@@ -222,6 +296,10 @@ const parseDeviceData = (logEntry) => {
     const hasFlashlight = flashlightSupportLog?.data?.isSupported === true ||
       torchEnabledLogs.length > 0 ||
       flashlightChangeLogs.some(log => log.data?.isOn === true && log.data?.method !== null)
+
+    // Экран есть, если есть хотя бы один лог изменения режима экрана
+    const screenModeChangeLogs = logData.logs?.filter(log => log.type === 'screen_mode_change') || []
+    const hasScreen = screenModeChangeLogs.length > 0
 
     const microphoneLog = logData.logs?.find(log => log.type === 'microphone_permission')
     const audioSettingsLog = logData.logs?.find(log => log.type === 'audio_settings')
@@ -280,6 +358,7 @@ const parseDeviceData = (logEntry) => {
       deviceInfo: deviceInfoStr,
       browser,
       hasFlashlight,
+      hasScreen,
       hasAudio,
       soundChangeCount: logData.soundChangeCount || 0,
       lastActivity,
@@ -294,6 +373,7 @@ const parseDeviceData = (logEntry) => {
       deviceInfo: 'Ошибка парсинга',
       browser: 'Ошибка',
       hasFlashlight: false,
+      hasScreen: false,
       hasAudio: false,
       soundChangeCount: 0,
       lastActivity: 0,
@@ -465,6 +545,42 @@ onMounted(() => {
 }
 
 .devices-view__list {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.device-group {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.device-group__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  background: $color-gray-200;
+  border-radius: 0.8rem;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.device-group__time {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: $color-gray-700;
+}
+
+.device-group__count {
+  font-size: 1.4rem;
+  color: $color-gray-600;
+  font-weight: 500;
+}
+
+.device-group__items {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
   gap: 2rem;
@@ -529,6 +645,11 @@ onMounted(() => {
     background: rgba($color-vibrant-purple, 0.15);
     color: $color-vibrant-purple;
   }
+
+  &--screen {
+    background: rgba($color-primary, 0.15);
+    color: $color-primary;
+  }
 }
 
 .device-card__info {
@@ -586,7 +707,7 @@ onMounted(() => {
     width: 100%;
   }
 
-  .devices-view__list {
+  .device-group__items {
     grid-template-columns: 1fr;
     gap: 1.5rem;
   }

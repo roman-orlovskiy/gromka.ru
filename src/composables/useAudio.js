@@ -154,25 +154,46 @@ export function useAudio() {
   // Функция для запроса разрешения на микрофон
   // existingStream — если передан, используем его вместо нового запроса
   const requestMicrophonePermission = async (loggingCallback = null, signalCallback = null, existingStream = null) => {
-    // Если уже слушаем — не создаём новый AudioContext
-    if (isListening.value) {
-      console.log('requestMicrophonePermission: уже слушаем, пропускаем')
-      return existingStream || true
-    }
-
-    // Если уже есть stream с audio — используем его
-    if (existingStream && existingStream.getAudioTracks().length > 0) {
-      return setupWithExistingStream(existingStream, loggingCallback, signalCallback)
-        ? existingStream
-        : null
-    }
-
     const audioSettings = {
       sampleRate: 44100,
       channelCount: 1,
       echoCancellation: false,
       noiseSuppression: false,
       autoGainControl: false
+    }
+
+    // Если уже слушаем — не создаём новый AudioContext
+    if (isListening.value) {
+      console.log('requestMicrophonePermission: уже слушаем, пропускаем')
+      if (loggingCallback) {
+        loggingCallback.logMicrophonePermission(true)
+        loggingCallback.logAudioSettings(audioSettings)
+      }
+      return existingStream || true
+    }
+
+    // Если уже есть stream с audio — используем его
+    if (existingStream && existingStream.getAudioTracks().length > 0) {
+      if (loggingCallback) {
+        loggingCallback.logMicrophonePermission(true)
+        loggingCallback.logAudioSettings(audioSettings)
+      }
+      return setupWithExistingStream(existingStream, loggingCallback, signalCallback)
+        ? existingStream
+        : null
+    }
+
+    // Проверяем поддержку MediaDevices API
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      const error = new Error('MediaDevices API не поддерживается в этом браузере или контексте')
+      console.error('Ошибка доступа к микрофону:', error)
+      hasPermission.value = false
+
+      // Логируем ошибку получения разрешения
+      if (loggingCallback) {
+        loggingCallback.logMicrophonePermission(false, error)
+      }
+      return null
     }
 
     try {
@@ -198,6 +219,7 @@ export function useAudio() {
       if (loggingCallback) {
         loggingCallback.logMicrophonePermission(false, error)
       }
+      return null
     }
   }
 

@@ -94,6 +94,18 @@ export function useLogging() {
     })
   }
 
+  // Отслеживание изменений режима экрана
+  const trackScreenModeChange = (isOn, color = null, brightness = null) => {
+    if (!isLoggingEnabled.value) return
+
+    addLog('screen_mode_change', {
+      isOn,
+      color,
+      brightness,
+      timestamp: Date.now()
+    })
+  }
+
   // Логирование информации о камерах
   const logCameraInfo = (cameras, selectedMethod) => {
     if (!isLoggingEnabled.value) return
@@ -681,6 +693,7 @@ export function useLogging() {
     disableLogging,
     trackSoundChange,
     trackFlashlightChange,
+    trackScreenModeChange,
     logCameraInfo,
     logMicrophonePermission,
     logAudioSettings,
