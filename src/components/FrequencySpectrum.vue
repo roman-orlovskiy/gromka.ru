@@ -25,7 +25,7 @@ const props = defineProps({
   },
   frequencyRange: {
     type: Object,
-    default: () => ({ min: 17500, max: 19500 })
+    default: () => ({ min: 17000, max: 19000 })
   }
 })
 
@@ -100,9 +100,9 @@ const drawSpectrum = () => {
   ctx.lineWidth = 1
 
   // Отмечаем важные частоты
-  const preambleFreq = 19500
-  const payloadOnFreq = 19000
-  const payloadOffFreq = 18000
+  const preambleFreq = 18000
+  const payloadOnFreq = 17500
+  const payloadOffFreq = 18500
 
   const freqToPosition = (freq) => {
     const range = props.frequencyRange.max - props.frequencyRange.min
@@ -117,7 +117,7 @@ const drawSpectrum = () => {
   const payloadOnX = freqToPosition(payloadOnFreq)
   const payloadOffX = freqToPosition(payloadOffFreq)
 
-  // Преамбула (19500 Гц)
+  // Преамбула (18000 Гц)
   if (preambleX >= 0 && preambleX <= width) {
     ctx.beginPath()
     ctx.moveTo(preambleX, 0)
@@ -128,7 +128,7 @@ const drawSpectrum = () => {
     ctx.fillStyle = 'rgba(255, 255, 255, 0.9)'
     ctx.font = 'bold 11px monospace'
     ctx.textAlign = 'center'
-    ctx.fillText('19500', preambleX, height - 8)
+    ctx.fillText('18000', preambleX, height - 8)
   }
 
   // Полезные частоты
@@ -142,7 +142,7 @@ const drawSpectrum = () => {
     ctx.fillStyle = 'rgba(255, 255, 255, 0.9)'
     ctx.font = 'bold 11px monospace'
     ctx.textAlign = 'center'
-    ctx.fillText('19000', payloadOnX, height - 8)
+    ctx.fillText('17500', payloadOnX, height - 8)
   }
 
   if (payloadOffX >= 0 && payloadOffX <= width) {
@@ -155,7 +155,7 @@ const drawSpectrum = () => {
     ctx.fillStyle = 'rgba(255, 255, 255, 0.9)'
     ctx.font = 'bold 11px monospace'
     ctx.textAlign = 'center'
-    ctx.fillText('18000', payloadOffX, height - 8)
+    ctx.fillText('18500', payloadOffX, height - 8)
   }
 
   // Рисуем бары спектра

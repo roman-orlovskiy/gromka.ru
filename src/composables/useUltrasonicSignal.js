@@ -4,10 +4,10 @@
  */
 
 const SIGNAL_FRAME = {
-  preambleFrequency: 19500,
+  preambleFrequency: 18000,
   payloadFrequencies: {
-    on: 19000,
-    off: 18000
+    on: 17500,
+    off: 18500
   },
   preambleDuration: 0.08,
   payloadDuration: 0.2,

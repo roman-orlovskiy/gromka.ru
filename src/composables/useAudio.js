@@ -11,7 +11,7 @@ export function useAudio() {
   const lastSignal = ref(null)
   const isFirstSignal = ref(true)
   const frequencyData = ref(null) // Данные для визуализации спектра
-  const frequencyRange = ref({ min: 17500, max: 19500 }) // Диапазон частот для визуализации
+  const frequencyRange = ref({ min: 17000, max: 19000 }) // Диапазон частот для визуализации
 
   let audioContext = null
   let analyser = null
@@ -24,9 +24,9 @@ export function useAudio() {
   let frequencyResolution = null
 
   const SIGNAL_CONSTANTS = {
-    PREAMBLE_FREQ: 19500,
-    PAYLOAD_FREQ_ON: 19000,
-    PAYLOAD_FREQ_OFF: 18000,
+    PREAMBLE_FREQ: 18000,
+    PAYLOAD_FREQ_ON: 17500,
+    PAYLOAD_FREQ_OFF: 18500,
     PREAMBLE_TOLERANCE: 150,
     PAYLOAD_TOLERANCE: 160,
     PREAMBLE_THRESHOLD: 110,
@@ -244,8 +244,8 @@ export function useAudio() {
     dataArray = new Uint8Array(bufferLength)
 
     // Предвычисляем константы для ультразвукового диапазона
-    const MIN_FREQ = 17500
-    const MAX_FREQ = 19500
+    const MIN_FREQ = 17000
+    const MAX_FREQ = 19000
     minIndex = Math.floor((MIN_FREQ * analyser.fftSize) / audioContext.sampleRate)
     maxIndex = Math.min(
       Math.ceil((MAX_FREQ * analyser.fftSize) / audioContext.sampleRate),
