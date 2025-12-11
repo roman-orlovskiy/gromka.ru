@@ -319,9 +319,9 @@ const handleAudioSignal = async (flag) => {
     stopShowSequence()
     handleColorChange(0)
     // Освобождаем Wake Lock при остановке
-    await releaseWakeLock()
+    releaseWakeLock()
     // Выходим из полноэкранного режима при остановке
-    await exitFullscreen()
+    exitFullscreen()
     showHeartOverlay.value = false
   }
 }
@@ -338,10 +338,10 @@ const handleStart = async () => {
   showHeartOverlay.value = true
 
   // Входим в полноэкранный режим
-  await enterFullscreen()
+  enterFullscreen()
 
   // Активируем Wake Lock для предотвращения засыпания экрана
-  await requestWakeLock()
+  requestWakeLock()
 
   // Устанавливаем начальное состояние - белый экран
   // Используем флаг, чтобы не запустить последовательность при начальной установке
@@ -390,10 +390,10 @@ onUnmounted(async () => {
   stopShowSequence()
 
   // Выходим из полноэкранного режима
-  await exitFullscreen()
+  exitFullscreen()
 
   // Деактивируем Wake Lock при размонтировании
-  await releaseWakeLock()
+  releaseWakeLock()
 
   showHeartOverlay.value = false
   cleanup()

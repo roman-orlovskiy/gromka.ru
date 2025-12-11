@@ -6,15 +6,79 @@
       <div class="heart-overlay__heart">
         <svg
           class="heart-overlay__svg"
-          viewBox="0 0 32 30"
+          viewBox="0 0 60 54"
           shape-rendering="crispEdges"
           role="presentation"
           aria-hidden="true"
         >
-          <path
-            class="heart-overlay__shape"
-            d="M16 30 L2 16 L2 8 L8 8 L8 2 L12 2 L12 8 L20 8 L20 2 L24 2 L24 8 L30 8 L30 16 Z"
-          />
+          <!-- Белая заливка -->
+          <g class="heart-overlay__fill">
+            <rect x="6" y="12" width="6" height="6" />
+            <rect x="12" y="12" width="6" height="6" />
+            <rect x="18" y="12" width="6" height="6" />
+            <rect x="6" y="18" width="6" height="6" />
+            <rect x="12" y="18" width="6" height="6" />
+            <rect x="18" y="18" width="6" height="6" />
+            <rect x="24" y="18" width="6" height="6" />
+            <rect x="30" y="18" width="6" height="6" />
+            <rect x="36" y="12" width="6" height="6" />
+            <rect x="42" y="12" width="6" height="6" />
+            <rect x="48" y="12" width="6" height="6" />
+            <rect x="36" y="18" width="6" height="6" />
+            <rect x="42" y="18" width="6" height="6" />
+            <rect x="48" y="18" width="6" height="6" />
+            <rect x="6" y="24" width="6" height="6" />
+            <rect x="12" y="24" width="6" height="6" />
+            <rect x="18" y="24" width="6" height="6" />
+            <rect x="24" y="24" width="6" height="6" />
+            <rect x="30" y="24" width="6" height="6" />
+            <rect x="36" y="24" width="6" height="6" />
+            <rect x="42" y="24" width="6" height="6" />
+            <rect x="48" y="24" width="6" height="6" />
+            <rect x="12" y="30" width="6" height="6" />
+            <rect x="18" y="30" width="6" height="6" />
+            <rect x="24" y="30" width="6" height="6" />
+            <rect x="30" y="30" width="6" height="6" />
+            <rect x="36" y="30" width="6" height="6" />
+            <rect x="42" y="30" width="6" height="6" />
+            <rect x="18" y="36" width="6" height="6" />
+            <rect x="24" y="36" width="6" height="6" />
+            <rect x="30" y="36" width="6" height="6" />
+            <rect x="36" y="36" width="6" height="6" />
+            <rect x="24" y="42" width="6" height="6" />
+            <rect x="30" y="42" width="6" height="6" />
+          </g>
+
+          <!-- Красный контур -->
+          <g class="heart-overlay__border">
+            <!-- Верхняя часть -->
+            <rect x="12" y="6" width="6" height="6" />
+            <rect x="18" y="6" width="6" height="6" />
+            <rect x="6" y="6" width="6" height="6" />
+            <rect x="36" y="6" width="6" height="6" />
+            <rect x="42" y="6" width="6" height="6" />
+            <rect x="48" y="6" width="6" height="6" />
+
+            <!-- Боковые стороны -->
+            <rect x="0" y="12" width="6" height="6" />
+            <rect x="0" y="18" width="6" height="6" />
+            <rect x="0" y="24" width="6" height="6" />
+            <rect x="24" y="12" width="6" height="6" />
+            <rect x="30" y="12" width="6" height="6" />
+            <rect x="54" y="12" width="6" height="6" />
+            <rect x="54" y="18" width="6" height="6" />
+            <rect x="54" y="24" width="6" height="6" />
+
+            <!-- Нижняя часть -->
+            <rect x="6" y="30" width="6" height="6" />
+            <rect x="12" y="36" width="6" height="6" />
+            <rect x="18" y="42" width="6" height="6" />
+            <rect x="24" y="48" width="6" height="6" />
+            <rect x="30" y="48" width="6" height="6" />
+            <rect x="36" y="42" width="6" height="6" />
+            <rect x="42" y="36" width="6" height="6" />
+            <rect x="48" y="30" width="6" height="6" />
+          </g>
         </svg>
 
         <div class="heart-overlay__message" v-html="messageHtml" />
@@ -79,10 +143,12 @@ defineProps({
     height: auto;
   }
 
-  &__shape {
+  &__fill rect {
     fill: $color-white;
-    stroke: $color-show-red;
-    stroke-width: 2;
+  }
+
+  &__border rect {
+    fill: $color-show-red;
   }
 
   &__message {
