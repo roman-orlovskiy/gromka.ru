@@ -95,7 +95,7 @@ const { sendUltrasonicSignal, downloadUltrasonicWav } = useUltrasonicSignal()
 
 const onBroadcastClick = async (action) => {
   try {
-    await sendUltrasonicSignal(action)
+    await sendUltrasonicSignal(action, { count: 5, interFrameGapMs: 300 })
 
     const flag = action === 'on' ? 1 : 0
     const payloadFrequency = flag === 1 ? 19000 : 18000
@@ -106,7 +106,7 @@ const onBroadcastClick = async (action) => {
       type: 'ultrasonic',
       flag,
       frequency: `${payloadFrequency} Гц`,
-      message: `Одиночный кадр: частота ${payloadFrequency} Гц`
+      message: `5 кадров подряд: частота ${payloadFrequency} Гц, пауза между кадрами 300мс`
     }
 
     // Показываем состояние успеха

@@ -12,6 +12,8 @@ const SIGNAL_FRAME = {
   preambleDuration: 0.08,
   payloadDuration: 0.2,
   silenceGap: 0.05,
+  interFrameGapMs: 300,
+  burstCount: 5,
   gains: {
     preamble: 1,
     payload: 1
@@ -25,9 +27,12 @@ const SIGNAL_FRAME = {
 /**
  * Отправляет ультразвуковой сигнал
  * @param {string} action - 'on' или 'off'
+ * @param {Object} [options]
+ * @param {number} [options.count=1] - количество кадров подряд
+ * @param {number} [options.interFrameGapMs=SIGNAL_FRAME.interFrameGapMs] - пауза между кадрами
  * @returns {Promise<void>}
  */
-export function sendUltrasonicSignal(action) {
+export function sendUltrasonicSignal(action, options = {}) {
   return new Promise((resolve, reject) => {
     try {
       const ctx = new (window.AudioContext || window.webkitAudioContext)()
@@ -60,32 +65,47 @@ export function sendUltrasonicSignal(action) {
       const flag = action === 'on' ? 1 : 0
       const payloadFrequency =
         flag === 1 ? SIGNAL_FRAME.payloadFrequencies.on : SIGNAL_FRAME.payloadFrequencies.off
+      const burstCountRaw = typeof options.count === 'number' ? options.count : 1
+      const burstCount = Number.isFinite(burstCountRaw) ? Math.max(1, Math.floor(burstCountRaw)) : 1
+
+      const interFrameGapMsRaw =
+        typeof options.interFrameGapMs === 'number' ? options.interFrameGapMs : SIGNAL_FRAME.interFrameGapMs
+      const interFrameGapMs = Number.isFinite(interFrameGapMsRaw) ? Math.max(0, interFrameGapMsRaw) : 0
+      const interFrameGapSec = interFrameGapMs / 1000
+
+      const frameDurationSec =
+        SIGNAL_FRAME.preambleDuration + SIGNAL_FRAME.silenceGap + SIGNAL_FRAME.payloadDuration
+
       const startTime = ctx.currentTime
 
-      emitTone({
-        frequency: SIGNAL_FRAME.preambleFrequency,
-        gain: SIGNAL_FRAME.gains.preamble,
-        startTime,
-        duration: SIGNAL_FRAME.preambleDuration
-      })
+      for (let i = 0; i < burstCount; i++) {
+        const frameStartTime = startTime + i * (frameDurationSec + interFrameGapSec)
 
-      emitTone({
-        frequency: payloadFrequency,
-        gain: SIGNAL_FRAME.gains.payload,
-        startTime: startTime + SIGNAL_FRAME.preambleDuration + SIGNAL_FRAME.silenceGap,
-        duration: SIGNAL_FRAME.payloadDuration
-      })
+        emitTone({
+          frequency: SIGNAL_FRAME.preambleFrequency,
+          gain: SIGNAL_FRAME.gains.preamble,
+          startTime: frameStartTime,
+          duration: SIGNAL_FRAME.preambleDuration
+        })
 
-      const totalDuration =
-        SIGNAL_FRAME.preambleDuration + SIGNAL_FRAME.silenceGap + SIGNAL_FRAME.payloadDuration
+        emitTone({
+          frequency: payloadFrequency,
+          gain: SIGNAL_FRAME.gains.payload,
+          startTime: frameStartTime + SIGNAL_FRAME.preambleDuration + SIGNAL_FRAME.silenceGap,
+          duration: SIGNAL_FRAME.payloadDuration
+        })
+      }
+
+      const totalDurationSec =
+        burstCount * frameDurationSec + Math.max(0, burstCount - 1) * interFrameGapSec
 
       setTimeout(() => {
         ctx.close()
         resolve()
-      }, (totalDuration + 0.1) * 1000)
+      }, (totalDurationSec + 0.1) * 1000)
 
       console.log(
-        `Передан одиночный кадр: флаг ${flag}, преамбула ${SIGNAL_FRAME.preambleFrequency} Гц, полезная часть ${payloadFrequency} Гц`
+        `Передан сигнал: кадров ${burstCount}, флаг ${flag}, преамбула ${SIGNAL_FRAME.preambleFrequency} Гц, полезная часть ${payloadFrequency} Гц, пауза между кадрами ${interFrameGapMs}мс`
       )
     } catch (error) {
       console.error('Ошибка при передаче ультразвукового сигнала:', error)
@@ -133,7 +153,7 @@ export function generateUltrasonicWav(action) {
 
       samples[sampleIndex] = Math.sin(phase) * envelope
       phase += phaseIncrement
-      
+
       // Нормализуем фазу для избежания переполнения
       if (phase >= twoPi) {
         phase -= twoPi
