@@ -87,7 +87,7 @@ const heartMessage = computed(() => {
     return 'Разрешите<br>микрофон<br>для синхронизации'
   }
   if (showScreenRotationMessage.value) {
-    return 'Разверните<br>экран<br>ко льду'
+    return 'Разверните<br>экран<br>к сцене'
   }
   return 'Яркость<br>экрана<br>на максимум'
 })
