@@ -86,7 +86,7 @@ const showScreenRotationMessage = ref(false)
 // Computed для сообщения в сердце
 const heartMessage = computed(() => {
   if (!hasMicrophoneAccess.value) {
-    return 'Разрешите<br>микрофон<br>для синхронизации'
+    return 'Чтобы билось в унисон,<br><br>разрешите<br>микрофон!'
   }
   if (showScreenRotationMessage.value) {
     return 'Разверните<br>экран<br>к сцене'
