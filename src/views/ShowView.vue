@@ -8,6 +8,13 @@
       :style="flickerLayerStyle"
     />
 
+    <Transition name="heart-fade">
+      <HeartOverlay
+        v-if="showHeartOverlay"
+        :message-html="heartMessage"
+      />
+    </Transition>
+
     <!-- Кнопка запуска -->
     <div v-if="!isStarted" class="show-view__start">
       <div class="show-view__content">
@@ -51,6 +58,7 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { storeToRefs } from 'pinia'
 import ButtonComp from '@/components/ButtonComp.vue'
+import HeartOverlay from '@/components/HeartOverlay.vue'
 import { useAudio } from '@/composables/useAudio'
 import { useWakeLock } from '@/composables/useWakeLock'
 import { useFullscreen } from '@/composables/useFullscreen'
@@ -69,6 +77,8 @@ const { isLightOn } = storeToRefs(mainStore)
 // Реактивные переменные для цвета и яркости экрана
 const screenColor = ref('ffffff')
 const screenBrightness = ref(100)
+const showHeartOverlay = ref(false)
+const heartMessage = computed(() => 'Яркость<br>экрана<br>на максимум')
 
 // Используем composable для аудио
 const {
@@ -312,6 +322,7 @@ const handleAudioSignal = async (flag) => {
     await releaseWakeLock()
     // Выходим из полноэкранного режима при остановке
     await exitFullscreen()
+    showHeartOverlay.value = false
   }
 }
 
@@ -322,6 +333,9 @@ const handleStart = async () => {
 
   // Включаем логирование
   enableLogging()
+
+  // Показываем подсказку с сердцем
+  showHeartOverlay.value = true
 
   // Входим в полноэкранный режим
   await enterFullscreen()
@@ -381,6 +395,7 @@ onUnmounted(async () => {
   // Деактивируем Wake Lock при размонтировании
   await releaseWakeLock()
 
+  showHeartOverlay.value = false
   cleanup()
 })
 </script>
@@ -499,6 +514,16 @@ onUnmounted(async () => {
   color: $color-gray-600;
   text-align: center;
   line-height: 1.4;
+}
+
+.heart-fade-enter-active,
+.heart-fade-leave-active {
+  transition: opacity 0.35s ease;
+}
+
+.heart-fade-enter-from,
+.heart-fade-leave-to {
+  opacity: 0;
 }
 
 @keyframes brightness-pulse {
