@@ -199,21 +199,32 @@ const handleStep = (step) => {
     if (state.flickerIntervalId) {
       clearInterval(state.flickerIntervalId)
     }
+    const flashInterval = step.flashInterval ?? 150
     state.flickerIntervalId = setInterval(() => {
       const currentIsWhite = mainStore.isLightOn
       mainStore.isLightOn = !currentIsWhite
 
       if (!currentIsWhite) {
-        // Применяем цвет и яркость при включении
-        screenColor.value = step.color
-        screenBrightness.value = step.brightness
-        // Логируем изменение режима экрана при включении
-        trackScreenModeChange(true, step.color, step.brightness)
-      } else {
-        // Логируем изменение режима экрана при выключении
-        trackScreenModeChange(false, null, null)
+        // Проверяем random при мерцании
+        if (step.random !== undefined) {
+          const randomValue = Math.random() * 100
+
+          if (randomValue <= step.random) {
+            // Применяем цвет и яркость при включении
+            screenColor.value = step.color
+            screenBrightness.value = step.brightness
+            mainStore.isLightOn = true
+          } else {
+            // Остаемся черными
+            mainStore.isLightOn = false
+          }
+        } else {
+          // Применяем цвет и яркость при включении (без random)
+          screenColor.value = step.color
+          screenBrightness.value = step.brightness
+        }
       }
-    }, 150)
+    }, flashInterval)
     return
   }
 
@@ -225,15 +236,28 @@ const handleStep = (step) => {
 
   // Устанавливаем состояние экрана
   if (step.status === 'on') {
-    mainStore.isLightOn = true
-    screenColor.value = step.color
-    screenBrightness.value = step.brightness
-    // Логируем изменение режима экрана
-    trackScreenModeChange(true, step.color, step.brightness)
+    // Проверяем наличие параметра random
+    if (step.random !== undefined) {
+      // Генерируем случайное число от 0 до 100
+      const randomValue = Math.random() * 100
+
+      // Если попали в диапазон от 0 до random, загораемся цветом
+      if (randomValue <= step.random) {
+        mainStore.isLightOn = true
+        screenColor.value = step.color
+        screenBrightness.value = step.brightness
+      } else {
+        // Иначе выключаем (черный экран)
+        mainStore.isLightOn = false
+      }
+    } else {
+      // Если random нет, работаем как обычно
+      mainStore.isLightOn = true
+      screenColor.value = step.color
+      screenBrightness.value = step.brightness
+    }
   } else if (step.status === 'off') {
     mainStore.isLightOn = false
-    // Логируем изменение режима экрана
-    trackScreenModeChange(false, null, null)
   }
 }
 

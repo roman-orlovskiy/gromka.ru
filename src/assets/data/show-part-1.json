@@ -2,9 +2,73 @@
   "show-part-1": [
     {
       "status": "on",
-      "color": "ffffff",
+      "color": "000000",
       "brightness": 100,
-      "duration": 600
+      "duration": 1000
+    },
+    {
+      "status": "flash",
+      "color": "ff0000",
+      "brightness": 100,
+      "duration": 4000,
+      "random": 30,
+      "flashInterval": 100
+    },
+    {
+      "status": "flash",
+      "color": "ff0000",
+      "brightness": 100,
+      "duration": 4000,
+      "random": 70,
+      "flashInterval": 100
+    },
+    {
+      "status": "on",
+      "color": "ff0000",
+      "brightness": 100,
+      "duration": 2000
+    },
+    {
+      "status": "flash",
+      "color": "ff0000",
+      "brightness": 100,
+      "duration": 3500,
+      "flashInterval": 100
+    },
+    {
+      "status": "on",
+      "color": "000000",
+      "brightness": 100,
+      "duration": 1000
+    },
+    {
+      "status": "flash",
+      "color": "ff0000",
+      "brightness": 100,
+      "duration": 3500,
+      "random": 30,
+      "flashInterval": 500
+    },
+    {
+      "status": "flash",
+      "color": "ff0000",
+      "brightness": 100,
+      "duration": 3500,
+      "random": 60,
+      "flashInterval": 500
+    },
+    {
+      "status": "on",
+      "color": "ff0000",
+      "brightness": 100,
+      "duration": 3500
+    },
+    {
+      "status": "flash",
+      "color": "ff0000",
+      "brightness": 100,
+      "duration": 4500,
+      "flashInterval": 100
     }
   ]
 }
