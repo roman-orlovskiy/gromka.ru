@@ -106,12 +106,13 @@ const {
 
 // Используем composable для полноэкранного режима
 const {
-  enterFullscreen,
   exitFullscreen
 } = useFullscreen()
 
 // Используем composable для последовательности перформанса
 const { stopSequence } = usePerformanceSequence('show-demo')
+
+// Используем composable для задержек
 
 // Универсальная система для работы с последовательностями
 const SHOW_DEFAULT_DURATION = 1000
@@ -316,8 +317,8 @@ const startShowSequence = (sequence) => {
   }, duration)
 }
 
-// Функция задержки
-const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms))
+
+
 
 // Обработчик аудиосигнала - управление последовательностью
 const handleAudioSignal = async (flag) => {
@@ -379,9 +380,6 @@ const handleStart = async () => {
   // Показываем подсказку с сердцем
   showHeartOverlay.value = true
 
-  // Входим в полноэкранный режим СРАЗУ, пока в синхронном контексте клика
-  enterFullscreen()
-
   // Активируем Wake Lock для предотвращения засыпания экрана
   requestWakeLock()
 
@@ -405,7 +403,6 @@ const handleStart = async () => {
     logFirstSoundSignal
   }
 
-  await sleep(1500)
   try {
     await requestMicrophonePermission(loggingCallbacks, handleAudioSignal)
     // Доступ к микрофону получен, обновляем статус
