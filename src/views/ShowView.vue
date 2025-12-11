@@ -43,7 +43,7 @@
             Поделитесь QR с тем,<br>кто не успел отсканировать
           </div>
           <img
-            src="/images/show-qr.webp"
+            src="/images/show-qr-1.webp"
             alt="QR-код для перформанса"
             class="show-view__qr-image"
           >
