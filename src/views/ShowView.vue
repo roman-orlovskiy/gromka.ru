@@ -44,26 +44,6 @@
       </div>
     </div>
 
-    <!-- Анимация перформанса -->
-    <div
-      v-if="isStarted"
-      class="show-view__performance"
-    >
-      <div
-        class="show-square"
-        :class="showSquareClass"
-        @click="copyDeviceId"
-      >
-        <div class="show-square__label">Gromka</div>
-        <div
-          v-if="displayDeviceId"
-          class="show-square__device-id"
-        >
-          {{ displayDeviceId }}
-        </div>
-      </div>
-    </div>
-
     <!-- Визуализация частот -->
     <div
       v-if="isStarted && isListening"
@@ -90,9 +70,7 @@ import { useMainStore } from '@/stores/main'
 import showDemoData from '@/assets/data/show-demo.json'
 
 const isStarted = ref(false)
-const isSquareBursting = ref(false)
 const isInitializing = ref(false) // Флаг начальной инициализации
-let squareBurstTimeout = null
 const mainStore = useMainStore()
 const { isLightOn } = storeToRefs(mainStore)
 
@@ -120,14 +98,14 @@ const { startSequence, stopSequence, isActive } = usePerformanceSequence('sound-
 
 // Логика для зацикленного проигрывания show-demo
 const showDemoSequence = showDemoData['show-demo'] || []
-let showDemoIntervalId = null
+const SHOW_DEMO_DEFAULT_DURATION = 1000
+let showDemoTimeoutId = null
 let showDemoFlickerIntervalId = null
 let showDemoCurrentIndex = 0
 const isShowDemoActive = ref(false)
 
 // Используем composable для логирования
 const {
-  deviceId,
   sendLogs,
   enableLogging,
   logMicrophonePermission,
@@ -161,49 +139,11 @@ const flickerLayerStyle = computed(() => {
   }
 })
 
-const showSquareClass = computed(() => {
-  if (isLightOn.value === null) {
-    return {}
-  }
-
-  return {
-    'show-square--dark': isLightOn.value,
-    'show-square--light': !isLightOn.value,
-    'show-square--burst': isSquareBursting.value
-  }
-})
-
-const displayDeviceId = computed(() => {
-  if (!deviceId.value) return null
-  return deviceId.value.replace(/^device_/, '')
-})
-
-const copyDeviceId = async () => {
-  if (!deviceId.value) return
-
-  try {
-    await navigator.clipboard.writeText(deviceId.value)
-    console.log('[ShowView] Device ID скопирован:', deviceId.value)
-  } catch (error) {
-    console.error('[ShowView] Ошибка копирования Device ID:', error)
-  }
-}
-
 // Управление цветом экрана по скрипту
 const handleColorChange = async (color) => {
   // color: 0 - черный, 1 - белый
   const isWhite = color === 1
   mainStore.isLightOn = isWhite
-
-  // Анимация квадрата
-  if (squareBurstTimeout) {
-    clearTimeout(squareBurstTimeout)
-  }
-  isSquareBursting.value = true
-  squareBurstTimeout = setTimeout(() => {
-    isSquareBursting.value = false
-    squareBurstTimeout = null
-  }, 150)
 }
 
 // Обработчик завершения последовательности - оставляем последний цвет последовательности
@@ -214,9 +154,9 @@ const handleSequenceComplete = () => {
 
 // Остановка show-demo последовательности
 const stopShowDemo = () => {
-  if (showDemoIntervalId) {
-    clearInterval(showDemoIntervalId)
-    showDemoIntervalId = null
+  if (showDemoTimeoutId) {
+    clearTimeout(showDemoTimeoutId)
+    showDemoTimeoutId = null
   }
   if (showDemoFlickerIntervalId) {
     clearInterval(showDemoFlickerIntervalId)
@@ -260,16 +200,32 @@ const handleShowDemoStep = (step) => {
   } else if (step.status === 'off') {
     mainStore.isLightOn = false
   }
+}
 
-  // Анимация квадрата
-  if (squareBurstTimeout) {
-    clearTimeout(squareBurstTimeout)
+// Функция для перехода к следующему шагу
+const playNextShowDemoStep = () => {
+  if (!isShowDemoActive.value || !showDemoSequence.length) {
+    return
   }
-  isSquareBursting.value = true
-  squareBurstTimeout = setTimeout(() => {
-    isSquareBursting.value = false
-    squareBurstTimeout = null
-  }, 150)
+
+  // Переходим к следующему шагу
+  showDemoCurrentIndex++
+
+  // Если достигли конца последовательности, начинаем сначала
+  if (showDemoCurrentIndex >= showDemoSequence.length) {
+    showDemoCurrentIndex = 0
+  }
+
+  const currentStep = showDemoSequence[showDemoCurrentIndex]
+
+  // Обрабатываем текущий шаг
+  handleShowDemoStep(currentStep)
+
+  // Запускаем таймаут для перехода к следующему шагу через duration текущего шага
+  const duration = currentStep.duration ?? SHOW_DEMO_DEFAULT_DURATION
+  showDemoTimeoutId = setTimeout(() => {
+    playNextShowDemoStep()
+  }, duration)
 }
 
 // Запуск зацикленного show-demo
@@ -282,19 +238,14 @@ const startShowDemo = () => {
   showDemoCurrentIndex = 0
 
   // Обрабатываем первый шаг
-  handleShowDemoStep(showDemoSequence[0])
+  const firstStep = showDemoSequence[0]
+  handleShowDemoStep(firstStep)
 
-  // Запускаем интервал для зацикленного проигрывания
-  showDemoIntervalId = setInterval(() => {
-    showDemoCurrentIndex++
-
-    // Если достигли конца последовательности, начинаем сначала
-    if (showDemoCurrentIndex >= showDemoSequence.length) {
-      showDemoCurrentIndex = 0
-    }
-
-    handleShowDemoStep(showDemoSequence[showDemoCurrentIndex])
-  }, 2000) // Тот же таймаут, что и в usePerformanceSequence
+  // Запускаем таймаут для перехода к следующему шагу через duration первого шага
+  const duration = firstStep.duration ?? SHOW_DEMO_DEFAULT_DURATION
+  showDemoTimeoutId = setTimeout(() => {
+    playNextShowDemoStep()
+  }, duration)
 }
 
 // Обработчик аудиосигнала - управление последовательностью
@@ -379,10 +330,6 @@ onUnmounted(async () => {
   await releaseWakeLock()
 
   cleanup()
-
-  if (squareBurstTimeout) {
-    clearTimeout(squareBurstTimeout)
-  }
 })
 </script>
 
@@ -513,16 +460,6 @@ onUnmounted(async () => {
   }
 }
 
-.show-view__performance {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  pointer-events: none;
-  z-index: 1200;
-}
-
 .show-view__spectrum {
   position: fixed;
   bottom: 2rem;
@@ -532,100 +469,6 @@ onUnmounted(async () => {
   height: 12rem;
   z-index: 1300;
   pointer-events: none;
-}
-
-.show-square {
-  width: min(40vw, 240px);
-  aspect-ratio: 1 / 1;
-  border-radius: 1.2rem;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  background: $color-black;
-  transition: transform 0.2s ease-in-out;
-  transform: scale(1);
-  color: $color-white;
-  pointer-events: auto;
-
-  &--dark {
-    background: $color-black;
-  }
-
-  &--light {
-    background: $color-white;
-  }
-
-  &--burst {
-    transform: scale(1.2);
-    background: $color-pink-stylish;
-  }
-}
-
-.show-square__label {
-  font-size: clamp(2rem, 6vw, 2.6rem);
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.2rem;
-}
-
-.show-square--dark .show-square__label {
-  color: $color-white;
-}
-
-.show-square--light .show-square__label {
-  color: $color-black;
-}
-
-.show-square__device-id {
-  font-size: 2rem;
-  font-weight: 400;
-  margin-top: 0.8rem;
-  opacity: 0.7;
-  cursor: pointer;
-  user-select: none;
-  pointer-events: auto;
-  transition: opacity 0.2s ease-in-out;
-
-  &:hover {
-    opacity: 1;
-  }
-}
-
-.show-square--dark .show-square__device-id {
-  color: $color-white;
-}
-
-.show-square--light .show-square__device-id {
-  color: $color-black;
-}
-
-@keyframes square-pulse {
-  0% {
-    transform: scale(0.9);
-  }
-
-  85% {
-    transform: scale(1);
-  }
-
-  100% {
-    transform: scale(0.9);
-  }
-}
-
-@keyframes square-burst {
-  0% {
-    transform: scale(1);
-  }
-
-  60% {
-    transform: scale(1.65);
-  }
-
-  100% {
-    transform: scale(1);
-  }
 }
 
 // Адаптивность для мобильных устройств

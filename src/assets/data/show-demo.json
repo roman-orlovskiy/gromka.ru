@@ -3,27 +3,26 @@
     {
       "status": "on",
       "color": "ff0000",
-      "brightness": 100
+      "brightness": 100,
+      "duration": 900
     },
     {
       "status": "on",
       "color": "ff0000",
-      "brightness": 35
+      "brightness": 35,
+      "duration": 500
     },
     {
       "status": "on",
       "color": "ff0000",
-      "brightness": 60
+      "brightness": 60,
+      "duration": 500
     },
     {
       "status": "flash",
       "color": "ff0000",
-      "brightness": 100
-    },
-    {
-      "status": "flash",
-      "color": "ff0000",
-      "brightness": 100
+      "brightness": 100,
+      "duration": 1000
     }
   ]
 }
