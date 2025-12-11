@@ -404,18 +404,17 @@ const handleStart = async () => {
 
     // Через 5 секунд меняем текст на "Разверните экран ко льду"
     setTimeout(() => {
+      // Входим в полноэкранный режим
+      enterFullscreen()
+
+      // Активируем Wake Lock для предотвращения засыпания экрана
+      requestWakeLock()
       showScreenRotationMessage.value = true
     }, 5000)
   } catch (err) {
     console.error('Ошибка при получении доступа к микрофону:', err)
     // Доступ не получен, оставляем hasMicrophoneAccess = false
   }
-
-  // Входим в полноэкранный режим
-  enterFullscreen()
-
-  // Активируем Wake Lock для предотвращения засыпания экрана
-  requestWakeLock()
 
   // Скрываем подсказку через 10 секунд
   setTimeout(() => {
