@@ -98,7 +98,7 @@ const onBroadcastClick = async (action) => {
     await sendUltrasonicSignal(action, ultrasonicBurstDefaults)
 
     const flag = action === 'on' ? 1 : 0
-    const payloadFrequency = flag === 1 ? 17500 : 18500
+    const payloadFrequency = flag === 1 ? 19000 : 18000
 
     lastResult.value = {
       timestamp: new Date(),
