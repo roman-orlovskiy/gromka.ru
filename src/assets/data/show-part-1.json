@@ -8,7 +8,7 @@
     },
     {
       "status": "flash",
-      "color": "ff0000",
+      "color": "0060ff",
       "brightness": 100,
       "duration": 4000,
       "random": 30,
@@ -16,7 +16,7 @@
     },
     {
       "status": "flash",
-      "color": "ff0000",
+      "color": "0060ff",
       "brightness": 100,
       "duration": 4000,
       "random": 70,
@@ -24,13 +24,13 @@
     },
     {
       "status": "on",
-      "color": "ff0000",
+      "color": "0060ff",
       "brightness": 100,
       "duration": 2000
     },
     {
       "status": "flash",
-      "color": "ff0000",
+      "color": "0060ff",
       "brightness": 100,
       "duration": 3500,
       "flashInterval": 100
@@ -43,7 +43,7 @@
     },
     {
       "status": "flash",
-      "color": "ff0000",
+      "color": "0060ff",
       "brightness": 100,
       "duration": 3500,
       "random": 30,
@@ -51,7 +51,7 @@
     },
     {
       "status": "flash",
-      "color": "ff0000",
+      "color": "0060ff",
       "brightness": 100,
       "duration": 3500,
       "random": 60,
@@ -59,13 +59,13 @@
     },
     {
       "status": "on",
-      "color": "ff0000",
+      "color": "0060ff",
       "brightness": 100,
       "duration": 3500
     },
     {
       "status": "flash",
-      "color": "ff0000",
+      "color": "0060ff",
       "brightness": 100,
       "duration": 4500,
       "flashInterval": 100
