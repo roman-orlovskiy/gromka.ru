@@ -2,25 +2,25 @@
   "show-demo": [
     {
       "status": "on",
-      "color": "ff0000",
+      "color": "0060ff",
       "brightness": 100,
       "duration": 900
     },
     {
       "status": "on",
-      "color": "ff0000",
+      "color": "0060ff",
       "brightness": 35,
       "duration": 500
     },
     {
       "status": "on",
-      "color": "ff0000",
+      "color": "0060ff",
       "brightness": 60,
       "duration": 500
     },
     {
       "status": "flash",
-      "color": "ff0000",
+      "color": "0060ff",
       "brightness": 100,
       "duration": 1000
     }

@@ -68,7 +68,6 @@ import { useLogging } from '@/composables/useLogging'
 import { usePerformanceSequence } from '@/composables/usePerformanceSequence'
 import { useMainStore } from '@/stores/main'
 import showDemoData from '@/assets/data/show-demo.json'
-import showPart1Data from '@/assets/data/show-part-1.json'
 import showPart2Data from '@/assets/data/show-part-2.json'
 
 const isStarted = ref(false)
@@ -123,7 +122,6 @@ const handleFullscreenStart = () => {
 // Универсальная система для работы с последовательностями
 const SHOW_DEFAULT_DURATION = 1000
 const showDemoSequence = showDemoData['show-demo'] || []
-const showPart1Sequence = showPart1Data['show-part-1'] || []
 const showPart2Sequence = showPart2Data['show-part-2'] || []
 
 // Состояние текущей активной последовательности
@@ -343,30 +341,16 @@ const handleAudioSignal = async (flag) => {
   trackSoundChange(flag === 1)
 
   if (flag === 1) {
+    // Если part-2 уже запущена — больше не реагируем на последующие сигналы включения
+    if (signalCount.value >= 1) return
+
     // Останавливаем текущую последовательность если активна
     if (currentSequenceState.value.isActive) {
       stopShowSequence()
     }
 
-    // При первом сигнале запускаем show-part-1 зацикленно
-    if (signalCount.value === 0) {
-      signalCount.value = 1
-      startShowSequence(showPart1Sequence)
-      return
-    }
-
-    // При втором сигнале переходим на show-part-2 зацикленно
-    if (signalCount.value === 1) {
-      signalCount.value = 2
-      startShowSequence(showPart2Sequence)
-      return
-    }
-
-    // При последующих сигналах остаемся на show-part-2 (не переходим дальше)
-    // Если последовательность уже запущена, повторный запуск не нужен
-    if (currentSequenceState.value.isActive) return
-
-    // Если show-part-2 не активна, запускаем её
+    // По первому сигналу сразу запускаем show-part-2 зацикленно
+    signalCount.value = 1
     startShowSequence(showPart2Sequence)
     return
   }
